@@ -168,6 +168,41 @@ function extractFromText(text: string): Partial<ExtractedProperty> {
   return out;
 }
 
+function htmlToText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function scrapeWithDirectFallback(url: string) {
+  const directRes = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; PermutaSmart/1.0; +https://lovable.dev)",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+    },
+  });
+
+  if (!directRes.ok) {
+    throw new Error(`Fallback direto falhou com status ${directRes.status}`);
+  }
+
+  const html = await directRes.text();
+  return {
+    markdown: htmlToText(html),
+    html,
+    rawHtml: html,
+    metadata: {},
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -184,37 +219,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
-    if (!FIRECRAWL_API_KEY) {
-      return new Response(JSON.stringify({ error: "FIRECRAWL_API_KEY não configurada" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY")?.trim().replace(/^['"]|['"]$/g, "");
+    let doc: any;
+
+    if (FIRECRAWL_API_KEY) {
+      const fcRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url,
+          formats: ["markdown", "html", "rawHtml"],
+          onlyMainContent: false,
+          waitFor: 2500,
+        }),
       });
+
+      const fcData = await fcRes.json().catch(() => ({}));
+      if (fcRes.ok) {
+        doc = fcData.data || fcData;
+      } else {
+        console.warn("Firecrawl failed, using direct fallback:", fcData);
+      }
+    } else {
+      console.warn("FIRECRAWL_API_KEY missing, using direct fallback");
     }
 
-    const fcRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url,
-        formats: ["markdown", "html", "rawHtml"],
-        onlyMainContent: false,
-        waitFor: 2500,
-      }),
-    });
-
-    const fcData = await fcRes.json();
-    if (!fcRes.ok) {
-      console.error("Firecrawl error:", fcData);
-      return new Response(
-        JSON.stringify({ error: fcData?.error || "Falha ao acessar o link", status: fcRes.status }),
-        { status: fcRes.status === 402 ? 402 : 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!doc) {
+      doc = await scrapeWithDirectFallback(url);
     }
-
-    const doc = fcData.data || fcData;
     const markdown: string = doc.markdown || "";
     const html: string = doc.rawHtml || doc.html || "";
     const metadata = doc.metadata || {};
