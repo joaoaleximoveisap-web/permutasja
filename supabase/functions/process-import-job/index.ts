@@ -16,10 +16,14 @@ Deno.serve(async (req) => {
     const { data: job } = await supabase.from("import_jobs").select("*").eq("id", job_id).single();
     if (!job || job.status !== "pending") return new Response("Skip", { headers: corsHeaders });
 
-    await supabase.from("import_jobs").update({ status: "processing", processed_at: new Date().toISOString() }).eq("id", job_id);
+    await supabase.from("import_jobs").update({ 
+      status: "processing", 
+      processed_at: new Date().toISOString() 
+    }).eq("id", job_id);
 
-    // 2. Scrape individual page with Firecrawl Extract
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
+
+    // Phase 2A - Scrape with scroll
     const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST",
       headers: {
@@ -28,8 +32,13 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         url: job.property_url,
-        formats: ["extract"],
-        waitFor: 4000,
+        formats: ["html", "markdown", "extract"],
+        waitFor: 5000,
+        actions: [
+          { type: "wait", milliseconds: 2000 },
+          { type: "scroll", direction: "down", amount: 800 },
+          { type: "wait", milliseconds: 1000 }
+        ],
         extract: {
           schema: {
             type: "object",
@@ -41,55 +50,104 @@ Deno.serve(async (req) => {
               bathrooms: { type: "string" },
               parking: { type: "string" },
               location: { type: "string" },
-              description: { type: "string" },
-              images: {
-                type: "array",
-                items: { type: "string" }
-              }
+              description: { type: "string" }
             }
           },
-          prompt: "Extract all real estate property details including title, price, area in m², bedrooms, bathrooms, parking spaces, full address or location, description, and all property image URLs. Return high quality image URLs only, not thumbnails."
+          prompt: "Extraia os detalhes do imóvel brasileiro: título, preço (R$), área (m²), quartos, banheiros, vagas, endereço completo e descrição."
         }
       }),
     });
 
     const fcData = await fcRes.json();
-    const extracted = fcData.data?.extract;
+    if (!fcRes.ok) throw new Error(fcData.error || "Erro no Firecrawl");
 
-    if (!extracted?.title || !extracted?.price) {
-      throw new Error("Não foi possível extrair os dados básicos do imóvel.");
+    const html = fcData.data?.html || "";
+    const extracted = fcData.data?.extract || {};
+    
+    // Phase 2B & 2C - Strict Image Extraction & Filtering
+    const images: string[] = [];
+    
+    // Regex for image patterns
+    const imgRegex = /<img[^>]+src=["']([^"'>]+)["']/g;
+    const dataSrcRegex = /data-(?:src|lazy|original|srcset)=["']([^"'>]+)["']/g;
+    const ogImgRegex = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"'>]+)["']/g;
+    
+    let match;
+    while ((match = imgRegex.exec(html)) !== null) images.push(match[1]);
+    while ((match = dataSrcRegex.exec(html)) !== null) images.push(match[1]);
+    while ((match = ogImgRegex.exec(html)) !== null) images.push(match[1]);
+
+    const junkWords = ['thumb', 'thumbnail', '-sm-', '-xs-', 'small', 'tiny', 'icon', 'logo', 'avatar', 'sprite', 'placeholder', 'blur', 'lqip', 'preview', 'watermark', 'banner-site', 'header-bg', 'footer', '.svg', '.gif', '.ico', '1x1'];
+    const junkPatterns = [/\/100x/, /\/150x/, /\/200x/, /\/50x/, /x100\//, /x150\//, /x200\//, /w=100/, /w=150/, /w=200/, /h=100/];
+
+    let filteredImages = Array.from(new Set(images))
+      .filter(url => {
+        if (!url.startsWith('http')) return false;
+        const low = url.toLowerCase();
+        if (junkWords.some(w => low.includes(w))) return false;
+        if (junkPatterns.some(p => p.test(low))) return false;
+        return true;
+      })
+      .map(url => {
+        // Phase 2D - Resolution Upgrade
+        return url
+          .replace('/400x300/', '/1200x900/')
+          .replace('/600x400/', '/1200x800/')
+          .replace('-medium.', '-large.')
+          .replace('-small.', '-large.')
+          .replace('_300.', '_1200.')
+          .replace(/\?width=\d+/, '?width=1200')
+          .replace(/\?w=\d+/, '?w=1200')
+          .replace('/thumb/', '/full/')
+          .replace('/thumbs/', '/photos/');
+      });
+
+    // Phase 2F - Validation
+    if (filteredImages.length === 0) {
+      throw new Error("zero_images");
     }
 
-    // Image quality filter
-    const filteredImages = (extracted.images || []).filter((url: string) => {
-      const low = url.toLowerCase();
-      return (
-        !low.includes('thumb') &&
-        !low.includes('icon') &&
-        !low.includes('logo') &&
-        !low.includes('sprite') &&
-        !low.includes('.svg') &&
-        !low.includes('.gif') &&
-        !low.includes('1x1') &&
-        url.startsWith('http')
-      );
-    });
-    extracted.images = filteredImages;
+    if (!extracted.title || extracted.title.length < 5) {
+       // Fallback for title
+       const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
+       extracted.title = h1Match ? h1Match[1].replace(/<[^>]*>/g, '').trim() : "Imóvel sem título";
+       if (extracted.title === "Imóvel sem título") throw new Error("no_title");
+    }
 
+    const rawData = {
+      ...extracted,
+      images: filteredImages.slice(0, 30) // Limit to 30 images
+    };
+
+    // Phase 4 - Duplicate Detection (Simpler version for edge function)
+    // In production, we'd do a fuzzy check here, but for now we rely on URL
+    
     // 4. Update job
     await supabase.from("import_jobs").update({ 
       status: "done", 
-      raw_data: extracted,
+      raw_data: rawData,
       processed_at: new Date().toISOString() 
     }).eq("id", job_id);
 
-    // 5. Update session stats
+    // 5. Update session stats - Deduct credits only AFTER successful extraction (UI/Trigger logic)
     await supabase.rpc("increment_session_done", { session_uuid: job.session_id });
 
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
 
   } catch (error) {
-    await supabase.from("import_jobs").update({ status: "failed", error_log: error.message }).eq("id", job_id);
+    console.error("Process error:", error);
+    const errorCode = error.message === "zero_images" ? "zero_images" : 
+                     error.message === "no_title" ? "no_title" : "parse_failed";
+    
+    await supabase.from("import_jobs").update({ 
+      status: "failed", 
+      error_log: { 
+        code: errorCode, 
+        message: error.message,
+        timestamp: new Date().toISOString()
+      } 
+    }).eq("id", job_id);
+    
     return new Response(JSON.stringify({ error: error.message }), { status: 200, headers: corsHeaders });
   }
 });
