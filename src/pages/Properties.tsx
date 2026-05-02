@@ -8,7 +8,7 @@ import { FilterPanel, defaultFilters, Filters } from "@/components/FilterPanel";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { Property } from "@/lib/types";
 import { Input } from "@/components/ui/input";
-import { Search, SlidersHorizontal, Building2 } from "lucide-react";
+import { Search, SlidersHorizontal, Building2, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
