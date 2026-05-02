@@ -137,7 +137,7 @@ export default function SmartSearch() {
 
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto h-[calc(100vh-140px)] flex flex-col gap-4">
+      <div className="max-w-4xl mx-auto h-[calc(100dvh-100px)] md:h-[calc(100vh-140px)] flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-center justify-between glass p-4 rounded-2xl">
           <div className="flex items-center gap-3">
@@ -157,7 +157,7 @@ export default function SmartSearch() {
         {/* Chat Area */}
         <div 
           ref={scrollRef}
-          className="flex-1 overflow-y-auto space-y-6 p-2 no-scrollbar scroll-smooth"
+          className="flex-1 overflow-y-auto space-y-6 p-2 no-scrollbar scroll-smooth pb-10"
         >
           {messages.map((m) => (
             <div key={m.id} className={cn(
