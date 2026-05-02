@@ -44,7 +44,7 @@ export default function Properties() {
             <p className="text-sm text-muted-foreground">{filtered.length} de {properties.length} na sua carteira</p>
           </div>
           <div className="flex gap-2">
-            <BulkImportDialog />
+            <BulkImportModal />
             <AddPropertyDialog />
           </div>
         </div>
