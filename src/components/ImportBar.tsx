@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { buildNormalized, uid } from "@/lib/property-utils";
 import { Property } from "@/lib/types";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { extractSingleProperty } from "@/services/singlePropertyExtractor";
 
 export function ImportBar({ onImported }: { onImported?: () => void }) {
   const [url, setUrl] = useState("");
@@ -21,99 +21,56 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
     try { new URL(url); } catch { toast.error("URL inválida"); return; }
     if (credits <= 0) { toast.error("Sem créditos. Faça upgrade para continuar importando."); return; }
 
-    console.log('=== STEP 1: Starting import for:', url);
     setLoading(true);
-    
     try {
-      const apiKey = import.meta.env.VITE_FIRECRAWL_API_KEY;
-      console.log('=== STEP 2: API key exists:', !!apiKey);
-      
-      if (!apiKey) {
-        toast.error("API key não configurada");
-        return;
-      }
-
-      console.log('=== STEP 3: Calling Firecrawl...');
-      const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          url: url.trim(),
-          formats: ['html'],
-          waitFor: 5000
-        })
+      const { data, error } = await supabase.functions.invoke("scrape-property", {
+        body: { url },
       });
 
-      console.log('=== STEP 4: Firecrawl status:', response.status);
-      
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error('Firecrawl error:', errText);
-        toast.error('Erro ao acessar página: ' + response.status);
-        return;
-      }
-
-      const result = await response.json();
-      const html = result?.data?.html || '';
-      
-      console.log('=== STEP 5: HTML received, length:', html.length);
-      console.log('=== STEP 5b: HTML preview:', html.substring(0, 500));
-      
-      if (!html || html.length < 100) {
-        toast.error('Página retornou vazia. Tente novamente.');
-        return;
-      }
-
-      // STEP 6: Extract images from HTML
-      console.log('=== STEP 6: Extracting images...');
-      const d = await extractSingleProperty(url); // This now uses internal parsePropertyFromHTML
-      console.log('=== STEP 6b: Extracted data:', JSON.stringify(d, null, 2));
-
-      if (!d) {
-        toast.error("Falha na extração", { description: "Não conseguimos processar os dados da página." });
+      if (error || data?.error) {
+        const msg = (data?.error as string) || error?.message || "Não conseguimos acessar este link.";
+        toast.error("Falha na importação", { description: msg });
         return;
       }
 
       const ok = consumeCredit();
       if (!ok) { toast.error("Sem créditos disponíveis."); return; }
 
-      const priceValue = typeof d.price === 'number' ? d.price : Number(d.price.toString().replace(/[^0-9]/g, '')) || 0;
-      const areaValue = typeof d.area === 'number' ? d.area : Number(d.area.toString().replace(/[^0-9]/g, '')) || 0;
-      const bedroomsValue = typeof d.bedrooms === 'number' ? d.bedrooms : Number(d.bedrooms.toString().replace(/[^0-9]/g, '')) || 0;
+      const d = data.data as {
+        title: string; price: number; area: number; bedrooms: number;
+        bathrooms?: number; parking?: number; description: string; images: string[];
+        city?: string; neighborhood?: string; type?: string;
+        permuta?: boolean; permutaDetails?: string; missingFields?: string[];
+      };
 
       const tags = [
-        bedroomsValue ? `${bedroomsValue} quartos` : null,
-        priceValue > 1500000 ? "alto padrão" : null,
-        areaValue > 150 ? "amplo" : null,
+        d.type?.toLowerCase(),
+        d.bedrooms ? `${d.bedrooms} quartos` : null,
+        d.neighborhood?.toLowerCase(),
+        d.price > 1500000 ? "alto padrão" : null,
+        d.area > 150 ? "amplo" : null,
       ].filter(Boolean) as string[];
 
       const base = {
-        title: d.title || "",
-        price: priceValue,
-        area: areaValue,
-        bedrooms: bedroomsValue,
-        bathrooms: Number(d.bathrooms) || 0,
-        parking: Number(d.parking) || 0,
-        suites: Number(d.suites) || 0,
+        title: d.title || "Imóvel importado",
+        price: d.price || 0,
+        area: d.area || 0,
+        bedrooms: d.bedrooms || 0,
+        bathrooms: d.bathrooms,
+        parking: d.parking,
         description: d.description || "",
         images: d.images || [],
         coverIndex: 0,
         sourceUrl: url,
-        city: d.location?.split(',')[0]?.trim() || "",
-        neighborhood: d.location?.split(',')[1]?.trim() || "",
-        address: d.address || d.location || "",
-        condominiumFee: d.condoFee || "",
-        propertyCode: d.property_code || "",
-        type: d.propertyType || "",
+        city: d.city,
+        neighborhood: d.neighborhood,
+        type: d.type,
         tags,
-        permuta: { enabled: false, details: "" },
+        permuta: { enabled: !!d.permuta, details: d.permutaDetails },
       };
 
       const fieldSources: Record<string, "imported" | "user_corrected" | "manual"> = {};
-      ["title", "price", "area", "bedrooms", "bathrooms", "parking", "description", "city", "neighborhood", "images"].forEach((k) => {
+      ["title", "price", "area", "bedrooms", "bathrooms", "parking", "description", "city", "neighborhood", "type", "images"].forEach((k) => {
         const v = (d as any)[k];
         if (v !== undefined && v !== null && v !== "" && v !== 0 && !(Array.isArray(v) && v.length === 0)) {
           fieldSources[k] = "imported";
@@ -129,23 +86,15 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         status: "draft",
         originalData: d as unknown as Record<string, unknown>,
         fieldSources,
-        missingFields: [],
+        missingFields: d.missingFields || [],
       };
 
-      console.log('=== STEP 9: Final property:', JSON.stringify({
-        title: draft.title,
-        price: draft.price,
-        images_count: draft.images.length,
-        area: draft.area
-      }));
-
       upsertDraft(draft);
-      toast.success(`Imóvel extraído: ${draft.images.length} fotos`);
+      toast.success("Imóvel importado!", { description: "Vamos revisar antes de publicar." });
       setUrl("");
       onImported?.();
       navigate(`/revisar/${draft.id}`);
-    } catch (err: any) {
-      console.error('=== IMPORT CRASHED ===', err);
+    } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
       toast.error("Falha na importação", { description: msg });
     } finally {

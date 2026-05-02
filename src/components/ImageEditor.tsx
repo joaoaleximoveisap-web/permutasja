@@ -186,12 +186,6 @@ export function ImageEditor({ images, coverIndex, onChange }: Props) {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {images.map((src, i) => {
-            // Skip non-URL values
-            if (!src || !src.startsWith('http')) {
-              console.warn('Invalid image URL at index', i, ':', src);
-              return null;
-            }
-
             const q = quality[i];
             const tier = q?.tier;
             return (
@@ -211,17 +205,10 @@ export function ImageEditor({ images, coverIndex, onChange }: Props) {
                 )}
               >
                 <img
-                  src={src}
-                  alt={`Foto ${i + 1}`}
+                  src={displaySrc(src)}
+                  alt={`Imóvel ${i + 1}`}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    if (target.parentElement) {
-                      target.parentElement.style.display = 'none';
-                    }
-                    console.warn('Image failed to load:', src);
-                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-smooth" />
                 <div className="absolute top-1 left-1 bg-background/70 backdrop-blur rounded-md p-1 cursor-grab">
@@ -289,12 +276,6 @@ export function ImageEditor({ images, coverIndex, onChange }: Props) {
             );
           })}
         </div>
-      )}
-
-      {images.length > 0 && images.every(img => !img || !img.startsWith('http')) && (
-        <p className="text-center text-muted-foreground py-8 glass rounded-2xl border-2 border-dashed border-glass-border">
-          Nenhuma imagem válida encontrada. Use o botão "Adicionar" para incluir manualmente.
-        </p>
       )}
 
       {/* Fullscreen viewer */}

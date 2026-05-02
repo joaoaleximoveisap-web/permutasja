@@ -14,16 +14,13 @@ export type Property = {
   area: number;
   bedrooms: number;
   bathrooms?: number;
-  suites?: number;
   parking?: number;
-  propertyCode?: string;
   description: string;
   images: string[];
   coverIndex?: number;
   sourceUrl?: string;
   address?: string;
   condominium?: string;
-  condominiumFee?: string;
   city?: string;
   neighborhood?: string;
   type?: string;

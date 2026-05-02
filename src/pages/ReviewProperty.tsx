@@ -131,123 +131,44 @@ export default function ReviewProperty() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>Título</Label>
-                  <Input 
-                    value={draft.title} 
-                    onChange={(e) => update({ title: e.target.value })} 
-                    placeholder="Não encontrado"
-                  />
+                  <Input value={draft.title} onChange={(e) => update({ title: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Preço (R$)</Label>
-                  <Input 
-                    type="number" 
-                    value={draft.price || ""} 
-                    onChange={(e) => update({ price: Number(e.target.value) || 0 })} 
-                    placeholder="Não encontrado"
-                  />
+                  <Input type="number" value={draft.price || ""} onChange={(e) => update({ price: Number(e.target.value) || 0 })} />
                   {draft.price > 0 && <p className="text-xs text-muted-foreground">{formatBRL(draft.price)}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <Label>Área (m²)</Label>
-                  <Input 
-                    type="number" 
-                    value={draft.area || ""} 
-                    onChange={(e) => update({ area: Number(e.target.value) || 0 })} 
-                    placeholder="Não encontrado"
-                  />
+                  <Input type="number" value={draft.area || ""} onChange={(e) => update({ area: Number(e.target.value) || 0 })} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Quartos</Label>
-                  <Input 
-                    type="number" 
-                    value={draft.bedrooms || ""} 
-                    onChange={(e) => update({ bedrooms: Number(e.target.value) || 0 })} 
-                    placeholder="Não encontrado"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Suítes</Label>
-                  <Input 
-                    type="number" 
-                    value={draft.suites || ""} 
-                    onChange={(e) => update({ suites: Number(e.target.value) || 0 })} 
-                    placeholder="Não encontrado"
-                  />
+                  <Input type="number" value={draft.bedrooms || ""} onChange={(e) => update({ bedrooms: Number(e.target.value) || 0 })} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Banheiros</Label>
-                  <Input 
-                    type="number" 
-                    value={draft.bathrooms || ""} 
-                    onChange={(e) => update({ bathrooms: Number(e.target.value) || 0 })} 
-                    placeholder="Não encontrado"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Vagas</Label>
-                  <Input 
-                    type="number" 
-                    value={draft.parking || ""} 
-                    onChange={(e) => update({ parking: Number(e.target.value) || 0 })} 
-                    placeholder="Não encontrado"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Taxa de Condomínio (R$)</Label>
-                  <Input 
-                    value={draft.condominiumFee || ""} 
-                    onChange={(e) => update({ condominiumFee: e.target.value })} 
-                    placeholder="Não encontrado"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Código do imóvel</Label>
-                  <Input 
-                    value={draft.propertyCode || ""} 
-                    onChange={(e) => update({ propertyCode: e.target.value })} 
-                    placeholder="Não encontrado"
-                  />
+                  <Input type="number" value={draft.bathrooms || ""} onChange={(e) => update({ bathrooms: Number(e.target.value) || 0 })} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Cidade</Label>
-                  <Input 
-                    value={draft.city || ""} 
-                    onChange={(e) => update({ city: e.target.value })} 
-                    placeholder="Não encontrado"
-                  />
+                  <Input value={draft.city || ""} onChange={(e) => update({ city: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Bairro</Label>
-                  <Input 
-                    value={draft.neighborhood || ""} 
-                    onChange={(e) => update({ neighborhood: e.target.value })} 
-                    placeholder="Não encontrado"
-                  />
+                  <Input value={draft.neighborhood || ""} onChange={(e) => update({ neighborhood: e.target.value })} />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>Endereço completo</Label>
-                  <Input 
-                    placeholder="Rua, número, complemento (Não encontrado)" 
-                    value={draft.address || ""} 
-                    onChange={(e) => update({ address: e.target.value })} 
-                  />
+                  <Input placeholder="Rua, número, complemento" value={draft.address || ""} onChange={(e) => update({ address: e.target.value })} />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>Nome do condomínio / edifício</Label>
-                  <Input 
-                    placeholder="Ex: Marquês do Herval (Não encontrado)" 
-                    value={draft.condominium || ""} 
-                    onChange={(e) => update({ condominium: e.target.value })} 
-                  />
+                  <Input placeholder="Ex: Marquês do Herval" value={draft.condominium || ""} onChange={(e) => update({ condominium: e.target.value })} />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>Descrição</Label>
-                  <Textarea 
-                    rows={5} 
-                    value={draft.description} 
-                    onChange={(e) => update({ description: e.target.value })} 
-                    placeholder="Não encontrado"
-                  />
+                  <Textarea rows={5} value={draft.description} onChange={(e) => update({ description: e.target.value })} />
                 </div>
               </div>
             </div>
