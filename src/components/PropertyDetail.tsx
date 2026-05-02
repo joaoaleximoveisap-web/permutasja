@@ -14,8 +14,10 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
   if (!property) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl glass-strong border-glass-border rounded-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(v) => {
+      if (!editOpen) onOpenChange(v);
+    }}>
+      <DialogContent className="max-w-4xl glass-strong border-glass-border rounded-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto z-50">
         <div className="grid md:grid-cols-2">
           <div className="relative bg-black h-72 md:h-auto flex items-center justify-center group">
             <img src={property.images[active]} alt={property.title} className="w-full h-full object-contain md:object-cover" />
