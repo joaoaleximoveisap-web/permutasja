@@ -195,6 +195,13 @@ function extractAllImages(html: string, baseUrl: string, ogImages: string[]): st
     if (parts[0]) addCandidate(parts[0].url, m.index, parts[0].w);
   }
   
+  // <a> tags pointing to images (common in galleries)
+  const aRe = /<a\b([^>]+)>/gi;
+  while ((m = aRe.exec(html)) !== null) {
+    const attrs = m[1];
+    const href = attrs.match(/\bhref=["']([^"']+\.(?:jpe?g|png|webp|avif)[^"']*)["']/i)?.[1];
+    if (href) addCandidate(href, m.index, 800, 600); // assume decent size
+  }
   // JSON in script tags (look for arrays of high-res image URLs)
   const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
   while ((m = scriptRe.exec(html)) !== null) {
