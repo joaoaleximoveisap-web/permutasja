@@ -137,38 +137,41 @@ export default function SmartSearch() {
 
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto h-[calc(100dvh-100px)] md:h-[calc(100vh-140px)] flex flex-col gap-4">
-        {/* Header */}
-        <div className="flex items-center justify-between glass p-4 rounded-2xl">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-primary grid place-items-center shadow-glass">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
+      <div className="max-w-[1000px] mx-auto h-[calc(100dvh-120px)] md:h-[calc(100vh-160px)] flex flex-col">
+        {/* Chat Header */}
+        <div className="bg-white border-b border-border p-6 md:px-8 rounded-t-[2rem] flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/10">
+              <Sparkles className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold">Busca Inteligente</h1>
-              <p className="text-xs text-muted-foreground">Assistente de Match & Negócios</p>
+              <h1 className="text-xl font-bold tracking-tight">Busca Inteligente</h1>
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Assistente IA Ativo</span>
+              </div>
             </div>
-          </div>
-          <div className="text-[10px] uppercase tracking-widest text-accent font-bold bg-accent/10 px-2 py-1 rounded">
-            Modo IA Ativo
           </div>
         </div>
 
         {/* Chat Area */}
         <div 
           ref={scrollRef}
-          className="flex-1 overflow-y-auto space-y-6 p-2 no-scrollbar scroll-smooth pb-10"
+          className="flex-1 overflow-y-auto space-y-8 p-6 md:p-8 bg-background scroll-smooth"
         >
           {messages.map((m) => (
             <div key={m.id} className={cn(
-              "flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300",
+              "flex flex-col gap-3",
               m.role === "user" ? "items-end" : "items-start"
             )}>
               <div className={cn(
-                "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm",
+                "max-w-[85%] md:max-w-[70%] rounded-2xl px-5 py-4 text-sm font-medium leading-relaxed shadow-sm",
                 m.role === "user" 
                   ? "bg-primary text-primary-foreground rounded-tr-none" 
-                  : "glass-strong text-foreground rounded-tl-none border-primary/10"
+                  : "bg-white border border-border/50 text-foreground rounded-tl-none"
               )}>
                 {m.content}
               </div>
