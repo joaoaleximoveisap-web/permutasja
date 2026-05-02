@@ -10,18 +10,18 @@ const items = [
 export function Sidebar() {
   const { pathname } = useLocation();
   return (
-    <aside className="hidden md:flex sticky top-0 h-screen w-64 flex-col p-4 gap-4">
-      <div className="glass rounded-2xl p-4 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-primary grid place-items-center shadow-glass">
-          <Sparkles className="h-5 w-5 text-primary-foreground" />
+    <aside className="hidden lg:flex sticky top-0 h-screen w-72 flex-col p-6 gap-8 bg-white border-r border-border">
+      <div className="flex items-center gap-4 px-2">
+        <div className="h-12 w-12 rounded-2xl bg-primary grid place-items-center shadow-xl shadow-primary/20">
+          <Sparkles className="h-6 w-6 text-primary-foreground" />
         </div>
         <div>
-          <div className="font-semibold tracking-tight">Permutas Já</div>
-          <div className="text-xs text-muted-foreground">para corretores</div>
+          <div className="font-bold text-lg tracking-tight">Permutas Já</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Real Estate Intelligence</div>
         </div>
       </div>
 
-      <nav className="glass rounded-2xl p-2 flex-1">
+      <nav className="flex-1">
         <ul className="space-y-1">
           {items.map(({ to, label, icon: Icon }) => {
             const active = pathname.startsWith(to);
