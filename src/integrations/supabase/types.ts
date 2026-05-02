@@ -147,7 +147,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_session_done: {
+        Args: { session_uuid: string }
+        Returns: undefined
+      }
     }
     Enums: {
       import_job_status:
