@@ -14,13 +14,13 @@ export interface ExtractedProperty {
   features: string[]
   images: string[]
   source_url: string
+  property_code?: string
 }
 
-export async function extractSingleProperty(url: string): Promise<ExtractedProperty> {
-
-  // ==========================================
-  // CALL 1: Extract structured data + HTML
-  // ==========================================
+/**
+ * METHOD 1: Firecrawl (Enhanced)
+ */
+async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
   const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
     method: 'POST',
     headers: {
@@ -29,13 +29,18 @@ export async function extractSingleProperty(url: string): Promise<ExtractedPrope
     },
     body: JSON.stringify({
       url,
-      formats: ['extract', 'html', 'markdown'],
-      waitFor: 5000,
+      formats: ['extract', 'html', 'markdown', 'screenshot'],
+      waitFor: 6000,
+      timeout: 30000,
+      skipTlsVerification: false,
+      removeBase64Images: false,
       actions: [
+        { type: 'wait', milliseconds: 3000 },
+        { type: 'scroll', direction: 'down', amount: 2000 },
         { type: 'wait', milliseconds: 2000 },
-        { type: 'scroll', direction: 'down', amount: 1500 },
-        { type: 'wait', milliseconds: 1500 },
-        { type: 'scroll', direction: 'down', amount: 1500 },
+        { type: 'scroll', direction: 'down', amount: 2000 },
+        { type: 'wait', milliseconds: 1000 },
+        { type: 'scroll', direction: 'up', amount: 5000 },
         { type: 'wait', milliseconds: 1000 }
       ],
       extract: {
@@ -44,49 +49,28 @@ export async function extractSingleProperty(url: string): Promise<ExtractedPrope
           properties: {
             title: { type: 'string' },
             price: { type: 'string' },
-            area: { type: 'string' },
+            area_util: { type: 'string' },
+            area_total: { type: 'string' },
             bedrooms: { type: 'string' },
+            suites: { type: 'string' },
             bathrooms: { type: 'string' },
             parking: { type: 'string' },
-            suites: { type: 'string' },
             location: { type: 'string' },
             address: { type: 'string' },
+            condominium_fee: { type: 'string' },
             description: { type: 'string' },
-            features: {
-              type: 'array',
-              items: { type: 'string' }
-            },
-            images: {
-              type: 'array',
-              items: { type: 'string' }
-            }
+            features: { type: 'array', items: { type: 'string' } },
+            property_code: { type: 'string' },
+            images: { type: 'array', items: { type: 'string' } }
           }
         },
-        prompt: `You are extracting data from a Brazilian real estate property listing page.
-
-Extract:
-- title: the property name or listing title
-- price: full price with R$ (if shows "Consulte" or hidden, return "Consulte")
-- area: total area in m² (number + m²)
-- bedrooms: number of bedrooms (quartos)
-- bathrooms: number of bathrooms (banheiros)
-- parking: number of parking spaces (vagas)
-- suites: number of suites (suítes)
-- location: neighborhood + city + state
-- address: full street address if available
-- description: full property description text (max 1000 chars)
-- features: array of amenities/features (piscina, churrasqueira, etc)
-- images: array of ALL property photo URLs
-
-CRITICAL FOR IMAGES:
-- Get EVERY property photo URL on the page
-- Prefer the LARGEST version of each image
-- If image URL has size params like ?w=400 or /400x300/, try to find the full URL
-- Include gallery images, carousel images, slideshow images
-- Include images loaded via data-src, data-lazy, data-original, srcset
-- Do NOT include: logos, icons, agent photos, site headers, map screenshots
-- Do NOT include thumbnails if full-size version exists
-- Look inside image galleries, lightbox containers, swiper/slick carousels`
+        prompt: `Extract ALL data from this Brazilian real estate listing.
+CRITICAL FOR IMAGES: Find EVERY property photo URL. 
+Look in: img tags, data-src, srcset, background-image, 
+galleries, carousels, lightbox containers, swiper slides.
+Get the HIGHEST resolution version. 
+Reject: logos, icons, agent photos, maps, social media icons.
+Return full absolute URLs starting with https://`
       }
     })
   })
@@ -97,308 +81,312 @@ CRITICAL FOR IMAGES:
   }
 
   const result = await response.json()
-  const extracted = result?.data?.extract
+  const data = result?.data?.extract
   const html = result?.data?.html || ''
 
-  // ==========================================
-  // PHASE 2: DEEP IMAGE EXTRACTION FROM HTML
-  // ==========================================
-  // Firecrawl extract sometimes misses images
-  // Parse HTML directly as backup
-
-  const additionalImages = extractImagesFromHTML(html)
-  
-  // Merge images: Firecrawl extracted + HTML parsed
+  // Deep image extraction from HTML as backup for Firecrawl's extraction
+  const additionalImages = extractImagesFromHTML(html, url)
   const allImages = [
-    ...(extracted?.images || []),
+    ...(data?.images || []),
     ...additionalImages
   ]
 
-  // ==========================================
-  // PHASE 3: IMAGE PROCESSING PIPELINE
-  // ==========================================
-  const processedImages = processImages(allImages, url)
-
   return {
-    title: extracted?.title || extractTitleFromHTML(html) || '',
-    price: extracted?.price || extracted?.price_text || extractPriceFromHTML(html) || 'Consulte',
-    area: extracted?.area || '',
-    bedrooms: extracted?.bedrooms || '',
-    bathrooms: extracted?.bathrooms || '',
-    parking: extracted?.parking || '',
-    suites: extracted?.suites || '',
-    location: extracted?.location || '',
-    address: extracted?.address || '',
-    description: extracted?.description || '',
-    features: extracted?.features || [],
-    images: processedImages,
-    source_url: url
+    title: data?.title || extractTitleFromHTML(html) || '',
+    price: data?.price || extractPriceFromHTML(html) || '',
+    area: data?.area_util || data?.area_total || '',
+    bedrooms: data?.bedrooms || '',
+    bathrooms: data?.bathrooms || '',
+    parking: data?.parking || '',
+    suites: data?.suites || '',
+    location: data?.location || '',
+    address: data?.address || '',
+    description: data?.description || '',
+    features: data?.features || [],
+    images: processImages(allImages, url),
+    source_url: url,
+    property_code: data?.property_code
   }
 }
 
-// ==========================================
-// HTML IMAGE EXTRACTOR (BACKUP)
-// ==========================================
-function extractImagesFromHTML(html: string): string[] {
-  const images: string[] = []
+/**
+ * METHOD 2: Browser-side Fallback
+ */
+async function fallbackExtraction(url: string): Promise<ExtractedProperty> {
+  const corsProxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ]
+
+  let html = ''
   
-  if (!html) return images
-
-  // 1. Regular img src
-  const imgSrcRegex = /<img[^>]+src=["']([^"']+)["']/gi
-  let match
-  while ((match = imgSrcRegex.exec(html)) !== null) {
-    images.push(match[1])
-  }
-
-  // 2. data-src (lazy loaded)
-  const dataSrcRegex = /<img[^>]+data-src=["']([^"']+)["']/gi
-  while ((match = dataSrcRegex.exec(html)) !== null) {
-    images.push(match[1])
-  }
-
-  // 3. data-lazy-src
-  const dataLazyRegex = /data-lazy-src=["']([^"']+)["']/gi
-  while ((match = dataLazyRegex.exec(html)) !== null) {
-    images.push(match[1])
-  }
-
-  // 4. data-original
-  const dataOrigRegex = /data-original=["']([^"']+)["']/gi
-  while ((match = dataOrigRegex.exec(html)) !== null) {
-    images.push(match[1])
-  }
-
-  // 5. srcset (pick largest)
-  const srcsetRegex = /srcset=["']([^"']+)["']/gi
-  while ((match = srcsetRegex.exec(html)) !== null) {
-    const srcset = match[1]
-    const parts = srcset.split(',').map(s => s.trim())
-    // Pick the last one (usually largest)
-    if (parts.length > 0) {
-      const largest = parts[parts.length - 1].split(/\s+/)[0]
-      if (largest) images.push(largest)
+  for (const proxy of corsProxies) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
+      
+      const res = await fetch(proxy + encodeURIComponent(url), {
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+      
+      if (res.ok) {
+        html = await res.text()
+        break
+      }
+    } catch (e) {
+      console.warn(`Proxy ${proxy} failed:`, e)
+      continue
     }
   }
 
-  // 6. background-image in style
-  const bgRegex = /background-image:\s*url\(["']?([^"')]+)["']?\)/gi
-  while ((match = bgRegex.exec(html)) !== null) {
-    images.push(match[1])
+  if (!html) {
+    throw new Error('Não foi possível acessar a página através dos proxies')
   }
 
-  // 7. og:image meta tag
-  const ogRegex = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/gi
-  while ((match = ogRegex.exec(html)) !== null) {
-    images.push(match[1])
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  const baseUrl = new URL(url).origin
+
+  // ---- EXTRACT IMAGES ----
+  const images: string[] = []
+  
+  doc.querySelectorAll('img').forEach(img => {
+    const src = img.getAttribute('src') 
+      || img.getAttribute('data-src')
+      || img.getAttribute('data-lazy')
+      || img.getAttribute('data-original')
+    if (src) images.push(src)
+    
+    const srcset = img.getAttribute('srcset')
+    if (srcset) {
+      const parts = srcset.split(',').map(s => s.trim())
+      const last = parts[parts.length - 1]?.split(/\s+/)[0]
+      if (last) images.push(last)
+    }
+  })
+
+  doc.querySelectorAll('[style*="background"]').forEach(el => {
+    const style = el.getAttribute('style') || ''
+    const match = style.match(/url\(["']?([^"')]+)["']?\)/)
+    if (match) images.push(match[1])
+  })
+
+  const ogImage = doc.querySelector('meta[property="og:image"]')
+  if (ogImage) {
+    const content = ogImage.getAttribute('content')
+    if (content) images.push(content)
   }
 
-  // 8. JSON-LD structured data
-  const jsonLdRegex = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
-  while ((match = jsonLdRegex.exec(html)) !== null) {
+  doc.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
     try {
-      const jsonData = JSON.parse(match[1])
-      if (jsonData.image) {
-        if (Array.isArray(jsonData.image)) {
-          images.push(...jsonData.image)
-        } else if (typeof jsonData.image === 'string') {
-          images.push(jsonData.image)
-        } else if (jsonData.image.url) {
-          images.push(jsonData.image.url)
-        }
+      const data = JSON.parse(script.textContent || '')
+      if (data.image) {
+        if (Array.isArray(data.image)) images.push(...data.image)
+        else if (typeof data.image === 'string') images.push(data.image)
+        else if (data.image.url) images.push(data.image.url)
       }
-      // Also check photo/photos
-      if (jsonData.photo) {
-        const photos = Array.isArray(jsonData.photo) ? jsonData.photo : [jsonData.photo]
+      if (data.photo) {
+        const photos = Array.isArray(data.photo) ? data.photo : [data.photo]
         photos.forEach((p: any) => {
           if (typeof p === 'string') images.push(p)
           else if (p?.contentUrl) images.push(p.contentUrl)
           else if (p?.url) images.push(p.url)
         })
       }
-    } catch (e) {
-      // Invalid JSON-LD, skip
+    } catch {}
+  })
+
+  doc.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href') || ''
+    if (/\.(jpg|jpeg|png|webp)/i.test(href)) {
+      images.push(href)
+    }
+  })
+
+  // ---- EXTRACT TEXT DATA ----
+  const getText = (selectors: string[]): string => {
+    for (const sel of selectors) {
+      const el = doc.querySelector(sel)
+      if (el?.textContent?.trim()) return el.textContent.trim()
+    }
+    return ''
+  }
+
+  const title = getText(['h1', 'meta[property="og:title"]', 'title'])
+
+  let price = ''
+  const priceEl = doc.querySelector('[class*="preco"], [class*="price"], [class*="valor"]')
+  if (priceEl) {
+    price = priceEl.textContent?.trim() || ''
+  }
+  if (!price) {
+    const bodyText = doc.body?.textContent || ''
+    const priceMatch = bodyText.match(/R\$\s*[\d.,]+/)
+    if (priceMatch) price = priceMatch[0]
+  }
+
+  const bodyContent = doc.body?.textContent || ''
+  const areaMatch = bodyContent.match(/(\d+)\s*m²/i)
+  const bedroomMatch = bodyContent.match(/(\d+)\s*(?:quarto|dormitório|dorm)/i)
+  const bathMatch = bodyContent.match(/(\d+)\s*(?:banheiro|banh)/i)
+  const parkMatch = bodyContent.match(/(\d+)\s*vaga/i)
+  const suiteMatch = bodyContent.match(/(\d+)\s*suíte/i)
+
+  const location = getText([
+    '[class*="endereco"]', '[class*="address"]',
+    '[class*="localizacao"]', '[class*="location"]',
+    'meta[property="og:street-address"]'
+  ])
+
+  const description = getText([
+    '[class*="descricao"]', '[class*="description"]',
+    '[class*="detalhe"]', '[class*="detail"]'
+  ])
+
+  return {
+    title,
+    price,
+    area: areaMatch ? areaMatch[0] : '',
+    bedrooms: bedroomMatch ? bedroomMatch[1] : '',
+    bathrooms: bathMatch ? bathMatch[1] : '',
+    parking: parkMatch ? parkMatch[1] : '',
+    suites: suiteMatch ? suiteMatch[1] : '',
+    location,
+    address: location,
+    description: description.substring(0, 1000),
+    features: [],
+    images: processImages(images, url),
+    source_url: url
+  }
+}
+
+/**
+ * COMBINE BOTH METHODS
+ */
+export async function extractSingleProperty(url: string): Promise<ExtractedProperty> {
+  let property: ExtractedProperty | null = null
+  let method = 'firecrawl'
+
+  try {
+    // 1. Try Firecrawl
+    property = await extractWithFirecrawl(url)
+    
+    // 2. Check if extraction was poor
+    if (!property.images || property.images.length === 0) {
+      console.log('Firecrawl returned 0 images, trying fallback...')
+      const fallback = await fallbackExtraction(url)
+      
+      if (fallback.images.length > 0) {
+        property.images = fallback.images
+        method = 'firecrawl+fallback'
+      }
+      
+      if (!property.title && fallback.title) property.title = fallback.title
+      if (!property.price && fallback.price) property.price = fallback.price
+      if (!property.description && fallback.description) property.description = fallback.description
+    }
+  } catch (firecrawlError) {
+    console.warn('Firecrawl failed:', firecrawlError)
+    // 3. Firecrawl failed completely, try fallback
+    try {
+      property = await fallbackExtraction(url)
+      method = 'fallback'
+    } catch (fallbackError) {
+      console.error('Extraction failed completely:', fallbackError)
+      throw new Error('Não foi possível extrair dados desta página.')
     }
   }
+
+  console.log(`Extraction method: ${method}`)
+  console.log(`Images found: ${property.images.length}`)
+  
+  return property
+}
+
+/**
+ * SHARED UTILS
+ */
+
+function extractImagesFromHTML(html: string, sourceUrl: string): string[] {
+  const images: string[] = []
+  if (!html) return images
+
+  const imgSrcRegex = /<img[^>]+src=["']([^"']+)["']/gi
+  const dataSrcRegex = /<img[^>]+data-src=["']([^"']+)["']/gi
+  const dataLazyRegex = /data-lazy-src=["']([^"']+)["']/gi
+  const dataOrigRegex = /data-original=["']([^"']+)["']/gi
+  const bgRegex = /background-image:\s*url\(["']?([^"')]+)["']?\)/gi
+  const ogRegex = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/gi
+
+  let match
+  while ((match = imgSrcRegex.exec(html)) !== null) images.push(match[1])
+  while ((match = dataSrcRegex.exec(html)) !== null) images.push(match[1])
+  while ((match = dataLazyRegex.exec(html)) !== null) images.push(match[1])
+  while ((match = dataOrigRegex.exec(html)) !== null) images.push(match[1])
+  while ((match = bgRegex.exec(html)) !== null) images.push(match[1])
+  while ((match = ogRegex.exec(html)) !== null) images.push(match[1])
 
   return images
 }
 
-// ==========================================
-// TITLE FALLBACK
-// ==========================================
 function extractTitleFromHTML(html: string): string {
-  // Try h1
   const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i)
   if (h1Match) return h1Match[1].trim()
-  
-  // Try og:title
   const ogMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
   if (ogMatch) return ogMatch[1].trim()
-  
-  // Try title tag (remove site name)
   const titleMatch = html.match(/<title>([^<]+)<\/title>/i)
-  if (titleMatch) {
-    const title = titleMatch[1].split('|')[0].split('-')[0].trim()
-    return title
-  }
-  
+  if (titleMatch) return titleMatch[1].split('|')[0].split('-')[0].trim()
   return ''
 }
 
-// ==========================================
-// PRICE FALLBACK
-// ==========================================
 function extractPriceFromHTML(html: string): string {
-  // Look for R$ pattern
   const priceMatch = html.match(/R\$\s*[\d.,]+/i)
-  if (priceMatch) return priceMatch[0].trim()
-  return ''
+  return priceMatch ? priceMatch[0].trim() : ''
 }
 
-// ==========================================
-// IMAGE PROCESSING PIPELINE
-// ==========================================
 function processImages(rawImages: string[], sourceUrl: string): string[] {
   const baseUrl = new URL(sourceUrl).origin
 
-  let images = rawImages
-    // 1. Convert relative to absolute
+  return rawImages
     .map(img => {
       if (img.startsWith('//')) return 'https:' + img
       if (img.startsWith('/')) return baseUrl + img
       if (!img.startsWith('http')) return baseUrl + '/' + img
       return img
     })
-    // 2. Remove non-image URLs
     .filter(img => {
       const low = img.toLowerCase()
-      return (
-        low.includes('.jpg') || low.includes('.jpeg') ||
-        low.includes('.png') || low.includes('.webp') ||
-        low.includes('image') || low.includes('photo') ||
-        low.includes('foto') || low.includes('img') ||
-        low.includes('upload') || low.includes('media') ||
-        // Accept URLs without clear extension if they look like CDN
-        low.includes('cloudinary') || low.includes('imgix') ||
-        low.includes('amazonaws') || low.includes('cdn') ||
-        low.includes('googleusercontent')
-      )
-    })
-    // 3. Reject trash images
-    .filter(img => {
-      const low = img.toLowerCase()
+      // Filter trash
       return !(
-        low.includes('logo') ||
-        low.includes('icon') ||
-        low.includes('favicon') ||
-        low.includes('avatar') ||
-        low.includes('sprite') ||
-        low.includes('placeholder') ||
-        low.includes('blank.') ||
-        low.includes('pixel.') ||
-        low.includes('spacer') ||
-        low.includes('loading') ||
-        low.includes('.svg') ||
-        low.includes('.gif') ||
-        low.includes('.ico') ||
-        low.includes('1x1') ||
-        low.includes('banner-site') ||
-        low.includes('watermark') ||
-        low.includes('selo') ||
-        low.includes('badge') ||
-        low.includes('whatsapp') ||
-        low.includes('facebook') ||
-        low.includes('instagram') ||
-        low.includes('twitter') ||
-        low.includes('linkedin') ||
-        low.includes('youtube') ||
-        low.includes('google-map') ||
-        low.includes('maps.google') ||
-        low.includes('staticmap') ||
-        low.includes('corretor') ||
-        low.includes('agente') ||
-        low.includes('broker') ||
-        low.includes('agent')
+        low.includes('logo') || low.includes('icon') ||
+        low.includes('favicon') || low.includes('avatar') ||
+        low.includes('sprite') || low.includes('placeholder') ||
+        low.includes('.svg') || low.includes('.gif') ||
+        low.includes('.ico') || low.includes('1x1') ||
+        low.includes('whatsapp') || low.includes('facebook') ||
+        low.includes('instagram') || low.includes('google') ||
+        low.includes('maps.') || low.includes('staticmap') ||
+        low.includes('corretor') || low.includes('agent') ||
+        low.includes('banner') || low.includes('selo') ||
+        low.includes('badge') || low.includes('watermark')
       )
     })
-    // 4. Reject small dimension URLs
-    .filter(img => {
-      const low = img.toLowerCase()
-      // Reject if URL contains tiny dimensions
-      const tinyPattern = /[/_-](5\d|[1-9]\d|1[0-4]\d|150)x/i
-      return !tinyPattern.test(low)
+    .map(upgradeImageResolution)
+    .filter((img, i, arr) => {
+      // Deduplicate
+      const normalized = img.replace(/\?.*$/, '').toLowerCase()
+      return arr.findIndex(x => x.replace(/\?.*$/, '').toLowerCase() === normalized) === i
     })
-
-  // 5. Upgrade to high resolution
-  images = images.map(upgradeImageResolution)
-
-  // 6. Deduplicate
-  const seen = new Set<string>()
-  images = images.filter(img => {
-    // Normalize for comparison
-    const normalized = img
-      .replace(/\?.*$/, '')  // remove query params
-      .replace(/\/+$/, '')   // remove trailing slash
-      .toLowerCase()
-    if (seen.has(normalized)) return false
-    seen.add(normalized)
-    return true
-  })
-
-  // 7. Sort: og:image pattern first, then by URL length (longer = more specific = better)
-  images.sort((a, b) => {
-    const aIsOg = a.includes('og') || a.includes('share') || a.includes('cover')
-    const bIsOg = b.includes('og') || b.includes('share') || b.includes('cover')
-    if (aIsOg && !bIsOg) return -1
-    if (!aIsOg && bIsOg) return 1
-    return 0
-  })
-
-  return images
 }
 
-// ==========================================
-// IMAGE RESOLUTION UPGRADER
-// ==========================================
 function upgradeImageResolution(url: string): string {
-  let upgraded = url
-
-  // Width params
-  upgraded = upgraded.replace(/[?&]w=\d+/gi, (m) => m.replace(/\d+/, '1200'))
-  upgraded = upgraded.replace(/[?&]width=\d+/gi, (m) => m.replace(/\d+/, '1200'))
-  upgraded = upgraded.replace(/[?&]h=\d+/gi, (m) => m.replace(/\d+/, '900'))
-  upgraded = upgraded.replace(/[?&]height=\d+/gi, (m) => m.replace(/\d+/, '900'))
-  
-  // Size in path: /400x300/ → /1200x900/
-  upgraded = upgraded.replace(/\/\d{2,3}x\d{2,3}\//g, '/1200x900/')
-  
-  // Named sizes
-  upgraded = upgraded.replace(/-thumb\./gi, '-large.')
-  upgraded = upgraded.replace(/-thumbnail\./gi, '-large.')
-  upgraded = upgraded.replace(/-small\./gi, '-large.')
-  upgraded = upgraded.replace(/-medium\./gi, '-large.')
-  upgraded = upgraded.replace(/_thumb\./gi, '_large.')
-  upgraded = upgraded.replace(/_small\./gi, '_large.')
-  upgraded = upgraded.replace(/_medium\./gi, '_large.')
-  upgraded = upgraded.replace(/\/thumb\//gi, '/full/')
-  upgraded = upgraded.replace(/\/thumbs\//gi, '/photos/')
-  upgraded = upgraded.replace(/\/small\//gi, '/large/')
-  upgraded = upgraded.replace(/\/medium\//gi, '/large/')
-
-  // Cloudinary transformations
-  if (upgraded.includes('cloudinary')) {
-    upgraded = upgraded.replace(/\/w_\d+/g, '/w_1200')
-    upgraded = upgraded.replace(/\/h_\d+/g, '/h_900')
-    upgraded = upgraded.replace(/\/c_thumb/g, '/c_fill')
-    upgraded = upgraded.replace(/\/q_\d+/g, '/q_90')
-  }
-
-  // imgix
-  if (upgraded.includes('imgix')) {
-    upgraded = upgraded.replace(/[?&]w=\d+/g, '?w=1200')
-    upgraded = upgraded.replace(/[?&]q=\d+/g, '&q=90')
-  }
-
-  return upgraded
+  return url
+    .replace(/\/thumb\//i, '/full/')
+    .replace(/\/small\//i, '/large/')
+    .replace(/-thumb\./i, '-large.')
+    .replace(/_thumb\./i, '_large.')
+    .replace(/\?w=\d+/i, '?w=1200')
+    .replace(/\/\d{2,3}x\d{2,3}\//i, '/1200x900/')
 }
