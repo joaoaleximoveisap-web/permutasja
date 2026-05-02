@@ -174,7 +174,7 @@ export default function SmartSearch() {
               </div>
 
               {m.results && m.results.length > 0 && (
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 mb-2">
                   {m.results.map(p => (
                     <div 
                       key={p.id} 
@@ -226,7 +226,7 @@ export default function SmartSearch() {
         </div>
 
         {/* Input Area */}
-        <div className="glass p-4 rounded-3xl border-t border-glass-border">
+        <div className="glass p-4 rounded-3xl border-t border-glass-border sticky bottom-0 bg-background/80 backdrop-blur-md">
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <input
