@@ -6,6 +6,7 @@ type Ctx = {
   drafts: Property[];
   credits: number;
   addProperty: (p: Property) => void;
+  updateProperty: (p: Property) => void;
   upsertDraft: (p: Property) => void;
   publishDraft: (id: string) => void;
   removeDraft: (id: string) => void;
