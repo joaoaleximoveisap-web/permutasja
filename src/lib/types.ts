@@ -23,6 +23,7 @@ export type Property = {
   sourceUrl?: string;
   address?: string;
   condominium?: string;
+  condominiumFee?: string;
   city?: string;
   neighborhood?: string;
   type?: string;
