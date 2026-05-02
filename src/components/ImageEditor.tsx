@@ -117,10 +117,15 @@ export function ImageEditor({ images, coverIndex, onChange }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          {images.length} imagem(ns) — arraste para reordenar, ⭐ define a capa.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/30 p-4 rounded-2xl border border-border/50">
+        <div>
+          <h4 className="font-semibold text-sm flex items-center gap-2">
+            <ImageIcon className="h-4 w-4 text-primary" /> Galeria de Fotos
+          </h4>
+          <p className="text-[12px] text-muted-foreground mt-0.5">
+            {images.length} imagem(ns) — arraste para reordenar, ⭐ define a capa.
+          </p>
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Switch id="sharpen" checked={sharpenEnabled} onCheckedChange={setSharpenEnabled} />
