@@ -48,18 +48,21 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
       ].filter(Boolean) as string[];
 
       const base = {
-        title: d.title || "Imóvel importado",
+        title: d.title || "",
         price: priceValue,
         area: areaValue,
         bedrooms: bedroomsValue,
         bathrooms: Number(d.bathrooms) || 0,
         parking: Number(d.parking) || 0,
+        suites: Number(d.suites) || 0,
         description: d.description || "",
         images: d.images || [],
         coverIndex: 0,
         sourceUrl: url,
         city: d.location?.split(',')[0]?.trim() || "",
         neighborhood: d.location?.split(',')[1]?.trim() || "",
+        address: d.address || "",
+        propertyCode: d.property_code || "",
         type: "",
         tags,
         permuta: { enabled: false, details: "" },

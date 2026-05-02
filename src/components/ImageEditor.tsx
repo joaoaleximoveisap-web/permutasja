@@ -209,6 +209,11 @@ export function ImageEditor({ images, coverIndex, onChange }: Props) {
                   alt={`Imóvel ${i + 1}`}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    console.warn('Image failed to load:', src);
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-smooth" />
                 <div className="absolute top-1 left-1 bg-background/70 backdrop-blur rounded-md p-1 cursor-grab">

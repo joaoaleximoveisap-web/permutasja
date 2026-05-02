@@ -14,7 +14,9 @@ export type Property = {
   area: number;
   bedrooms: number;
   bathrooms?: number;
+  suites?: number;
   parking?: number;
+  propertyCode?: string;
   description: string;
   images: string[];
   coverIndex?: number;
