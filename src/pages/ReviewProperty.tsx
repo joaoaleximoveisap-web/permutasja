@@ -57,7 +57,18 @@ export default function ReviewProperty() {
     return () => clearTimeout(t);
   }, [draft, upsertDraft]);
 
-  const update = (patch: Partial<Property>) => setDraft((d) => d ? { ...d, ...patch } : d);
+  const update = (patch: Partial<Property>) => setDraft((d) => {
+    if (!d) return d;
+    const sources = { ...(d.fieldSources || {}) };
+    Object.keys(patch).forEach((k) => { sources[k] = "user_corrected"; });
+    return { ...d, ...patch, fieldSources: sources, userCorrected: true };
+  });
+
+  const fieldMissing = (field: keyof Property) => {
+    if (!draft) return false;
+    const v = draft[field] as unknown;
+    return v === undefined || v === null || v === "" || v === 0;
+  };
 
   const canPublish = useMemo(() => {
     if (!draft) return false;
@@ -146,6 +157,14 @@ export default function ReviewProperty() {
                 <div className="space-y-1.5">
                   <Label>Bairro</Label>
                   <Input value={draft.neighborhood || ""} onChange={(e) => update({ neighborhood: e.target.value })} />
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label>Endereço completo</Label>
+                  <Input placeholder="Rua, número, complemento" value={draft.address || ""} onChange={(e) => update({ address: e.target.value })} />
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label>Nome do condomínio / edifício</Label>
+                  <Input placeholder="Ex: Marquês do Herval" value={draft.condominium || ""} onChange={(e) => update({ condominium: e.target.value })} />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>Descrição</Label>
