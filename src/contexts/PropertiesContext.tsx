@@ -35,7 +35,11 @@ export function PropertiesProvider({ children }: { children: React.ReactNode }) 
     return v == null ? 50 : Number(v);
   });
 
-  useEffect(() => { localStorage.setItem(PROPS_KEY, JSON.stringify(properties)); }, [properties]);
+  useEffect(() => { 
+    if (properties.length > 0 || loadJSON<Property[]>(PROPS_KEY, []).length > 0) {
+      localStorage.setItem(PROPS_KEY, JSON.stringify(properties)); 
+    }
+  }, [properties]);
   useEffect(() => { localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts)); }, [drafts]);
   useEffect(() => { localStorage.setItem(CREDITS_KEY, String(credits)); }, [credits]);
 
