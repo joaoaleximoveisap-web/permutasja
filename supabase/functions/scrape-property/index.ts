@@ -132,7 +132,7 @@ function extractAllImages(html: string, baseUrl: string, ogImages: string[]): st
 
     let score = 0;
     if (inGallery(idx)) score += 40;
-    if (GOOD_HINT_RE.test(abs)) score += 8;
+    if (GOOD_HINT_RE.test(abs)) score += 20;
     if (w && h) {
       // hard filter on small images (likely icons/UI)
       if (w < 300 || h < 200) return;
