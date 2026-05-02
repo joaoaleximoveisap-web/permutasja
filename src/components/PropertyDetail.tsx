@@ -94,7 +94,15 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
               </div>
             )}
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Button 
+                onClick={() => setEditOpen(true)}
+                className="rounded-xl glass border-primary/20 hover:bg-primary/10 text-primary"
+                variant="outline"
+              >
+                <Pencil className="h-4 w-4" /> Editar informações
+              </Button>
+
               {property.sourceUrl && (
                 <Button asChild variant="outline" className="rounded-xl">
                   <a href={property.sourceUrl} target="_blank" rel="noreferrer">
@@ -112,6 +120,14 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
             </div>
           </div>
         </div>
+        
+        {editOpen && (
+          <EditPropertyDialog 
+            property={property} 
+            open={editOpen} 
+            onOpenChange={setEditOpen} 
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
