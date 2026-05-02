@@ -119,7 +119,15 @@ export async function extractPropertyData(propertyUrl: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`Falha na extração: ${response.status}`);
+    const errorText = await response.text();
+    console.error('Firecrawl extraction error:', response.status, errorText);
+    
+    if (response.status === 402) {
+      throw new Error('Créditos esgotados');
+    } else if (response.status === 429) {
+      throw new Error('Limite de taxa excedido');
+    }
+    throw new Error(`Falha na extração (${response.status})`);
   }
 
   const result = await response.json();
