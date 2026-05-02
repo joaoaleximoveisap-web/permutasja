@@ -4,7 +4,7 @@ import { ImportBar } from "@/components/ImportBar";
 import { PropertyCard } from "@/components/PropertyCard";
 import { PropertyDetail } from "@/components/PropertyDetail";
 import { AddPropertyDialog } from "@/components/AddPropertyDialog";
-import { BulkImportDialog } from "@/components/BulkImportDialog";
+import { BulkImportModal } from "@/components/BulkImport/BulkImportModal";
 import { FilterPanel, defaultFilters, Filters } from "@/components/FilterPanel";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { Property } from "@/lib/types";
