@@ -1,7 +1,7 @@
 import { Property } from "@/lib/types";
 import { formatBRL } from "@/lib/property-utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Bed, Maximize2, MapPin, Repeat2, Tag, ExternalLink, Trash2 } from "lucide-react";
+import { Bed, Maximize2, MapPin, Repeat2, Tag, ExternalLink, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { useState } from "react";
@@ -15,16 +15,48 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl glass-strong border-glass-border rounded-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         <div className="grid md:grid-cols-2">
-          <div className="relative bg-black">
-            <img src={property.images[active]} alt={property.title} className="w-full h-72 md:h-full object-cover" />
+          <div className="relative bg-black h-72 md:h-auto flex items-center justify-center group">
+            <img src={property.images[active]} alt={property.title} className="w-full h-full object-contain md:object-cover" />
+            
+            {/* Navegação por setas */}
+            {property.images.length > 1 && (
+              <>
+                <button 
+                  onClick={() => setActive(prev => (prev > 0 ? prev - 1 : property.images.length - 1))}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm transition-all z-10 sm:opacity-0 sm:group-hover:opacity-100"
+                  aria-label="Imagem anterior"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button 
+                  onClick={() => setActive(prev => (prev < property.images.length - 1 ? prev + 1 : 0))}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm transition-all z-10 sm:opacity-0 sm:group-hover:opacity-100"
+                  aria-label="Próxima imagem"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+
             {property.permuta.enabled && (
-              <div className="absolute top-3 left-3 glass rounded-full px-2.5 py-1 text-xs flex items-center gap-1">
+              <div className="absolute top-3 left-3 glass rounded-full px-2.5 py-1 text-xs flex items-center gap-1 z-10">
                 <Repeat2 className="h-3 w-3" /> Permuta
               </div>
             )}
-            <div className="absolute bottom-3 left-3 right-3 flex gap-2 overflow-x-auto">
+            
+            {/* Contador de imagens */}
+            <div className="absolute top-3 right-3 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm z-10">
+              {active + 1} / {property.images.length}
+            </div>
+
+            {/* Miniaturas */}
+            <div className="absolute bottom-3 left-3 right-3 flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {property.images.map((src, i) => (
-                <button key={i} onClick={() => setActive(i)} className={`h-14 w-20 rounded-lg overflow-hidden ring-2 transition-smooth ${i === active ? "ring-accent" : "ring-transparent opacity-70"}`}>
+                <button 
+                  key={i} 
+                  onClick={() => setActive(i)} 
+                  className={`h-12 w-16 shrink-0 rounded-lg overflow-hidden ring-2 transition-smooth ${i === active ? "ring-accent" : "ring-transparent opacity-60 hover:opacity-100"}`}
+                >
                   <img src={src} alt="" className="h-full w-full object-cover" />
                 </button>
               ))}
