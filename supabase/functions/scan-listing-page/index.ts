@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY não configurada");
 
-    // 1. Firecrawl scan
+    // 1. Firecrawl scan - ONLY get links
     const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST",
       headers: {
@@ -44,32 +44,80 @@ Deno.serve(async (req) => {
     if (!fcRes.ok) throw new Error(fcData.error || "Erro no Firecrawl");
 
     const rawLinks = fcData.data?.links || [];
-    const patterns = ['/imovel/', '/imoveis/', '/property/', '/listing/', '/detalhe/', '/venda/', '/comprar/'];
     
-    const validLinks = Array.from(new Set(
+    // Step 1A & 1E - Filter and Validate URLs
+    const patterns = [
+      '/imovel', '/imoveis', '/property', '/properties',
+      '/listing', '/listings', '/detalhe', '/detail',
+      '/apartamento', '/casa', '/terreno', '/comercial',
+      '/empreendimento', '/residencial', '/lancamento'
+    ];
+
+    const rejectPatterns = [
+      '/blog', '/sobre', '/contato', '/equipe', '/noticias',
+      '/login', '/cadastro', '/busca', '/search',
+      '#', 'javascript:', 'mailto:'
+    ];
+
+    const baseUrl = new URL(url);
+
+    let validLinks = Array.from(new Set(
       rawLinks
-        .map((l: any) => l.href)
-        .filter((href: string) => 
-          href && patterns.some(p => href.toLowerCase().includes(p))
-        )
-    ));
+        .map((l: any) => {
+          let href = l.href;
+          if (!href) return null;
+          
+          // Step 1C - Handle relative URLs
+          if (href.startsWith('/')) {
+            href = `${baseUrl.protocol}//${baseUrl.host}${href}`;
+          }
+          
+          try {
+            const linkUrl = new URL(href);
+            // Step 1D - Normalize (remove tracking params)
+            const trackingParams = ['utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid'];
+            trackingParams.forEach(p => linkUrl.searchParams.delete(p));
+            return linkUrl.toString().replace(/\/$/, ""); // Remove trailing slash
+          } catch {
+            return null;
+          }
+        })
+        .filter((href: string | null) => {
+          if (!href) return false;
+          const lowHref = href.toLowerCase();
+          const isProperty = patterns.some(p => lowHref.includes(p));
+          const isJunk = rejectPatterns.some(p => lowHref.includes(p));
+          return isProperty && !isJunk;
+        })
+    )) as string[];
+
+    // Max limit 500
+    if (validLinks.length > 500) {
+      validLinks = validLinks.slice(0, 500);
+    }
 
     if (validLinks.length === 0) {
-      await supabase.from("import_sessions").update({ status: "failed", error_log: "Nenhum link de imóvel encontrado." }).eq("id", session_id);
+      await supabase.from("import_sessions").update({ 
+        status: "failed", 
+        error_log: { code: "incompatible_page", message: "Nenhum link de imóvel individual encontrado na página de listagem." } 
+      }).eq("id", session_id);
       return new Response(JSON.stringify({ found: 0 }), { headers: corsHeaders });
     }
 
-    // 2. Create jobs
+    // 2. Create jobs - DO NOT extract images here
     const jobs = validLinks.map(link => ({
       session_id,
       property_url: link,
       status: "pending"
     }));
 
+    // Batch insert to avoid issues
     await supabase.from("import_jobs").insert(jobs);
+    
     await supabase.from("import_sessions").update({ 
       total_found: validLinks.length, 
-      status: "processing" 
+      status: "processing",
+      error_log: validLinks.length >= 500 ? "Limite de 500 imóveis atingido para esta sessão." : null
     }).eq("id", session_id);
 
     // 3. Trigger orchestration
@@ -85,6 +133,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ found: validLinks.length }), { headers: corsHeaders });
 
   } catch (error) {
+    console.error("Scan error:", error);
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
   }
 });
