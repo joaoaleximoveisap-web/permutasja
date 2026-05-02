@@ -260,11 +260,29 @@ export default function ReviewProperty() {
           {step === 5 && (
             <div className="space-y-4">
               <Summary draft={draft} />
-              {!canPublish && (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-                  Para publicar é preciso: título, preço &gt; 0, ao menos 1 imagem, função selecionada, autorização e responsabilidade confirmadas.
-                </div>
-              )}
+              {(() => {
+                const issues: { msg: string; goto: Step }[] = [];
+                if (!draft.title?.trim()) issues.push({ msg: "Adicione um título.", goto: 0 });
+                if (!draft.price || draft.price <= 0) issues.push({ msg: "Informe o preço do imóvel.", goto: 0 });
+                if (draft.images.length < 1) issues.push({ msg: "Inclua pelo menos 1 imagem.", goto: 1 });
+                if (!draft.role) issues.push({ msg: "Selecione sua função.", goto: 3 });
+                if (!draft.authorized) issues.push({ msg: "Confirme a autorização do proprietário.", goto: 4 });
+                if (!draft.responsibilityAck) issues.push({ msg: "Aceite o termo de responsabilidade.", goto: 4 });
+                if (!issues.length) return null;
+                return (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm space-y-2">
+                    <p className="font-medium">Faltam alguns passos para publicar:</p>
+                    <ul className="space-y-1.5">
+                      {issues.map((it, i) => (
+                        <li key={i} className="flex items-center justify-between gap-3">
+                          <span>• {it.msg}</span>
+                          <Button size="sm" variant="ghost" className="h-7 rounded-md" onClick={() => setStep(it.goto)}>Corrigir</Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
