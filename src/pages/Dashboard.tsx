@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import { ImportBar } from "@/components/ImportBar";
 import { useProperties } from "@/contexts/PropertiesContext";
-import { Building2, Coins, Repeat2, TrendingUp, ArrowRight } from "lucide-react";
+import { Building2, Coins, Repeat2, TrendingUp, ArrowRight, Sparkles, Bed } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatBRL } from "@/lib/property-utils";
 
@@ -19,71 +19,98 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="max-w-6xl mx-auto space-y-6">
-        <section className="glass-strong rounded-3xl p-6 md:p-10 relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-primary opacity-20 blur-3xl animate-float" />
-          <div className="relative">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Permutas Já</p>
-            <h1 className="text-3xl md:text-5xl font-semibold mt-2 leading-tight">
-              Importe um imóvel <span className="text-gradient">em segundos</span>.
+      <div className="max-w-[1200px] mx-auto space-y-8 md:space-y-12">
+        {/* Welcome Section */}
+        <section className="relative overflow-hidden rounded-[2rem] bg-primary text-primary-foreground p-8 md:p-16">
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-accent/20 to-transparent pointer-events-none" />
+          <div className="relative z-10 max-w-2xl space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-medium tracking-wider uppercase">
+              <Sparkles className="h-3 w-3" /> Inteligência Imobiliária
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold leading-[1.1] tracking-tight">
+              A nova era da <span className="text-accent">permuta</span> começa aqui.
             </h1>
-            <p className="mt-3 text-muted-foreground max-w-xl">
-              Cole o link de qualquer portal. Extraímos título, fotos, preço, área e tudo mais — pronto para a sua carteira.
+            <p className="text-lg text-white/70 font-medium">
+              Transforme links em oportunidades. Nossa IA extrai cada detalhe para você focar no que importa: o fechamento.
             </p>
-            <div className="mt-6 max-w-2xl">
+            <div className="pt-4">
               <ImportBar />
             </div>
           </div>
         </section>
 
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Stats Grid */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {stats.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="glass rounded-2xl p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{label}</span>
-                <Icon className="h-4 w-4 text-accent" />
+            <div key={label} className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 rounded-xl bg-muted">
+                  <Icon className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
               </div>
-              <div className="mt-2 text-2xl font-semibold">{value}</div>
+              <div className="text-3xl font-bold tracking-tight">{value}</div>
             </div>
           ))}
         </section>
 
-        {properties.length === 0 ? (
-          <section className="glass-strong rounded-3xl p-10 text-center space-y-3">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-primary mx-auto grid place-items-center">
-              <Building2 className="h-7 w-7 text-primary-foreground" />
-            </div>
-            <h3 className="text-xl font-semibold">Sua carteira está vazia</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Comece importando um link acima ou adicione um imóvel manualmente na aba Imóveis.
-            </p>
-            <Link to="/imoveis" className="inline-flex items-center gap-1 text-sm text-accent hover:underline">
-              Ir para Imóveis <ArrowRight className="h-4 w-4" />
+        {/* Content Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold tracking-tight">Portfólio Recente</h2>
+            <Link 
+              to="/imoveis" 
+              className="group flex items-center gap-2 text-sm font-semibold text-primary hover:text-accent transition-colors"
+            >
+              Ver todos <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
-          </section>
-        ) : (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Adicionados recentemente</h2>
-              <Link to="/imoveis" className="text-sm text-accent hover:underline flex items-center gap-1">
-                Ver todos <ArrowRight className="h-4 w-4" />
-              </Link>
+          </div>
+
+          {properties.length === 0 ? (
+            <div className="bg-muted/30 rounded-[2rem] border-2 border-dashed border-border p-12 md:p-20 text-center space-y-6">
+              <div className="h-16 w-16 rounded-2xl bg-white shadow-xl mx-auto flex items-center justify-center">
+                <Building2 className="h-8 w-8 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold">Nenhum imóvel catalogado</h3>
+                <p className="text-muted-foreground max-w-xs mx-auto text-sm font-medium">
+                  Seu inventário está vazio. Importe seu primeiro imóvel usando a barra acima.
+                </p>
+              </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {properties.slice(0, 4).map(p => (
-                <Link key={p.id} to="/imoveis" className="glass rounded-2xl overflow-hidden block group transition-smooth hover:scale-[1.02]">
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover transition-smooth group-hover:scale-110" />
+                <Link 
+                  key={p.id} 
+                  to="/imoveis" 
+                  className="group bg-card rounded-2xl overflow-hidden border border-border/50 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500"
+                >
+                  <div className="aspect-[4/3] overflow-hidden relative">
+                    <img 
+                      src={p.images[0]} 
+                      alt={p.title} 
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold shadow-sm">
+                        {p.type}
+                      </span>
+                    </div>
                   </div>
-                  <div className="p-3">
-                    <div className="text-sm font-semibold truncate">{formatBRL(p.price)}</div>
-                    <div className="text-xs text-muted-foreground truncate">{p.title}</div>
+                  <div className="p-5 space-y-2">
+                    <div className="text-xl font-bold tracking-tight text-primary">{formatBRL(p.price)}</div>
+                    <div className="text-sm text-muted-foreground font-medium line-clamp-1">{p.title}</div>
+                    <div className="flex items-center gap-3 pt-2 text-[11px] text-muted-foreground/80 border-t border-border/50">
+                      <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.bedrooms}</span>
+                      <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3" />{p.area}m²</span>
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
-          </section>
-        )}
+          )}
+        </div>
       </div>
     </AppShell>
   );
