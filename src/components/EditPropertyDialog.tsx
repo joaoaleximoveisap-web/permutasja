@@ -79,10 +79,7 @@ export function EditPropertyDialog({
       permuta: { enabled: form.permutaEnabled, details: form.permutaDetails },
     };
 
-    updateProperty({
-      ...updatedData,
-      normalized: buildNormalized(updatedData as any),
-    });
+    updateProperty(updatedData);
 
     toast.success("Imóvel atualizado!");
     onOpenChange(false);
