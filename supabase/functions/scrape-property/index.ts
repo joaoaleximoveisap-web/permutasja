@@ -108,82 +108,113 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- MODE: SINGLE EXTRACTION (HIGH QUALITY + FALLBACK) ---
+    // --- MODE: SINGLE EXTRACTION ---
     let extracted: any = null;
+    let html = "";
 
-    // Attempt 1: Firecrawl Extract (LLM-powered)
-    try {
-      const fcRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url,
-          formats: [
-            { type: "json", schema: {
-              type: "object",
-              properties: {
-                title: { type: "string" },
-                price: { type: "number" },
-                area: { type: "number" },
-                bedrooms: { type: "number" },
-                bathrooms: { type: "number" },
-                parking: { type: "number" },
-                description: { type: "string" },
-                city: { type: "string" },
-                neighborhood: { type: "string" },
-                type: { type: "string" },
-                images: { type: "array", items: { type: "string" } },
-                permuta: { type: "boolean" },
-                permutaDetails: { type: "string" }
-              }
-            }},
-            "html"
-          ],
-          waitFor: 2000,
-        }),
-      });
-
-      const result = await fcRes.json();
-      const doc = result.data || result;
-      extracted = doc.json || doc.extract || null;
-
-      // Fallback: if LLM extract failed, parse HTML for at least title + images + price
-      if ((!extracted || !extracted.title) && doc.html) {
-        const html = doc.html as string;
-        const titleMatch = html.match(/<title>([^<]+)<\/title>/i) || html.match(/property=["']og:title["']\s+content=["']([^"']+)/i);
-        const priceMatch = html.match(/R\$\s*([\d.,]+)/i);
-        const areaMatch = html.match(/(\d+)\s*m[²2]/i);
-        const bedMatch = html.match(/(\d+)\s*(?:quartos?|dormit[óo]rios?|su[íi]tes?)/i);
-
-        const imgs = new Set<string>();
-        const ogImg = html.match(/property=["']og:image["']\s+content=["']([^"']+)/i)?.[1];
-        if (ogImg) imgs.add(absolutize(ogImg, url));
-        const imgRe = /<img[^>]+src=["']([^"']+)["']/gi;
-        let m;
-        while ((m = imgRe.exec(html)) !== null) {
-          if (!JUNK_RE.test(m[1])) imgs.add(absolutize(m[1], url));
+    // Attempt 1: Firecrawl (LLM extract + HTML)
+    if (FIRECRAWL_API_KEY) {
+      try {
+        const fcRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            url,
+            formats: [
+              { type: "json", schema: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  price: { type: "number" },
+                  area: { type: "number" },
+                  bedrooms: { type: "number" },
+                  bathrooms: { type: "number" },
+                  parking: { type: "number" },
+                  description: { type: "string" },
+                  city: { type: "string" },
+                  neighborhood: { type: "string" },
+                  type: { type: "string" },
+                  images: { type: "array", items: { type: "string" } },
+                  permuta: { type: "boolean" },
+                  permutaDetails: { type: "string" }
+                }
+              }},
+              "html"
+            ],
+            waitFor: 2000,
+          }),
+        });
+        const result = await fcRes.json();
+        if (fcRes.ok) {
+          const doc = result.data || result;
+          extracted = doc.json || doc.extract || null;
+          html = doc.html || "";
+        } else {
+          console.warn("Firecrawl failed:", result);
         }
-
-        extracted = {
-          title: titleMatch?.[1]?.trim() || "Imóvel importado",
-          price: priceMatch ? parseNumber(priceMatch[1]) : 0,
-          area: areaMatch ? parseInt(areaMatch[1], 10) : 0,
-          bedrooms: bedMatch ? parseInt(bedMatch[1], 10) : 0,
-          description: "",
-          images: Array.from(imgs).slice(0, 20),
-          missingFields: ["city", "neighborhood", "type"]
-        };
+      } catch (e) {
+        console.error("Firecrawl error:", e);
       }
-    } catch (e) {
-      console.error("Firecrawl error:", e);
+    }
+
+    // Attempt 2: Direct fetch fallback (if no Firecrawl HTML)
+    if (!html) {
+      try {
+        const directRes = await fetch(url, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml",
+            "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+          },
+        });
+        if (directRes.ok) html = await directRes.text();
+      } catch (e) {
+        console.error("Direct fetch failed:", e);
+      }
+    }
+
+    // Manual HTML extraction (fallback if no LLM extract)
+    if ((!extracted || !extracted.title) && html) {
+      const titleMatch = 
+        html.match(/property=["']og:title["']\s+content=["']([^"']+)/i) ||
+        html.match(/<title>([^<]+)<\/title>/i);
+      const descMatch = html.match(/property=["']og:description["']\s+content=["']([^"']+)/i);
+      const priceMatch = html.match(/R\$\s*([\d.,]+)/i);
+      const areaMatch = html.match(/(\d+)\s*m[²2]/i);
+      const bedMatch = html.match(/(\d+)\s*(?:quartos?|dormit[óo]rios?|su[íi]tes?)/i);
+      const bathMatch = html.match(/(\d+)\s*(?:banheiros?|wc)/i);
+      const parkMatch = html.match(/(\d+)\s*(?:vagas?|garagens?)/i);
+
+      const imgs = new Set<string>();
+      const ogImg = html.match(/property=["']og:image["']\s+content=["']([^"']+)/i)?.[1];
+      if (ogImg) imgs.add(absolutize(ogImg, url));
+      const imgRe = /<img[^>]+src=["']([^"']+)["']/gi;
+      let m;
+      while ((m = imgRe.exec(html)) !== null) {
+        if (!JUNK_RE.test(m[1]) && /\.(jpe?g|png|webp|avif)/i.test(m[1])) {
+          imgs.add(absolutize(m[1], url));
+        }
+      }
+
+      extracted = {
+        title: titleMatch?.[1]?.trim() || "Imóvel importado",
+        description: descMatch?.[1]?.trim() || "",
+        price: priceMatch ? parseNumber(priceMatch[1]) : 0,
+        area: areaMatch ? parseInt(areaMatch[1], 10) : 0,
+        bedrooms: bedMatch ? parseInt(bedMatch[1], 10) : 0,
+        bathrooms: bathMatch ? parseInt(bathMatch[1], 10) : 0,
+        parking: parkMatch ? parseInt(parkMatch[1], 10) : 0,
+        images: Array.from(imgs).slice(0, 20),
+        missingFields: ["city", "neighborhood", "type"]
+      };
     }
 
     if (!extracted || !extracted.title) {
       return new Response(JSON.stringify({ 
-        error: "Não foi possível extrair os dados deste link. Tente outro imóvel ou adicione manualmente." 
+        error: "Não foi possível acessar este link. Verifique a URL ou adicione manualmente." 
       }), {
         status: 422,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -191,7 +222,7 @@ Deno.serve(async (req) => {
     }
 
     // Clean and upgrade images
-    if (extracted.images) {
+    if (extracted.images && extracted.images.length) {
       extracted.images = extracted.images
         .map((u: string) => upgradeImageUrl(absolutize(u, url)))
         .filter((u: string) => !JUNK_RE.test(u) && !u.startsWith("data:"));
@@ -199,6 +230,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ data: extracted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
+
 
     });
 
