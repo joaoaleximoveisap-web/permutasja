@@ -35,11 +35,21 @@ export function BulkImportDialog() {
         body: { url, mode: "discover" },
       });
 
-      if (error || !data?.data) throw new Error("Falha ao escanear página");
+      if (error || !data) throw new Error("Falha ao escanear página");
       
-      const links = data.data as string[];
+      const links = (data.data as string[]) || [];
+      const debug = data.debug;
+      setScanDebug(debug);
+      
       if (links.length === 0) {
-        toast.error("Nenhum link de imóvel encontrado nesta página.");
+        if (debug && (debug.potentialCards > 0 || debug.pricesFound > 0)) {
+          toast.info(`Encontrei ${debug.potentialCards} imóveis, mas os links estão protegidos.`, {
+            description: "Tente um link direto de um dos imóveis.",
+            duration: 6000
+          });
+        } else {
+          toast.error("Nenhum link de imóvel encontrado nesta página.");
+        }
         setPhase("idle");
         return;
       }
