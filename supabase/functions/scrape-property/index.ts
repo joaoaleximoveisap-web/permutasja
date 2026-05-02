@@ -58,114 +58,56 @@ function upgradeImageUrl(rawUrl: string): string {
 }
 
 function extractImagesFromHtml(html: string, baseUrl: string): string[] {
-  const candidates: { url: string; priority: number; resolution: number }[] = [];
+  const foundImgs: string[] = [];
+  const baseOrigin = new URL(baseUrl).origin;
 
-  // 1. Meta Tags (Priority 3)
-  const metaOg = html.match(/property=["']og:image["']\s+content=["']([^"']+)/i);
-  if (metaOg) candidates.push({ url: absolutize(metaOg[1], baseUrl), priority: 3, resolution: 1000 });
-
-  const metaTwitter = html.match(/name=["']twitter:image["']\s+content=["']([^"']+)/i);
-  if (metaTwitter) candidates.push({ url: absolutize(metaTwitter[1], baseUrl), priority: 3, resolution: 1000 });
-
-  // 2. JSON-LD (Priority 1)
-  const jsonLdMatches = html.matchAll(/<script type=["']application\/ld\+json["']>([\s\S]*?)<\/script>/gi);
-  for (const match of jsonLdMatches) {
+  // 1. img src
+  for (const m of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
+  // 2. data-src
+  for (const m of html.matchAll(/data-src=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
+  // 3. data-lazy
+  for (const m of html.matchAll(/data-(?:lazy|original)=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
+  // 4. srcset largest
+  for (const m of html.matchAll(/srcset=["']([^"']+)["']/gi)) {
+    const last = m[1].split(',').pop()?.trim().split(/\s+/)[0];
+    if (last) foundImgs.push(last);
+  }
+  // 5. background-image
+  for (const m of html.matchAll(/url\(["']?([^"')]+\.(?:jpg|jpeg|png|webp)[^"']*)["']?\)/gi)) foundImgs.push(m[1]);
+  // 6. og:image
+  const ogM = html.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+  if (ogM) foundImgs.push(ogM[1]);
+  // 7. JSON-LD
+  for (const m of html.matchAll(/<script[^>]+ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
-      const data = JSON.parse(match[1]);
-      const findImages = (obj: any) => {
-        if (typeof obj === "string" && /\.(jpe?g|png|webp|avif)/i.test(obj)) {
-          candidates.push({ url: absolutize(obj, baseUrl), priority: 1, resolution: 1200 });
-        } else if (Array.isArray(obj)) {
-          obj.forEach(findImages);
-        } else if (typeof obj === "object" && obj !== null) {
-          if (obj.url && typeof obj.url === "string") findImages(obj.url);
-          if (obj.image) findImages(obj.image);
-          Object.values(obj).forEach(findImages);
-        }
-      };
-      findImages(data);
-    } catch { /* ignore */ }
+      const d = JSON.parse(m[1]);
+      if (typeof d.image === 'string') foundImgs.push(d.image);
+      if (Array.isArray(d.image)) d.image.forEach((i: any) => typeof i === 'string' ? foundImgs.push(i) : i?.url && foundImgs.push(i.url));
+    } catch {}
   }
+  // 8. Direct URLs
+  for (const m of html.matchAll(/["'](https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*)["']/gi)) foundImgs.push(m[1]);
 
-  // 3. Next.js Data (Priority 2)
-  const nextData = html.match(/<script id=["']__NEXT_DATA__["'] type=["']application\/json["']>([\s\S]*?)<\/script>/i);
-  if (nextData) {
-    try {
-      const data = JSON.parse(nextData[1]);
-      const findImages = (obj: any) => {
-        if (typeof obj === "string" && (obj.startsWith("http") || obj.startsWith("/")) && /\.(jpe?g|png|webp|avif)/i.test(obj)) {
-          candidates.push({ url: absolutize(obj, baseUrl), priority: 2, resolution: 1100 });
-        } else if (Array.isArray(obj)) {
-          obj.forEach(findImages);
-        } else if (typeof obj === "object" && obj !== null) {
-          Object.values(obj).forEach(findImages);
-        }
-      };
-      findImages(data);
-    } catch { /* ignore */ }
-  }
-
-  // 4. Standard Images and Data Attributes
-  const imgRe = /<img[^>]+(?:src|data-src|data-lazy-src|data-original|data-image|data-full|data-large)=["']([^"']+)["']/gi;
-  let m;
-  while ((m = imgRe.exec(html)) !== null) {
-    candidates.push({ url: absolutize(m[1], baseUrl), priority: 5, resolution: 800 });
-  }
-
-  // 5. Srcset (Highest Resolution)
-  const srcsetRe = /srcset=["']([^"']+)["']/gi;
-  while ((m = srcsetRe.exec(html)) !== null) {
-    const parts = m[1].split(",").map(p => p.trim());
-    let best = { url: "", val: 0 };
-    parts.forEach(p => {
-      const [u, s] = p.split(/\s+/);
-      const val = s ? parseInt(s.replace(/[^\d]/g, ""), 10) : 1;
-      if (val > best.val) best = { url: u, val };
-    });
-    if (best.url) candidates.push({ url: absolutize(best.url, baseUrl), priority: 4, resolution: best.val });
-  }
-
-  // 6. CSS Backgrounds
-  const bgRe = /background-image:\s*url\(["']?([^"')]+)["']?\)/gi;
-  while ((m = bgRe.exec(html)) !== null) {
-    candidates.push({ url: absolutize(m[1], baseUrl), priority: 5, resolution: 700 });
-  }
-
-  // Filter and Process
-  const seen = new Set<string>();
-  const final = candidates
-    .filter(c => {
-      const url = c.url.toLowerCase();
-      // Step 3: Low Quality Filter
-      if (JUNK_RE.test(url)) return false;
-      if (/\.(svg|gif|ico)$/i.test(url)) return false;
-      if (url.includes("1x1") || url.includes("32x32") || url.includes("64x64")) return false;
-      return true;
+  const realImages = foundImgs
+    .map(u => u.startsWith('//') ? 'https:' + u : u.startsWith('/') ? baseOrigin + u : u)
+    .filter(u => { try { new URL(u); return true } catch { return false } })
+    .filter(u => {
+      const l = u.toLowerCase();
+      return !(l.includes('logo') || l.includes('icon') || l.includes('favicon') ||
+        l.includes('avatar') || l.includes('sprite') || l.includes('.svg') ||
+        l.includes('.gif') || l.includes('.ico') || l.includes('whatsapp') ||
+        l.includes('facebook') || l.includes('instagram') || l.includes('google') ||
+        l.includes('maps.') || l.includes('staticmap') || l.includes('corretor') ||
+        l.includes('agent') || l.includes('banner') || l.includes('selo') ||
+        l.includes('badge') || l.includes('watermark') || l.includes('1x1') ||
+        l.includes('placeholder') || l.includes('spinner') || l.includes('loading'));
     })
-    .map(c => ({
-      ...c,
-      url: upgradeImageUrl(c.url)
-    }))
-    .filter(c => {
-      // Step 5: Deduplication
-      const baseUrl = c.url.split("?")[0];
-      if (seen.has(baseUrl)) return false;
-      seen.add(baseUrl);
-      return true;
-    })
-    .sort((a, b) => {
-      // Step 8: Ordering
-      if (a.priority !== b.priority) return a.priority - b.priority;
-      return b.resolution - a.resolution;
-    });
+    .map(u => upgradeImageUrl(u))
+    .filter((u, i, a) => a.findIndex(x => x.replace(/\?.*$/,'').toLowerCase() === u.replace(/\?.*$/,'').toLowerCase()) === i)
+    .slice(0, 30);
 
-  // Step 6: Minimum Result Rule
-  if (final.length === 0 && candidates.length > 0) {
-    // Relaxed filter fallback
-    return Array.from(new Set(candidates.slice(0, 10).map(c => upgradeImageUrl(c.url))));
-  }
-
-  return final.map(f => f.url).slice(0, 25);
+  console.log('Real images found:', realImages.length);
+  return realImages;
 }
 
 Deno.serve(async (req) => {
