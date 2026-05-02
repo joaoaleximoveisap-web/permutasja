@@ -14,7 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      import_jobs: {
+        Row: {
+          created_at: string | null
+          error_log: string | null
+          id: string
+          is_duplicate: boolean | null
+          processed_at: string | null
+          property_url: string
+          raw_data: Json | null
+          retry_count: number | null
+          session_id: string | null
+          status: Database["public"]["Enums"]["import_job_status"] | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_log?: string | null
+          id?: string
+          is_duplicate?: boolean | null
+          processed_at?: string | null
+          property_url: string
+          raw_data?: Json | null
+          retry_count?: number | null
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["import_job_status"] | null
+        }
+        Update: {
+          created_at?: string | null
+          error_log?: string | null
+          id?: string
+          is_duplicate?: boolean | null
+          processed_at?: string | null
+          property_url?: string
+          raw_data?: Json | null
+          retry_count?: number | null
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["import_job_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_jobs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "import_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_preview_selections: {
+        Row: {
+          created_at: string | null
+          edited_data: Json | null
+          id: string
+          job_id: string | null
+          selected: boolean | null
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          edited_data?: Json | null
+          id?: string
+          job_id?: string | null
+          selected?: boolean | null
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          edited_data?: Json | null
+          id?: string
+          job_id?: string | null
+          selected?: boolean | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_preview_selections_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "import_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_preview_selections_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "import_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_sessions: {
+        Row: {
+          created_at: string | null
+          error_log: string | null
+          finished_at: string | null
+          id: string
+          source_url: string
+          status: Database["public"]["Enums"]["import_session_status"] | null
+          total_done: number | null
+          total_failed: number | null
+          total_found: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_log?: string | null
+          finished_at?: string | null
+          id?: string
+          source_url: string
+          status?: Database["public"]["Enums"]["import_session_status"] | null
+          total_done?: number | null
+          total_failed?: number | null
+          total_found?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_log?: string | null
+          finished_at?: string | null
+          id?: string
+          source_url?: string
+          status?: Database["public"]["Enums"]["import_session_status"] | null
+          total_done?: number | null
+          total_failed?: number | null
+          total_found?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +150,18 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      import_job_status:
+        | "pending"
+        | "processing"
+        | "done"
+        | "failed"
+        | "skipped"
+      import_session_status:
+        | "scanning"
+        | "processing"
+        | "done"
+        | "cancelled"
+        | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +288,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      import_job_status: ["pending", "processing", "done", "failed", "skipped"],
+      import_session_status: [
+        "scanning",
+        "processing",
+        "done",
+        "cancelled",
+        "failed",
+      ],
+    },
   },
 } as const
