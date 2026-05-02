@@ -29,6 +29,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/imoveis" element={<Properties />} />
               <Route path="/revisar/:id" element={<ReviewProperty />} />
+              <Route path="/busca-inteligente" element={<SmartSearch />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
