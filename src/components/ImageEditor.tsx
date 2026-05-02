@@ -307,34 +307,38 @@ export function ImageEditor({ images, coverIndex, onChange }: Props) {
             </button>
           </div>
 
-          <div className="relative w-full h-full flex items-center justify-center group/viewer">
+          <div className="relative w-full h-full flex items-center justify-center">
             {viewerIdx > 0 && (
               <button
-                className="absolute left-4 z-10 text-white/50 hover:text-white p-4 hover:bg-white/10 rounded-full transition-all opacity-0 group-hover/viewer:opacity-100"
+                className="absolute left-4 z-20 text-white/70 hover:text-white p-3 sm:p-4 hover:bg-white/10 rounded-full transition-all flex items-center justify-center bg-black/20 backdrop-blur-sm shadow-xl"
                 onClick={(e) => {
                   e.stopPropagation();
                   setViewerIdx(viewerIdx - 1);
                 }}
+                aria-label="Foto anterior"
               >
-                <ChevronLeft className="h-10 w-10" />
+                <ChevronLeft className="h-10 w-10 sm:h-12 sm:w-12" />
               </button>
             )}
 
-            <img
-              src={displaySrc(images[viewerIdx])}
-              alt={`Imóvel ${viewerIdx + 1}`}
-              className="max-w-[95vw] max-h-[80vh] object-contain rounded shadow-2xl transition-all duration-300 pointer-events-none"
-            />
+            <div className="relative flex items-center justify-center w-full h-full p-4 sm:p-12">
+              <img
+                src={displaySrc(images[viewerIdx])}
+                alt={`Imóvel ${viewerIdx + 1}`}
+                className="max-w-full max-h-full object-contain rounded shadow-2xl transition-all duration-300 pointer-events-none"
+              />
+            </div>
 
             {viewerIdx < images.length - 1 && (
               <button
-                className="absolute right-4 z-10 text-white/50 hover:text-white p-4 hover:bg-white/10 rounded-full transition-all opacity-0 group-hover/viewer:opacity-100"
+                className="absolute right-4 z-20 text-white/70 hover:text-white p-3 sm:p-4 hover:bg-white/10 rounded-full transition-all flex items-center justify-center bg-black/20 backdrop-blur-sm shadow-xl"
                 onClick={(e) => {
                   e.stopPropagation();
                   setViewerIdx(viewerIdx + 1);
                 }}
+                aria-label="Próxima foto"
               >
-                <ChevronRight className="h-10 w-10" />
+                <ChevronRight className="h-10 w-10 sm:h-12 sm:w-12" />
               </button>
             )}
           </div>
