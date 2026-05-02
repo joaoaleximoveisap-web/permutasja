@@ -42,9 +42,9 @@ export function upgradeImageUrl(rawUrl: string): string {
     // -300x200.jpg style (WordPress)
     .replace(/-\d{2,4}x\d{2,4}(\.[a-z]+)$/i, "$1");
 
-  // Cloudinary: /w_300,h_200/ or /c_fill,w_300/ → /w_1600/ (upgrade not invent)
-  url = url.replace(/\/(w|h|c|q)_[^/]+\//gi, (m) => {
-    if (/w_\d+/.test(m) || /h_\d+/.test(m)) return "/w_1600/";
+  // Cloudinary: /w_300,h_200/ or /c_fill,w_300/ → /w_1600/
+  url = url.replace(/\/(w|h|c|q|f|dpr)_[^/]+\//gi, (m) => {
+    if (m.includes("w_") || m.includes("h_")) return "/w_1600/";
     return "/";
   });
 
