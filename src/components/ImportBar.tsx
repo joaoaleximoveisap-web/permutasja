@@ -69,6 +69,7 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         city: d.location?.split(',')[0]?.trim() || "",
         neighborhood: d.location?.split(',')[1]?.trim() || "",
         address: d.address || "",
+        condominiumFee: d.condoFee || "",
         propertyCode: d.property_code || "",
         type: "",
         tags,
