@@ -49,8 +49,7 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
           properties: {
             title: { type: 'string' },
             price: { type: 'string' },
-            area_util: { type: 'string' },
-            area_total: { type: 'string' },
+            area: { type: 'string' },
             bedrooms: { type: 'string' },
             suites: { type: 'string' },
             bathrooms: { type: 'string' },
@@ -60,17 +59,10 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
             condominium_fee: { type: 'string' },
             description: { type: 'string' },
             features: { type: 'array', items: { type: 'string' } },
-            property_code: { type: 'string' },
-            images: { type: 'array', items: { type: 'string' } }
+            property_code: { type: 'string' }
           }
         },
-        prompt: `Extract ALL data from this Brazilian real estate listing.
-CRITICAL FOR IMAGES: Find EVERY property photo URL. 
-Look in: img tags, data-src, srcset, background-image, 
-galleries, carousels, lightbox containers, swiper slides.
-Get the HIGHEST resolution version. 
-Reject: logos, icons, agent photos, maps, social media icons.
-Return full absolute URLs starting with https://`
+        prompt: 'Extract real estate property data from this Brazilian listing page. Get title, price in R$, area in m², bedrooms (quartos), suites (suítes), bathrooms (banheiros), parking (vagas), full address, condo fee, description, features list, and property reference code.'
       }
     })
   })
@@ -81,31 +73,59 @@ Return full absolute URLs starting with https://`
   }
 
   const result = await response.json()
-  const data = result?.data?.extract
+  const textData = result?.data?.extract || {}
   const html = result?.data?.html || ''
 
-  // Deep image extraction from HTML as backup for Firecrawl's extraction
-  const additionalImages = extractImagesFromHTML(html, url)
-  const allImages = [
-    ...(data?.images || []),
-    ...additionalImages
-  ]
+  // Parse REAL images from HTML
+  let images = extractRealImagesFromHTML(html, url)
+
+  // ALSO try fallback if zero images
+  if (images.length === 0) {
+    console.log('Zero images from HTML, trying CORS fallback...')
+    try {
+      const corsProxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?'
+      ]
+      for (const proxy of corsProxies) {
+        try {
+          const res = await fetch(proxy + encodeURIComponent(url), {
+            signal: AbortSignal.timeout(10000)
+          })
+          if (res.ok) {
+            const fallbackHtml = await res.text()
+            const fallbackImages = extractRealImagesFromHTML(fallbackHtml, url)
+            if (fallbackImages.length > 0) {
+              images = fallbackImages
+              break
+            }
+          }
+        } catch { continue }
+      }
+    } catch {}
+  }
+
+  // DEBUG
+  console.log('=== REAL IMAGES ===', images)
+  if (images.length > 0) {
+    alert('IMAGENS REAIS:\nTotal: ' + images.length + '\n' + images.slice(0, 3).join('\n'))
+  }
 
   return {
-    title: data?.title || extractTitleFromHTML(html) || '',
-    price: data?.price || extractPriceFromHTML(html) || '',
-    area: data?.area_util || data?.area_total || '',
-    bedrooms: data?.bedrooms || '',
-    bathrooms: data?.bathrooms || '',
-    parking: data?.parking || '',
-    suites: data?.suites || '',
-    location: data?.location || '',
-    address: data?.address || '',
-    description: data?.description || '',
-    features: data?.features || [],
-    images: processImages(allImages, url),
+    title: textData.title || extractTitleFromHTML(html) || '',
+    price: textData.price || extractPriceFromHTML(html) || '',
+    area: textData.area || '',
+    bedrooms: textData.bedrooms || '',
+    bathrooms: textData.bathrooms || '',
+    parking: textData.parking || '',
+    suites: textData.suites || '',
+    location: textData.location || '',
+    address: textData.address || '',
+    description: textData.description || '',
+    features: textData.features || [],
+    images: images,
     source_url: url,
-    property_code: data?.property_code
+    property_code: textData.property_code
   }
 }
 
