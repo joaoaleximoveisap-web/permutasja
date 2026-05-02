@@ -32,51 +32,37 @@ function absolutize(src: string, base: string): string {
   } catch { return src; }
 }
 
-// Extract images from many sources, NO FILTERING (per spec)
-function extractAllImages(html: string, baseUrl: string, ogImages: string[]): string[] {
-  const imgs = new Set<string>();
-  ogImages.forEach((u) => u && imgs.add(absolutize(u, baseUrl)));
+// ---------- IMAGE PIPELINE (production-grade) ----------
 
-  // <img src=...>
-  const imgRegex = /<img[^>]+(?:src|data-src|data-lazy|data-original)=["']([^"']+)["']/gi;
-  let m;
-  while ((m = imgRegex.exec(html)) !== null) {
-    imgs.add(absolutize(m[1], baseUrl));
-  }
-  // srcset
-  const srcsetRegex = /srcset=["']([^"']+)["']/gi;
-  while ((m = srcsetRegex.exec(html)) !== null) {
-    m[1].split(",").forEach((part) => {
-      const url = part.trim().split(" ")[0];
-      if (url) imgs.add(absolutize(url, baseUrl));
-    });
-  }
-  // background-image url(...)
-  const bgRegex = /background(?:-image)?:\s*url\(["']?([^"')]+)["']?\)/gi;
-  while ((m = bgRegex.exec(html)) !== null) {
-    imgs.add(absolutize(m[1], baseUrl));
-  }
-  // og:image and twitter:image already captured but double-check
-  const metaImg = /<meta[^>]+(?:property|name)=["'](?:og:image(?::secure_url)?|twitter:image)["'][^>]+content=["']([^"']+)["']/gi;
-  while ((m = metaImg.exec(html)) !== null) {
-    imgs.add(absolutize(m[1], baseUrl));
-  }
+const JUNK_RE = /(logo|sprite|favicon|avatar|brand|icon[-_/.]|\/icons?\/|placeholder|blank|pixel|spacer|watermark|whatsapp|facebook|instagram|youtube|tiktok|linkedin|google|gtm|analytics|tracking|ads?[-_/.]|banner)/i;
+const GOOD_HINT_RE = /(gallery|galeria|carousel|slider|slideshow|fotos?|photos?|imovel|imoveis|property|listing|midia|media|cdn|upload|wp-content|images?\/)/i;
+const EXT_RE = /\.(jpe?g|png|webp|avif)(\?|#|$)/i;
 
-  // Keep only image-like extensions OR url contains 'image'/'foto'/'photo'
-  const filtered = Array.from(imgs).filter((u) => /\.(jpe?g|png|webp|gif)(\?|$)/i.test(u) || /image|foto|photo|midia|cdn/i.test(u));
-  // Upgrade thumbnail/resize URLs to highest available resolution (Module 11)
-  const upgraded = filtered.map(upgradeImageUrl);
-  // Dedupe after upgrade
-  return Array.from(new Set(upgraded)).slice(0, 40);
+type ImgCandidate = {
+  url: string;
+  width?: number;
+  height?: number;
+  score: number;
+  order: number;
+};
+
+function extractFromSrcset(srcset: string): { url: string; w?: number }[] {
+  return srcset.split(",").map((part) => {
+    const [u, descRaw] = part.trim().split(/\s+/);
+    const desc = descRaw || "";
+    const wMatch = desc.match(/(\d+)w/);
+    return { url: u, w: wMatch ? parseInt(wMatch[1], 10) : undefined };
+  }).filter((p) => p.url);
 }
 
-/** Upgrade common thumbnail patterns to highest-resolution variant (server side mirror of client util). */
+/** Strip resize/quality params and rewrite known thumbnail patterns to high-res. */
 function upgradeImageUrl(rawUrl: string): string {
   if (!rawUrl) return rawUrl;
   let url = rawUrl;
   try {
     const u = new URL(url);
-    ["w", "h", "width", "height", "resize", "quality", "q", "fit", "size"].forEach((k) => u.searchParams.delete(k));
+    ["w", "h", "width", "height", "resize", "quality", "q", "fit", "size", "dpr"]
+      .forEach((k) => u.searchParams.delete(k));
     url = u.toString().replace(/\?$/, "");
   } catch { /* keep */ }
   url = url
@@ -87,9 +73,152 @@ function upgradeImageUrl(rawUrl: string): string {
     .replace(/_small(\.[a-z]+)$/i, "$1")
     .replace(/_medium(\.[a-z]+)$/i, "$1")
     .replace(/-thumbnail(\.[a-z]+)$/i, "$1")
-    .replace(/-\d{2,4}x\d{2,4}(\.[a-z]+)$/i, "$1");
+    // WordPress/imobi sites: -300x200.jpg -> .jpg
+    .replace(/-\d{2,4}x\d{2,4}(\.[a-z]+)$/i, "$1")
+    // Cloudinary: /w_300,h_200/ -> /w_1600/
+    .replace(/\/(?:[whcq]_[^/,]+,?)+\//gi, "/w_1600/");
   return url;
 }
+
+function baseKey(url: string): string {
+  try {
+    const u = new URL(url);
+    // Drop dimension-like suffixes for dedupe
+    const path = u.pathname
+      .replace(/-\d{2,4}x\d{2,4}(?=\.[a-z]+$)/i, "")
+      .replace(/_(?:thumb|small|medium|large|original)(?=\.[a-z]+$)/i, "");
+    return `${u.host}${path}`.toLowerCase();
+  } catch {
+    return url.toLowerCase().split("?")[0];
+  }
+}
+
+/**
+ * Production-grade image extractor:
+ * 1) Detect gallery containers and boost images inside them
+ * 2) Collect from <img>, srcset, <source>, background-image, og:image, JSON-LD
+ * 3) Filter out logos/icons/social/UI junk
+ * 4) Filter by min dimensions when known (>=400x300) — unknown allowed
+ * 5) Upgrade thumbnail URLs to high-res
+ * 6) Dedupe by base key (host+path without dimension suffix)
+ * 7) Sort: in-gallery first, then by score (resolution + hints), preserving DOM order on ties
+ */
+function extractAllImages(html: string, baseUrl: string, ogImages: string[]): string[] {
+  const candidates: ImgCandidate[] = [];
+  let order = 0;
+
+  // ---- 1. Detect gallery containers (rough offsets) ----
+  const galleryRanges: Array<[number, number]> = [];
+  const containerRe = /<(div|section|ul|aside)([^>]*)>/gi;
+  let cm: RegExpExecArray | null;
+  while ((cm = containerRe.exec(html)) !== null) {
+    const attrs = cm[2] || "";
+    if (/(gallery|galeria|carousel|slider|slideshow|fotos|photos|swiper|fotorama|lightbox|fancybox)/i.test(attrs)) {
+      // Approximate range: from this tag to +8000 chars (cheap, no DOM parser)
+      galleryRanges.push([cm.index, cm.index + 8000]);
+    }
+  }
+  const inGallery = (idx: number) =>
+    galleryRanges.some(([s, e]) => idx >= s && idx <= e);
+
+  const addCandidate = (rawUrl: string, idx: number, w?: number, h?: number) => {
+    if (!rawUrl) return;
+    const abs = absolutize(rawUrl, baseUrl);
+    if (!abs) return;
+    if (abs.startsWith("data:")) return;
+    if (JUNK_RE.test(abs)) return;
+    // Must look like an image OR be on a media/cdn path
+    if (!EXT_RE.test(abs) && !/\b(image|imagem|foto|photo|midia|media|cdn|upload|wp-content)\b/i.test(abs)) return;
+
+    let score = 0;
+    if (inGallery(idx)) score += 40;
+    if (GOOD_HINT_RE.test(abs)) score += 8;
+    if (w && h) {
+      // hard filter on small images (likely icons/UI)
+      if (w < 300 || h < 200) return;
+      const ar = w / h;
+      // exclude extreme aspect ratios (sprites, banners, thin strips)
+      if (ar < 0.4 || ar > 3.5) return;
+      score += Math.min(60, Math.round((w * h) / 20000));
+    } else if (w) {
+      if (w < 300) return;
+      score += Math.min(40, Math.round(w / 30));
+    }
+
+    candidates.push({ url: upgradeImageUrl(abs), width: w, height: h, score, order: order++ });
+  };
+
+  // OG / JSON-LD images first (assumed valid, high score)
+  ogImages.forEach((u) => {
+    if (!u) return;
+    const abs = absolutize(u, baseUrl);
+    if (!abs || JUNK_RE.test(abs)) return;
+    candidates.push({ url: upgradeImageUrl(abs), score: 50, order: order++ });
+  });
+
+  // <img> with optional width/height attributes
+  const imgRe = /<img\b([^>]+)>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = imgRe.exec(html)) !== null) {
+    const attrs = m[1];
+    const idx = m.index;
+    const src =
+      attrs.match(/\bdata-src=["']([^"']+)["']/i)?.[1] ||
+      attrs.match(/\bdata-lazy(?:-src)?=["']([^"']+)["']/i)?.[1] ||
+      attrs.match(/\bdata-original=["']([^"']+)["']/i)?.[1] ||
+      attrs.match(/\bsrc=["']([^"']+)["']/i)?.[1];
+    const w = parseInt(attrs.match(/\bwidth=["']?(\d+)/i)?.[1] || "0", 10) || undefined;
+    const h = parseInt(attrs.match(/\bheight=["']?(\d+)/i)?.[1] || "0", 10) || undefined;
+
+    if (src) addCandidate(src, idx, w, h);
+
+    // srcset on the same <img>
+    const srcset = attrs.match(/\bsrcset=["']([^"']+)["']/i)?.[1];
+    if (srcset) {
+      const parts = extractFromSrcset(srcset);
+      // Prefer the largest variant
+      parts.sort((a, b) => (b.w || 0) - (a.w || 0));
+      const best = parts[0];
+      if (best) addCandidate(best.url, idx, best.w, undefined);
+    }
+  }
+
+  // <source srcset="...">
+  const sourceRe = /<source\b([^>]+)>/gi;
+  while ((m = sourceRe.exec(html)) !== null) {
+    const srcset = m[1].match(/\bsrcset=["']([^"']+)["']/i)?.[1];
+    if (!srcset) continue;
+    const parts = extractFromSrcset(srcset).sort((a, b) => (b.w || 0) - (a.w || 0));
+    if (parts[0]) addCandidate(parts[0].url, m.index, parts[0].w);
+  }
+
+  // background-image
+  const bgRe = /background(?:-image)?\s*:\s*url\(["']?([^"')]+)["']?\)/gi;
+  while ((m = bgRe.exec(html)) !== null) {
+    addCandidate(m[1], m.index);
+  }
+
+  // ---- Dedupe by base key, keep best score ----
+  const byKey = new Map<string, ImgCandidate>();
+  for (const c of candidates) {
+    const k = baseKey(c.url);
+    const prev = byKey.get(k);
+    if (!prev || c.score > prev.score) byKey.set(k, c);
+  }
+
+  // ---- Sort: score desc, then DOM order asc ----
+  const sorted = Array.from(byKey.values()).sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.order - b.order;
+  });
+
+  // Safety: if everything looks weak (no scored > 10 and no og/gallery), return empty
+  const hasStrong = sorted.some((c) => c.score >= 20);
+  if (!hasStrong && sorted.length < 2) return [];
+
+  return sorted.slice(0, 30).map((c) => c.url);
+}
+
 
 function extractJsonLd(html: string): any[] {
   const out: any[] = [];
