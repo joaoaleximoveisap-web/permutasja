@@ -49,6 +49,7 @@ Deno.serve(async (req) => {
 
     // --- MODE: DISCOVER (BULK) ---
     if (mode === "discover") {
+      console.log("Discover mode: using Firecrawl for JS rendering...");
       const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
         method: "POST",
         headers: {
@@ -58,22 +59,51 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           url,
           formats: ["html"],
+          waitFor: 5000, // Wait for JS rendering as requested
           onlyMainContent: false,
         }),
       });
+      
       const data = await res.json();
       const html = data.data?.html || "";
       
-      const linkRe = /href=["']([^"']+\/(?:imovel|property|listing|detalhe|venda|comprar)[^"']*)["']/gi;
+      // Advanced Link Detection Pattern
+      // Looking for /imovel/, /detalhe/, /venda/, /aluguel/ etc in hrefs
+      const linkPatterns = [
+        /href=["']([^"']+\/(?:imovel|property|listing|detalhe|venda|comprar|alugar|apartamento|casa)[^"']*)["']/gi,
+        /data-href=["']([^"']+)["']/gi,
+        /data-url=["']([^"']+)["']/gi
+      ];
+      
       const links = new Set<string>();
-      let m;
-      while ((m = linkRe.exec(html)) !== null) {
-        try {
-          const abs = absolutize(m[1], url);
-          if (new URL(abs).host === new URL(url).host) links.add(abs);
-        } catch { /* skip */ }
+      for (const pattern of linkPatterns) {
+        let m;
+        while ((m = pattern.exec(html)) !== null) {
+          try {
+            const abs = absolutize(m[1], url);
+            const u = new URL(abs);
+            // Ignore common assets and ensure same host
+            if (u.host === new URL(url).host && !/\.(css|js|png|jpg|jpeg|gif|svg|woff2?|pdf)$/i.test(u.pathname)) {
+              links.add(abs);
+            }
+          } catch { /* skip */ }
+        }
       }
-      return new Response(JSON.stringify({ data: Array.from(links).slice(0, 50) }), {
+
+      // Detection Stats for debugging
+      const cardPattern = /<div|section|li[^>]*?(?:card|item|listing|property|result)[^>]*?>/gi;
+      const cardMatches = (html.match(cardPattern) || []).length;
+      const priceMatches = (html.match(/R\$\s*[\d.,]+/g) || []).length;
+
+      return new Response(JSON.stringify({ 
+        data: Array.from(links).slice(0, 50),
+        debug: {
+          elementsScanned: html.length,
+          potentialCards: cardMatches,
+          pricesFound: priceMatches,
+          linksExtracted: links.size
+        }
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
