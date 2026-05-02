@@ -1,6 +1,7 @@
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { MobileNav } from "./MobileNav";
+import { SmartSearch } from "./SmartSearch";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
