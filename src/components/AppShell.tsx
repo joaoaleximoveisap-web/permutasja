@@ -4,13 +4,11 @@ import { MobileNav } from "./MobileNav";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex w-full bg-background selection:bg-primary selection:text-primary-foreground">
+    <div className="min-h-screen flex w-full">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div className="flex-1 flex flex-col min-w-0">
         <Topbar />
-        <main className="flex-1 w-full max-w-[1400px] mx-auto p-4 md:p-8 lg:p-12 pb-24 md:pb-12 animate-fade-in overflow-x-hidden">
-          {children}
-        </main>
+        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-6 animate-fade-in">{children}</main>
       </div>
       <MobileNav />
     </div>

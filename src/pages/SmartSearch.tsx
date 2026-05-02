@@ -137,79 +137,77 @@ export default function SmartSearch() {
 
   return (
     <AppShell>
-      <div className="max-w-[1000px] mx-auto h-[calc(100dvh-120px)] md:h-[calc(100vh-160px)] flex flex-col">
-        {/* Chat Header */}
-        <div className="bg-white border-b border-border p-6 md:px-8 rounded-t-[2rem] flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/10">
-              <Sparkles className="h-6 w-6 text-primary-foreground" />
+      <div className="max-w-4xl mx-auto h-[calc(100dvh-100px)] md:h-[calc(100vh-140px)] flex flex-col gap-4">
+        {/* Header */}
+        <div className="flex items-center justify-between glass p-4 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-primary grid place-items-center shadow-glass">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">Busca Inteligente</h1>
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Assistente IA Ativo</span>
-              </div>
+              <h1 className="text-lg font-semibold">Busca Inteligente</h1>
+              <p className="text-xs text-muted-foreground">Assistente de Match & Negócios</p>
             </div>
+          </div>
+          <div className="text-[10px] uppercase tracking-widest text-accent font-bold bg-accent/10 px-2 py-1 rounded">
+            Modo IA Ativo
           </div>
         </div>
 
         {/* Chat Area */}
         <div 
           ref={scrollRef}
-          className="flex-1 overflow-y-auto space-y-8 p-6 md:p-8 bg-background scroll-smooth"
+          className="flex-1 overflow-y-auto space-y-6 p-2 no-scrollbar scroll-smooth pb-10"
         >
           {messages.map((m) => (
             <div key={m.id} className={cn(
-              "flex flex-col gap-3",
+              "flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300",
               m.role === "user" ? "items-end" : "items-start"
             )}>
               <div className={cn(
-                "max-w-[85%] md:max-w-[70%] rounded-2xl px-5 py-4 text-sm font-medium leading-relaxed shadow-sm",
+                "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm",
                 m.role === "user" 
                   ? "bg-primary text-primary-foreground rounded-tr-none" 
-                  : "bg-white border border-border/50 text-foreground rounded-tl-none"
+                  : "glass-strong text-foreground rounded-tl-none border-primary/10"
               )}>
                 {m.content}
               </div>
 
               {m.results && m.results.length > 0 && (
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 mb-2">
                   {m.results.map(p => (
                     <div 
                       key={p.id} 
-                      className="bg-white rounded-3xl overflow-hidden border border-border/50 hover:shadow-xl transition-all group flex flex-col"
+                      className="glass rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all group flex flex-col"
                     >
                       <div className="aspect-video relative overflow-hidden">
-                        <img src={p.images[0]} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                        <div className="absolute top-4 left-4">
-                          <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold shadow-sm uppercase">
+                        <img src={p.images[0]} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" />
+                        <div className="absolute top-2 left-2 flex gap-1">
+                          <span className="text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full backdrop-blur-md uppercase font-bold tracking-tighter">
                             {p.type}
                           </span>
                         </div>
                         {p.permuta.enabled && (
-                          <div className="absolute top-4 right-4 bg-accent text-white text-[9px] px-2.5 py-1 rounded-full font-bold flex items-center gap-1 shadow-lg">
+                          <div className="absolute top-2 right-2 bg-accent/90 text-white text-[9px] px-2 py-0.5 rounded-full backdrop-blur-sm font-bold flex items-center gap-1 shadow-lg">
                             <Repeat2 className="h-3 w-3" /> PERMUTA
                           </div>
                         )}
                       </div>
-                      <div className="p-5 flex-1 space-y-3">
-                        <div className="text-2xl font-bold tracking-tight text-primary">{formatBRL(p.price)}</div>
-                        <h4 className="text-sm font-semibold text-foreground/80 line-clamp-1">{p.title}</h4>
-                        <div className="flex items-center gap-4 text-[11px] text-muted-foreground/80 font-medium">
-                          <span className="flex items-center gap-1.5"><Bed className="h-3.5 w-3.5" />{p.bedrooms}</span>
-                          <span className="flex items-center gap-1.5"><Home className="h-3.5 w-3.5" />{p.area}m²</span>
-                          <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{p.city}</span>
+                      <div className="p-3 flex-1">
+                        <div className="text-lg font-bold text-gradient">{formatBRL(p.price)}</div>
+                        <h4 className="text-xs font-medium text-foreground/80 truncate mb-2">{p.title}</h4>
+                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground mb-3">
+                          <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.bedrooms} qtos</span>
+                          <span className="flex items-center gap-1"><Home className="h-3 w-3" />{p.area}m²</span>
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{p.city}</span>
                         </div>
                         <Button 
                           size="sm" 
-                          className="w-full rounded-xl text-xs font-bold h-10 mt-2 bg-primary hover:bg-primary/90"
+                          variant="outline" 
+                          className="w-full rounded-xl text-xs h-8 border-primary/20 hover:bg-primary/10"
                           onClick={() => setSelectedProperty(p)}
                         >
-                          Detalhes do Imóvel <ArrowRight className="h-3.5 w-3.5 ml-2" />
+                          Ver detalhes <ArrowRight className="h-3 w-3 ml-1" />
                         </Button>
                       </div>
                     </div>
@@ -228,7 +226,7 @@ export default function SmartSearch() {
         </div>
 
         {/* Input Area */}
-        <div className="bg-white p-6 md:px-8 rounded-b-[2rem] border-t border-border shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+        <div className="glass p-4 rounded-3xl border-t border-glass-border sticky bottom-0 bg-background/80 backdrop-blur-md">
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <input
