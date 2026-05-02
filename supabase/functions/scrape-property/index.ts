@@ -63,7 +63,32 @@ function extractAllImages(html: string, baseUrl: string, ogImages: string[]): st
   }
 
   // Keep only image-like extensions OR url contains 'image'/'foto'/'photo'
-  return Array.from(imgs).filter((u) => /\.(jpe?g|png|webp|gif)(\?|$)/i.test(u) || /image|foto|photo|midia|cdn/i.test(u)).slice(0, 40);
+  const filtered = Array.from(imgs).filter((u) => /\.(jpe?g|png|webp|gif)(\?|$)/i.test(u) || /image|foto|photo|midia|cdn/i.test(u));
+  // Upgrade thumbnail/resize URLs to highest available resolution (Module 11)
+  const upgraded = filtered.map(upgradeImageUrl);
+  // Dedupe after upgrade
+  return Array.from(new Set(upgraded)).slice(0, 40);
+}
+
+/** Upgrade common thumbnail patterns to highest-resolution variant (server side mirror of client util). */
+function upgradeImageUrl(rawUrl: string): string {
+  if (!rawUrl) return rawUrl;
+  let url = rawUrl;
+  try {
+    const u = new URL(url);
+    ["w", "h", "width", "height", "resize", "quality", "q", "fit", "size"].forEach((k) => u.searchParams.delete(k));
+    url = u.toString().replace(/\?$/, "");
+  } catch { /* keep */ }
+  url = url
+    .replace(/\/thumbs?\//gi, "/")
+    .replace(/\/small\//gi, "/large/")
+    .replace(/\/medium\//gi, "/large/")
+    .replace(/_thumb(\.[a-z]+)$/i, "$1")
+    .replace(/_small(\.[a-z]+)$/i, "$1")
+    .replace(/_medium(\.[a-z]+)$/i, "$1")
+    .replace(/-thumbnail(\.[a-z]+)$/i, "$1")
+    .replace(/-\d{2,4}x\d{2,4}(\.[a-z]+)$/i, "$1");
+  return url;
 }
 
 function extractJsonLd(html: string): any[] {
