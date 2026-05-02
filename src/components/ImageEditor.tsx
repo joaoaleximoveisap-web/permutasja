@@ -276,53 +276,82 @@ export function ImageEditor({ images, coverIndex, onChange }: Props) {
       {/* Fullscreen viewer */}
       {viewerIdx !== null && images[viewerIdx] && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center animate-in fade-in"
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-200"
           onClick={() => setViewerIdx(null)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowLeft" && viewerIdx > 0) setViewerIdx(viewerIdx - 1);
+            if (e.key === "ArrowRight" && viewerIdx < images.length - 1) setViewerIdx(viewerIdx + 1);
+            if (e.key === "Escape") setViewerIdx(null);
+          }}
+          tabIndex={0}
         >
-          <button
-            className="absolute top-4 right-4 text-white/80 hover:text-white p-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              setViewerIdx(null);
-            }}
-            aria-label="Fechar"
-          >
-            <X className="h-6 w-6" />
-          </button>
-          {viewerIdx > 0 && (
+          <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+            <div className="text-white text-sm font-medium drop-shadow-md pointer-events-auto">
+              {viewerIdx + 1} / {images.length}
+              {quality[viewerIdx] && (
+                <span className="ml-2 text-white/60">
+                  • {quality[viewerIdx]!.width}×{quality[viewerIdx]!.height}px ({quality[viewerIdx]!.tier === 'high' ? 'HD' : quality[viewerIdx]!.tier === 'medium' ? 'MD' : 'SD'})
+                </span>
+              )}
+            </div>
             <button
-              className="absolute left-4 text-white/80 hover:text-white p-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                setViewerIdx((v) => (v! > 0 ? v! - 1 : v));
-              }}
-              aria-label="Anterior"
+              className="text-white/80 hover:text-white p-2 hover:bg-white/10 rounded-full transition-colors pointer-events-auto"
+              onClick={() => setViewerIdx(null)}
             >
-              <ChevronLeft className="h-8 w-8" />
+              <X className="h-6 w-6" />
             </button>
-          )}
-          {viewerIdx < images.length - 1 && (
-            <button
-              className="absolute right-4 text-white/80 hover:text-white p-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                setViewerIdx((v) => (v! < images.length - 1 ? v! + 1 : v));
-              }}
-              aria-label="Próxima"
-            >
-              <ChevronRight className="h-8 w-8" />
-            </button>
-          )}
-          <img
-            src={displaySrc(images[viewerIdx])}
-            alt={`Imóvel ${viewerIdx + 1}`}
-            className="max-w-[92vw] max-h-[85vh] object-contain rounded-lg shadow-2xl transition-all duration-300"
+          </div>
+
+          <div className="relative w-full h-full flex items-center justify-center group/viewer">
+            {viewerIdx > 0 && (
+              <button
+                className="absolute left-4 z-10 text-white/50 hover:text-white p-4 hover:bg-white/10 rounded-full transition-all opacity-0 group-hover/viewer:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewerIdx(viewerIdx - 1);
+                }}
+              >
+                <ChevronLeft className="h-10 w-10" />
+              </button>
+            )}
+
+            <img
+              src={displaySrc(images[viewerIdx])}
+              alt={`Imóvel ${viewerIdx + 1}`}
+              className="max-w-[95vw] max-h-[80vh] object-contain rounded shadow-2xl transition-all duration-300 pointer-events-none"
+            />
+
+            {viewerIdx < images.length - 1 && (
+              <button
+                className="absolute right-4 z-10 text-white/50 hover:text-white p-4 hover:bg-white/10 rounded-full transition-all opacity-0 group-hover/viewer:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewerIdx(viewerIdx + 1);
+                }}
+              >
+                <ChevronRight className="h-10 w-10" />
+              </button>
+            )}
+          </div>
+
+          {/* Thumbnails strip for fast navigation */}
+          <div 
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/40 backdrop-blur rounded-2xl border border-white/10 max-w-[90vw] overflow-x-auto no-scrollbar"
             onClick={(e) => e.stopPropagation()}
-          />
-          <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm">
-            {viewerIdx + 1} / {images.length}
-            {quality[viewerIdx] && ` • ${quality[viewerIdx]!.width}×${quality[viewerIdx]!.height}px`}
-          </span>
+          >
+            {images.map((img, idx) => (
+              <button
+                key={idx}
+                onClick={() => setViewerIdx(idx)}
+                className={cn(
+                  "relative shrink-0 w-14 h-10 rounded-md overflow-hidden border-2 transition-all",
+                  viewerIdx === idx ? "border-primary scale-110 shadow-lg" : "border-transparent opacity-50 hover:opacity-100"
+                )}
+              >
+                <img src={img} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
