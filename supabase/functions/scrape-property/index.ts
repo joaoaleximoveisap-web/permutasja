@@ -34,8 +34,8 @@ function absolutize(src: string, base: string): string {
 
 // ---------- IMAGE PIPELINE (production-grade) ----------
 
-const JUNK_RE = /(logo|sprite|favicon|avatar|brand|icon[-_/.]|\/icons?\/|placeholder|blank|pixel|spacer|watermark|whatsapp|facebook|instagram|youtube|tiktok|linkedin|google|gtm|analytics|tracking|ads?[-_/.]|banner)/i;
-const GOOD_HINT_RE = /(gallery|galeria|carousel|slider|slideshow|fotos?|photos?|imovel|imoveis|property|listing|midia|media|cdn|upload|wp-content|images?\/)/i;
+const JUNK_RE = /(logo|sprite|favicon|avatar|brand|icon[-_/.]|\/icons?\/|placeholder|blank|pixel|spacer|watermark|whatsapp|facebook|instagram|youtube|tiktok|linkedin|google|gtm|analytics|tracking|ads?[-_/.]|banner|aurora|perfil|avatar|creci|person|user|profile)/i;
+const GOOD_HINT_RE = /(gallery|galeria|carousel|slider|slideshow|fotos?|photos?|imovel|imoveis|property|listing|midia|media|cdn|upload|wp-content|images?\/|anuncio|principal|fachada|interno|externo)/i;
 const EXT_RE = /\.(jpe?g|png|webp|avif)(\?|#|$)/i;
 
 type ImgCandidate = {
@@ -166,6 +166,9 @@ function extractAllImages(html: string, baseUrl: string, ogImages: string[]): st
       attrs.match(/\bdata-src=["']([^"']+)["']/i)?.[1] ||
       attrs.match(/\bdata-lazy(?:-src)?=["']([^"']+)["']/i)?.[1] ||
       attrs.match(/\bdata-original=["']([^"']+)["']/i)?.[1] ||
+      attrs.match(/\bdata-full-src=["']([^"']+)["']/i)?.[1] ||
+      attrs.match(/\bdata-zoom(?:-image)?=["']([^"']+)["']/i)?.[1] ||
+      attrs.match(/\bdata-big=["']([^"']+)["']/i)?.[1] ||
       attrs.match(/\bsrc=["']([^"']+)["']/i)?.[1];
     const w = parseInt(attrs.match(/\bwidth=["']?(\d+)/i)?.[1] || "0", 10) || undefined;
     const h = parseInt(attrs.match(/\bheight=["']?(\d+)/i)?.[1] || "0", 10) || undefined;
