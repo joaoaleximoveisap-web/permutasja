@@ -209,6 +209,12 @@ function extractAllImages(html: string, baseUrl: string, ogImages: string[]): st
       });
     }
   }
+  
+  // background-image
+  const bgRe = /background(?:-image)?\s*:\s*url\(["']?([^"')]+)["']?\)/gi;
+  while ((m = bgRe.exec(html)) !== null) {
+    addCandidate(m[1], m.index);
+  }
 
   // ---- Dedupe by base key, keep best score ----
   const byKey = new Map<string, ImgCandidate>();
