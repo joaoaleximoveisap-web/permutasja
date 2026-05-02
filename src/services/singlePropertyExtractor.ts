@@ -49,8 +49,7 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
           properties: {
             title: { type: 'string' },
             price: { type: 'string' },
-            area_util: { type: 'string' },
-            area_total: { type: 'string' },
+            area: { type: 'string' },
             bedrooms: { type: 'string' },
             suites: { type: 'string' },
             bathrooms: { type: 'string' },
@@ -60,17 +59,10 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
             condominium_fee: { type: 'string' },
             description: { type: 'string' },
             features: { type: 'array', items: { type: 'string' } },
-            property_code: { type: 'string' },
-            images: { type: 'array', items: { type: 'string' } }
+            property_code: { type: 'string' }
           }
         },
-        prompt: `Extract ALL data from this Brazilian real estate listing.
-CRITICAL FOR IMAGES: Find EVERY property photo URL. 
-Look in: img tags, data-src, srcset, background-image, 
-galleries, carousels, lightbox containers, swiper slides.
-Get the HIGHEST resolution version. 
-Reject: logos, icons, agent photos, maps, social media icons.
-Return full absolute URLs starting with https://`
+        prompt: 'Extract real estate property data from this Brazilian listing page. Get title, price in R$, area in m², bedrooms (quartos), suites (suítes), bathrooms (banheiros), parking (vagas), full address, condo fee, description, features list, and property reference code.'
       }
     })
   })
@@ -81,31 +73,59 @@ Return full absolute URLs starting with https://`
   }
 
   const result = await response.json()
-  const data = result?.data?.extract
+  const textData = result?.data?.extract || {}
   const html = result?.data?.html || ''
 
-  // Deep image extraction from HTML as backup for Firecrawl's extraction
-  const additionalImages = extractImagesFromHTML(html, url)
-  const allImages = [
-    ...(data?.images || []),
-    ...additionalImages
-  ]
+  // Parse REAL images from HTML
+  let images = extractRealImagesFromHTML(html, url)
+
+  // ALSO try fallback if zero images
+  if (images.length === 0) {
+    console.log('Zero images from HTML, trying CORS fallback...')
+    try {
+      const corsProxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?'
+      ]
+      for (const proxy of corsProxies) {
+        try {
+          const res = await fetch(proxy + encodeURIComponent(url), {
+            signal: AbortSignal.timeout(10000)
+          })
+          if (res.ok) {
+            const fallbackHtml = await res.text()
+            const fallbackImages = extractRealImagesFromHTML(fallbackHtml, url)
+            if (fallbackImages.length > 0) {
+              images = fallbackImages
+              break
+            }
+          }
+        } catch { continue }
+      }
+    } catch {}
+  }
+
+  // DEBUG
+  console.log('=== REAL IMAGES ===', images)
+  if (images.length > 0) {
+    alert('IMAGENS REAIS:\nTotal: ' + images.length + '\n' + images.slice(0, 3).join('\n'))
+  }
 
   return {
-    title: data?.title || extractTitleFromHTML(html) || '',
-    price: data?.price || extractPriceFromHTML(html) || '',
-    area: data?.area_util || data?.area_total || '',
-    bedrooms: data?.bedrooms || '',
-    bathrooms: data?.bathrooms || '',
-    parking: data?.parking || '',
-    suites: data?.suites || '',
-    location: data?.location || '',
-    address: data?.address || '',
-    description: data?.description || '',
-    features: data?.features || [],
-    images: processImages(allImages, url),
+    title: textData.title || extractTitleFromHTML(html) || '',
+    price: textData.price || extractPriceFromHTML(html) || '',
+    area: textData.area || '',
+    bedrooms: textData.bedrooms || '',
+    bathrooms: textData.bathrooms || '',
+    parking: textData.parking || '',
+    suites: textData.suites || '',
+    location: textData.location || '',
+    address: textData.address || '',
+    description: textData.description || '',
+    features: textData.features || [],
+    images: images,
     source_url: url,
-    property_code: data?.property_code
+    property_code: textData.property_code
   }
 }
 
@@ -257,7 +277,7 @@ async function fallbackExtraction(url: string): Promise<ExtractedProperty> {
     address: location,
     description: description.substring(0, 1000),
     features: [],
-    images: processImages(images, url),
+    images: extractRealImagesFromHTML(doc.documentElement.outerHTML, url),
     source_url: url
   }
 }
@@ -309,26 +329,166 @@ export async function extractSingleProperty(url: string): Promise<ExtractedPrope
  * SHARED UTILS
  */
 
-function extractImagesFromHTML(html: string, sourceUrl: string): string[] {
-  const images: string[] = []
-  if (!html) return images
+function extractRealImagesFromHTML(html: string, sourceUrl: string): string[] {
+  if (!html) return []
+  
+  const baseUrl = new URL(sourceUrl).origin
+  const found: string[] = []
 
-  const imgSrcRegex = /<img[^>]+src=["']([^"']+)["']/gi
-  const dataSrcRegex = /<img[^>]+data-src=["']([^"']+)["']/gi
-  const dataLazyRegex = /data-lazy-src=["']([^"']+)["']/gi
-  const dataOrigRegex = /data-original=["']([^"']+)["']/gi
-  const bgRegex = /background-image:\s*url\(["']?([^"')]+)["']?\)/gi
-  const ogRegex = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/gi
+  // 1. img src attributes
+  const imgSrc = html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)
+  for (const m of imgSrc) found.push(m[1])
 
-  let match
-  while ((match = imgSrcRegex.exec(html)) !== null) images.push(match[1])
-  while ((match = dataSrcRegex.exec(html)) !== null) images.push(match[1])
-  while ((match = dataLazyRegex.exec(html)) !== null) images.push(match[1])
-  while ((match = dataOrigRegex.exec(html)) !== null) images.push(match[1])
-  while ((match = bgRegex.exec(html)) !== null) images.push(match[1])
-  while ((match = ogRegex.exec(html)) !== null) images.push(match[1])
+  // 2. data-src (lazy loading)
+  const dataSrc = html.matchAll(/data-src=["']([^"']+)["']/gi)
+  for (const m of dataSrc) found.push(m[1])
 
-  return images
+  // 3. data-lazy / data-original
+  const dataLazy = html.matchAll(/data-(?:lazy|original|lazy-src)=["']([^"']+)["']/gi)
+  for (const m of dataLazy) found.push(m[1])
+
+  // 4. srcset — pick largest
+  const srcsets = html.matchAll(/srcset=["']([^"']+)["']/gi)
+  for (const m of srcsets) {
+    const parts = m[1].split(',').map(s => s.trim())
+    // Get last entry (usually highest res)
+    const last = parts[parts.length - 1]?.split(/\s+/)[0]
+    if (last) found.push(last)
+  }
+
+  // 5. background-image CSS
+  const bgImages = html.matchAll(/background-image:\s*url\(["']?([^"')]+)["']?\)/gi)
+  for (const m of bgImages) found.push(m[1])
+
+  // 6. og:image meta
+  const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+  if (ogMatch) found.push(ogMatch[1])
+
+  // 7. Also try reverse order (content before property)
+  const ogMatch2 = html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+  if (ogMatch2) found.push(ogMatch2[1])
+
+  // 8. JSON-LD image data
+  const jsonLdBlocks = html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)
+  for (const block of jsonLdBlocks) {
+    try {
+      const data = JSON.parse(block[1])
+      const extractJsonImages = (obj: any) => {
+        if (!obj) return
+        if (typeof obj.image === 'string') found.push(obj.image)
+        if (Array.isArray(obj.image)) obj.image.forEach((i: any) => {
+          if (typeof i === 'string') found.push(i)
+          else if (i?.url) found.push(i.url)
+        })
+        if (obj.image?.url) found.push(obj.image.url)
+        if (obj.photo) {
+          const photos = Array.isArray(obj.photo) ? obj.photo : [obj.photo]
+          photos.forEach((p: any) => {
+            if (typeof p === 'string') found.push(p)
+            else if (p?.contentUrl) found.push(p.contentUrl)
+          })
+        }
+      }
+      extractJsonImages(data)
+      if (Array.isArray(data)) data.forEach(extractJsonImages)
+      if (data['@graph']) data['@graph'].forEach(extractJsonImages)
+    } catch {}
+  }
+
+  // 9. Direct image file links
+  const imageLinks = html.matchAll(/["'](https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*)["']/gi)
+  for (const m of imageLinks) found.push(m[1])
+
+  // =====================
+  // PROCESS & CLEAN
+  // =====================
+  const processed = found
+    // Make absolute URLs
+    .map(url => {
+      if (url.startsWith('//')) return 'https:' + url
+      if (url.startsWith('/')) return baseUrl + url
+      if (!url.startsWith('http')) return baseUrl + '/' + url
+      return url
+    })
+    // Must be valid URL format
+    .filter(url => {
+      try { new URL(url); return true } catch { return false }
+    })
+    // Must look like an image
+    .filter(url => {
+      const low = url.toLowerCase()
+      return (
+        low.includes('.jpg') || low.includes('.jpeg') ||
+        low.includes('.png') || low.includes('.webp') ||
+        low.includes('/image') || low.includes('/photo') ||
+        low.includes('/foto') || low.includes('/img') ||
+        low.includes('/upload') || low.includes('/media') ||
+        low.includes('cloudinary') || low.includes('amazonaws') ||
+        low.includes('cdn') || low.includes('imgix') ||
+        low.includes('arbo') || low.includes('jetimob') ||
+        low.includes('vista') || low.includes('kenlo')
+      )
+    })
+    // REJECT trash
+    .filter(url => {
+      const low = url.toLowerCase()
+      return !(
+        low.includes('logo') || low.includes('icon') ||
+        low.includes('favicon') || low.includes('avatar') ||
+        low.includes('sprite') || low.includes('placeholder') ||
+        low.includes('blank') || low.includes('spacer') ||
+        low.includes('.svg') || low.includes('.gif') ||
+        low.includes('.ico') || low.includes('1x1') ||
+        low.includes('whatsapp') || low.includes('facebook') ||
+        low.includes('instagram') || low.includes('twitter') ||
+        low.includes('linkedin') || low.includes('youtube') ||
+        low.includes('google') || low.includes('maps.') ||
+        low.includes('staticmap') || low.includes('map-') ||
+        low.includes('corretor') || low.includes('agente') ||
+        low.includes('agent') || low.includes('broker') ||
+        low.includes('banner-site') || low.includes('header-bg') ||
+        low.includes('footer') || low.includes('selo') ||
+        low.includes('badge') || low.includes('watermark') ||
+        low.includes('loading') || low.includes('spinner')
+      )
+    })
+    // REJECT tiny images by URL pattern
+    .filter(url => {
+      // Reject dimensions below 200px in URL
+      const tinyMatch = url.match(/[\/_-](\d+)x(\d+)/i)
+      if (tinyMatch) {
+        const w = parseInt(tinyMatch[1])
+        const h = parseInt(tinyMatch[2])
+        if (w < 200 || h < 200) return false
+      }
+      return true
+    })
+    // Upgrade resolution where possible
+    .map(url => {
+      return url
+        .replace(/\/thumb\//, '/full/')
+        .replace(/\/thumbs\//, '/photos/')
+        .replace(/\/small\//, '/large/')
+        .replace(/\/medium\//, '/large/')
+        .replace(/-thumb\./gi, '-large.')
+        .replace(/_thumb\./gi, '_large.')
+        .replace(/-small\./gi, '-large.')
+        .replace(/_small\./gi, '_large.')
+        .replace(/-medium\./gi, '-large.')
+        .replace(/\?w=\d+/gi, '?w=1200')
+        .replace(/\?width=\d+/gi, '?width=1200')
+    })
+
+  // DEDUPLICATE by normalized URL
+  const seen = new Set<string>()
+  const deduped = processed.filter(url => {
+    const key = url.replace(/\?.*$/, '').replace(/\/+$/, '').toLowerCase()
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  return deduped
 }
 
 function extractTitleFromHTML(html: string): string {
@@ -344,62 +504,4 @@ function extractTitleFromHTML(html: string): string {
 function extractPriceFromHTML(html: string): string {
   const priceMatch = html.match(/R\$\s*[\d.,]+/i)
   return priceMatch ? priceMatch[0].trim() : ''
-}
-
-function processImages(rawImages: string[], sourceUrl: string): string[] {
-  const baseUrl = new URL(sourceUrl).origin
-
-  return rawImages
-    .filter(img => typeof img === 'string' && img.trim().length > 0)
-    .map(img => {
-      let url = img.trim()
-      if (url.startsWith('//')) return 'https:' + url
-      if (url.startsWith('/')) return baseUrl + url
-      if (!url.startsWith('http')) {
-        // If it looks like a path but doesn't start with /, add /
-        if (/^[a-z0-9]/i.test(url) && !url.includes(' ')) {
-          return baseUrl + '/' + url
-        }
-        return url
-      }
-      return url
-    })
-    .filter(img => {
-      // Must be a URL and not placeholder text
-      if (!img.startsWith('http')) return false
-      
-      const low = img.toLowerCase()
-      // Filter trash
-      return !(
-        low.includes('logo') || low.includes('icon') ||
-        low.includes('favicon') || low.includes('avatar') ||
-        low.includes('sprite') || low.includes('placeholder') ||
-        low.includes('.svg') || low.includes('.gif') ||
-        low.includes('.ico') || low.includes('1x1') ||
-        low.includes('whatsapp') || low.includes('facebook') ||
-        low.includes('instagram') || low.includes('google') ||
-        low.includes('maps.') || low.includes('staticmap') ||
-        low.includes('corretor') || low.includes('agent') ||
-        low.includes('banner') || low.includes('selo') ||
-        low.includes('badge') || low.includes('watermark') ||
-        // Check for the specific problematic text pattern mentioned by user
-        /im[oó]vel \d+/i.test(low)
-      )
-    })
-    .map(upgradeImageResolution)
-    .filter((img, i, arr) => {
-      // Deduplicate
-      const normalized = img.replace(/\?.*$/, '').toLowerCase()
-      return arr.findIndex(x => x.replace(/\?.*$/, '').toLowerCase() === normalized) === i
-    })
-}
-
-function upgradeImageResolution(url: string): string {
-  return url
-    .replace(/\/thumb\//i, '/full/')
-    .replace(/\/small\//i, '/large/')
-    .replace(/-thumb\./i, '-large.')
-    .replace(/_thumb\./i, '_large.')
-    .replace(/\?w=\d+/i, '?w=1200')
-    .replace(/\/\d{2,3}x\d{2,3}\//i, '/1200x900/')
 }
