@@ -7,7 +7,7 @@ import { useProperties } from "@/contexts/PropertiesContext";
 import { buildNormalized, uid } from "@/lib/property-utils";
 import { Property } from "@/lib/types";
 import { toast } from "sonner";
-import { extractPropertyData } from "@/services/bulkImportService";
+import { extractSingleProperty } from "@/services/singlePropertyExtractor";
 
 export function ImportBar({ onImported }: { onImported?: () => void }) {
   const [url, setUrl] = useState("");
