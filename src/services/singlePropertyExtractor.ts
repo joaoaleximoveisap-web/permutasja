@@ -291,13 +291,8 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
     },
     body: JSON.stringify({
       url,
-      formats: ['html', 'markdown'],
-      waitFor: 5000,
-      actions: [
-        { type: 'wait', milliseconds: 3000 },
-        { type: 'scroll', direction: 'down', amount: 2000 },
-        { type: 'wait', milliseconds: 1500 }
-      ]
+      formats: ['html'],
+      waitFor: 5000
     })
   })
 
@@ -318,7 +313,6 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
     throw new Error('Falha ao processar o HTML da página')
   }
 
-  console.log('=== PARSED DATA ===', property)
   return property
 }
 
