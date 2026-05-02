@@ -34,8 +34,8 @@ function absolutize(src: string, base: string): string {
 
 // ---------- IMAGE PIPELINE (production-grade) ----------
 
-const JUNK_RE = /(logo|sprite|favicon|avatar|brand|icon[-_/.]|\/icons?\/|placeholder|blank|pixel|spacer|watermark|whatsapp|facebook|instagram|youtube|tiktok|linkedin|google|gtm|analytics|tracking|ads?[-_/.]|banner)/i;
-const GOOD_HINT_RE = /(gallery|galeria|carousel|slider|slideshow|fotos?|photos?|imovel|imoveis|property|listing|midia|media|cdn|upload|wp-content|images?\/)/i;
+const JUNK_RE = /(logo|sprite|favicon|avatar|brand|icon[-_/.]|\/icons?\/|placeholder|blank|pixel|spacer|watermark|whatsapp|facebook|instagram|youtube|tiktok|linkedin|google|gtm|analytics|tracking|ads?[-_/.]|banner|aurora|perfil|avatar|creci|person|user|profile)/i;
+const GOOD_HINT_RE = /(gallery|galeria|carousel|slider|slideshow|fotos?|photos?|imovel|imoveis|property|listing|midia|media|cdn|upload|wp-content|images?\/|anuncio|principal|fachada|interno|externo)/i;
 const EXT_RE = /\.(jpe?g|png|webp|avif)(\?|#|$)/i;
 
 type ImgCandidate = {
@@ -132,7 +132,7 @@ function extractAllImages(html: string, baseUrl: string, ogImages: string[]): st
 
     let score = 0;
     if (inGallery(idx)) score += 40;
-    if (GOOD_HINT_RE.test(abs)) score += 8;
+    if (GOOD_HINT_RE.test(abs)) score += 20;
     if (w && h) {
       // hard filter on small images (likely icons/UI)
       if (w < 300 || h < 200) return;
@@ -166,6 +166,9 @@ function extractAllImages(html: string, baseUrl: string, ogImages: string[]): st
       attrs.match(/\bdata-src=["']([^"']+)["']/i)?.[1] ||
       attrs.match(/\bdata-lazy(?:-src)?=["']([^"']+)["']/i)?.[1] ||
       attrs.match(/\bdata-original=["']([^"']+)["']/i)?.[1] ||
+      attrs.match(/\bdata-full-src=["']([^"']+)["']/i)?.[1] ||
+      attrs.match(/\bdata-zoom(?:-image)?=["']([^"']+)["']/i)?.[1] ||
+      attrs.match(/\bdata-big=["']([^"']+)["']/i)?.[1] ||
       attrs.match(/\bsrc=["']([^"']+)["']/i)?.[1];
     const w = parseInt(attrs.match(/\bwidth=["']?(\d+)/i)?.[1] || "0", 10) || undefined;
     const h = parseInt(attrs.match(/\bheight=["']?(\d+)/i)?.[1] || "0", 10) || undefined;
@@ -191,7 +194,29 @@ function extractAllImages(html: string, baseUrl: string, ogImages: string[]): st
     const parts = extractFromSrcset(srcset).sort((a, b) => (b.w || 0) - (a.w || 0));
     if (parts[0]) addCandidate(parts[0].url, m.index, parts[0].w);
   }
-
+  
+  // <a> tags pointing to images (common in galleries)
+  const aRe = /<a\b([^>]+)>/gi;
+  while ((m = aRe.exec(html)) !== null) {
+    const attrs = m[1];
+    const href = attrs.match(/\bhref=["']([^"']+\.(?:jpe?g|png|webp|avif)[^"']*)["']/i)?.[1];
+    if (href) addCandidate(href, m.index, 800, 600); // assume decent size
+  }
+  // JSON in script tags (look for arrays of high-res image URLs)
+  const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+  while ((m = scriptRe.exec(html)) !== null) {
+    const scriptContent = m[1];
+    // Look for things like "https://.../img.jpg" in arrays
+    const urlMatches = scriptContent.match(/https?:\/\/[^"']+\.(?:jpe?g|png|webp|avif)/gi);
+    if (urlMatches && urlMatches.length > 5) {
+      urlMatches.forEach(u => {
+        if (!JUNK_RE.test(u) && GOOD_HINT_RE.test(u)) {
+          addCandidate(u, m!.index + 500); // give it a boost
+        }
+      });
+    }
+  }
+  
   // background-image
   const bgRe = /background(?:-image)?\s*:\s*url\(["']?([^"')]+)["']?\)/gi;
   while ((m = bgRe.exec(html)) !== null) {
