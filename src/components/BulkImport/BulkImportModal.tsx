@@ -19,17 +19,16 @@ export function BulkImportModal() {
   const handleSave = async () => {
     const toSave = properties.filter(p => p.selected);
     
-    toSave.forEach(job => {
-      const d = job.raw_data!;
+    toSave.forEach(prop => {
       const base = {
-        title: d.title,
-        price: Number(d.price) || 0,
-        area: Number(d.area) || 0,
-        bedrooms: Number(d.bedrooms) || 0,
-        description: d.description,
-        images: d.images,
-        city: d.location?.split(',')[0] || "",
-        neighborhood: d.location?.split(',')[1] || "",
+        title: prop.title,
+        price: typeof prop.price === 'string' ? Number(prop.price.replace(/[^0-9]/g, '')) || 0 : prop.price,
+        area: typeof prop.area === 'string' ? Number(prop.area.replace(/[^0-9]/g, '')) || 0 : prop.area,
+        bedrooms: typeof prop.bedrooms === 'string' ? Number(prop.bedrooms.replace(/[^0-9]/g, '')) || 0 : prop.bedrooms,
+        description: prop.description,
+        images: prop.images,
+        city: prop.location?.split(',')[0] || "",
+        neighborhood: prop.location?.split(',')[1] || "",
         type: "Apartamento",
         tags: ["importação em massa"],
         permuta: { enabled: false, details: "" }
