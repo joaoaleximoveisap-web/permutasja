@@ -107,9 +107,9 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
 
   // DEBUG
   console.log('=== REAL IMAGES ===', images)
-  if (images.length > 0) {
-    alert('IMAGENS REAIS:\nTotal: ' + images.length + '\n' + images.slice(0, 3).join('\n'))
-  }
+  
+  // Limit to 30 max images
+  const finalImages = images.slice(0, 30)
 
   return {
     title: textData.title || extractTitleFromHTML(html) || '',
@@ -123,7 +123,7 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
     address: textData.address || '',
     description: textData.description || '',
     features: textData.features || [],
-    images: images,
+    images: finalImages,
     source_url: url,
     property_code: textData.property_code
   }
