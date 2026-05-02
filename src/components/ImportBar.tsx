@@ -32,13 +32,6 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
       console.log('Images count:', imgs.length);
       console.log('First image URL:', imgs[0]);
 
-      // TEMPORARY: Show alert so user can see without opening console
-      alert(
-        'DEBUG IMAGENS:\n' +
-        'Total: ' + imgs.length + '\n' +
-        'URLs:\n' + imgs.slice(0, 5).join('\n')
-      );
-
       if (!d) {
         toast.error("Falha na importação", { description: "Não conseguimos extrair dados deste link." });
         return;
