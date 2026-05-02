@@ -194,11 +194,20 @@ function extractAllImages(html: string, baseUrl: string, ogImages: string[]): st
     const parts = extractFromSrcset(srcset).sort((a, b) => (b.w || 0) - (a.w || 0));
     if (parts[0]) addCandidate(parts[0].url, m.index, parts[0].w);
   }
-
-  // background-image
-  const bgRe = /background(?:-image)?\s*:\s*url\(["']?([^"')]+)["']?\)/gi;
-  while ((m = bgRe.exec(html)) !== null) {
-    addCandidate(m[1], m.index);
+  
+  // JSON in script tags (look for arrays of high-res image URLs)
+  const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+  while ((m = scriptRe.exec(html)) !== null) {
+    const scriptContent = m[1];
+    // Look for things like "https://.../img.jpg" in arrays
+    const urlMatches = scriptContent.match(/https?:\/\/[^"']+\.(?:jpe?g|png|webp|avif)/gi);
+    if (urlMatches && urlMatches.length > 5) {
+      urlMatches.forEach(u => {
+        if (!JUNK_RE.test(u) && GOOD_HINT_RE.test(u)) {
+          addCandidate(u, m!.index + 500); // give it a boost
+        }
+      });
+    }
   }
 
   // ---- Dedupe by base key, keep best score ----
