@@ -228,7 +228,7 @@ export default function SmartSearch() {
         </div>
 
         {/* Input Area */}
-        <div className="glass p-4 rounded-3xl border-t border-glass-border sticky bottom-0 bg-background/80 backdrop-blur-md">
+        <div className="bg-white p-6 md:px-8 rounded-b-[2rem] border-t border-border shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <input
