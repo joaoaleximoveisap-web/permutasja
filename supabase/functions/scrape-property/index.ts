@@ -361,15 +361,38 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { url } = await req.json();
+    const { url, mode } = await req.json();
     if (!url || typeof url !== "string") {
       return new Response(JSON.stringify({ error: "URL obrigatória" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
     try { new URL(url); } catch {
       return new Response(JSON.stringify({ error: "URL inválida" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (mode === "discover") {
+      const doc = await scrapeWithDirectFallback(url);
+      const html = doc.rawHtml;
+      
+      const linkRe = /href=["']([^"']+\/(?:imovel|property|listing|detalhe|venda|aluguel|comprar|alugar)[^"']*)["']/gi;
+      const links = new Set<string>();
+      let m;
+      while ((m = linkRe.exec(html)) !== null) {
+        try {
+          const abs = absolutize(m[1], url);
+          const u = new URL(abs);
+          if (u.pathname.length > 5 && !/\.(css|js|png|jpg|jpeg|gif|svg|woff2?|pdf)$/i.test(u.pathname)) {
+            links.add(abs);
+          }
+        } catch { /* skip */ }
+      }
+
+      return new Response(JSON.stringify({ data: Array.from(links).slice(0, 50) }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
