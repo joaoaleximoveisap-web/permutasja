@@ -17,6 +17,12 @@ export function BulkImportDialog() {
   const [discoveredLinks, setDiscoveredLinks] = useState<string[]>([]);
   const [extractedProperties, setExtractedProperties] = useState<Property[]>([]);
   const [progress, setProgress] = useState(0);
+  const [scanDebug, setScanDebug] = useState<{
+    elementsScanned: number;
+    potentialCards: number;
+    pricesFound: number;
+    linksExtracted: number;
+  } | null>(null);
   const { addProperty, properties } = useProperties();
 
   const discoverLinks = async () => {
