@@ -271,7 +271,7 @@ function parsePropertyFromHTML(html: string, sourceUrl: string): ExtractedProper
     address: location || 'Não encontrado',
     condoFee,
     description: description || 'Não encontrado',
-    propertyCode,
+    property_code: propertyCode,
     propertyType,
     features,
     images: finalImages,
