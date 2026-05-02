@@ -13,7 +13,7 @@ import { uid, buildNormalized } from '@/lib/property-utils';
 export function BulkImportModal() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
-  const { step, properties, progress, startScan, setStep, toggleSelect } = useBulkImport();
+  const { step, properties, progress, startScan, setStep, toggleSelect, isLoading } = useBulkImport();
   const { addProperty } = useProperties();
 
   const handleSave = async () => {
@@ -81,10 +81,19 @@ export function BulkImportModal() {
                 </div>
                 <Button 
                   onClick={() => startScan(url)} 
-                  disabled={!url.includes('http')}
+                  disabled={isLoading || !url.trim()}
                   className="w-full h-14 bg-gradient-primary text-white text-lg rounded-2xl shadow-lg hover:opacity-90 transition-smooth gap-2"
                 >
-                  <ArrowRight className="h-5 w-5" /> Iniciar Varredura Inteligente
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                      Varrendo...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="h-5 w-5" /> Iniciar Varredura Inteligente
+                    </>
+                  )}
                 </Button>
               </div>
 
