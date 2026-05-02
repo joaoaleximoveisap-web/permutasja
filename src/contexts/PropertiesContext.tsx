@@ -68,7 +68,7 @@ export function PropertiesProvider({ children }: { children: React.ReactNode }) 
   const value = useMemo(() => ({
     properties, drafts, credits,
     addProperty, upsertDraft, publishDraft, removeDraft, getDraft,
-    removeProperty, consumeCredit, refillCredits,
+    removeProperty, updateProperty, consumeCredit, refillCredits,
   }), [properties, drafts, credits, addProperty, upsertDraft, publishDraft, removeDraft, getDraft, removeProperty, consumeCredit, refillCredits]);
 
   return <PropertiesCtx.Provider value={value}>{children}</PropertiesCtx.Provider>;
