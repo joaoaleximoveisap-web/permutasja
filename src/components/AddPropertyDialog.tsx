@@ -53,6 +53,7 @@ export function AddPropertyDialog() {
       normalized: buildNormalized(base as any),
       createdAt: Date.now(),
       origin: "manual",
+      status: "published",
     });
     toast.success("Imóvel adicionado!");
     setOpen(false);
