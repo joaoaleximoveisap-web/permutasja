@@ -4,21 +4,283 @@ export interface ExtractedProperty {
   title: string
   price: string
   area: string
+  areaTerreno?: string
   bedrooms: string
   bathrooms: string
   parking: string
   suites: string
   location: string
   address: string
+  condoFee?: string
   description: string
   features: string[]
   images: string[]
   source_url: string
   property_code?: string
+  propertyType?: string
 }
 
 /**
- * METHOD 1: Firecrawl (Enhanced)
+ * NEW: parsePropertyFromHTML function
+ * This function replaces ALL AI extraction.
+ * It reads structured data directly from HTML patterns.
+ */
+function parsePropertyFromHTML(html: string, sourceUrl: string): ExtractedProperty | null {
+  if (!html) return null
+
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  const bodyText = doc.body?.textContent || ''
+
+  // Helper: get text from first matching selector
+  const getText = (...selectors: string[]): string => {
+    for (const sel of selectors) {
+      try {
+        const el = doc.querySelector(sel)
+        if (el?.textContent?.trim()) return el.textContent.trim()
+      } catch {}
+    }
+    return ''
+  }
+
+  // Helper: get meta content
+  const getMeta = (prop: string): string => {
+    const el = doc.querySelector(
+      `meta[property="${prop}"], meta[name="${prop}"]`
+    )
+    return el?.getAttribute('content')?.trim() || ''
+  }
+
+  // ============ TITLE ============
+  let title = ''
+  // Try og:title first (most reliable)
+  title = getMeta('og:title')
+  // Then h1
+  if (!title) title = getText('h1', '.property-title', '.titulo-imovel', 
+    '[class*="title"]', '[class*="titulo"]')
+  // Then page title (remove site name)
+  if (!title) {
+    const pageTitle = doc.querySelector('title')?.textContent || ''
+    title = pageTitle.split('|')[0].split(' - ')[0].trim()
+  }
+
+  // ============ PRICE ============
+  let price = ''
+  // Try specific price elements first
+  const priceSelectors = [
+    '[class*="preco"]', '[class*="price"]', '[class*="valor"]',
+    '[class*="Preco"]', '[class*="Price"]', '[class*="Valor"]',
+    '.property-price', '.listing-price', '.imovel-preco',
+    'h2[class*="preco"]', 'h2[class*="price"]',
+    'span[class*="preco"]', 'span[class*="price"]',
+    'div[class*="preco"]', 'div[class*="price"]',
+    'p[class*="preco"]', 'p[class*="price"]'
+  ]
+  for (const sel of priceSelectors) {
+    try {
+      const el = doc.querySelector(sel)
+      const text = el?.textContent?.trim() || ''
+      if (text && text.includes('R$')) {
+        price = text.match(/R\$\s*[\d.,]+/)?.[0] || text
+        break
+      }
+    } catch {}
+  }
+  // Fallback: find largest R$ value in page (likely the sale price)
+  if (!price) {
+    const allPrices = bodyText.match(/R\$\s*[\d.,]+/g) || []
+    if (allPrices.length > 0) {
+      // Parse all prices, pick the largest (sale price, not condo fee)
+      const parsed = allPrices.map(p => {
+        const num = parseFloat(p.replace(/R\$\s*/, '').replace(/\./g, '').replace(',', '.'))
+        return { text: p, value: num }
+      }).filter(p => !isNaN(p.value))
+      parsed.sort((a, b) => b.value - a.value)
+      price = parsed[0]?.text || ''
+    }
+  }
+
+  // ============ AREA ============
+  let area = ''
+  let areaTerreno = ''
+  // Look for labeled area fields
+  const areaPatterns = [
+    /(?:área\s*(?:útil|construída|privativa|total))\s*[:\s]*(\d+[\d.,]*\s*m²)/gi,
+    /(\d+[\d.,]*\s*m²)\s*(?:útil|construída|privativa)/gi,
+    /(\d+)\s*m²/gi
+  ]
+  for (const pattern of areaPatterns) {
+    const matches = [...bodyText.matchAll(pattern)]
+    if (matches.length > 0) {
+      // First match is usually the built area
+      area = matches[0][1]?.includes('m²') ? matches[0][1] : matches[0][1] + ' m²'
+      // If there's a second, it might be land area
+      if (matches.length > 1 && !areaTerreno) {
+        areaTerreno = matches[1][1]?.includes('m²') ? matches[1][1] : matches[1][1] + ' m²'
+      }
+      break
+    }
+  }
+
+  // ============ BEDROOMS ============
+  let bedrooms = ''
+  const bedroomPatterns = [
+    /(\d+)\s*(?:quarto|dormitório|dorm)/gi,
+    /(?:quarto|dormitório|dorm)[^\d]*(\d+)/gi
+  ]
+  for (const p of bedroomPatterns) {
+    const m = p.exec(bodyText)
+    if (m) { bedrooms = m[1]; break }
+  }
+
+  // ============ SUITES ============
+  let suites = ''
+  const suitePatterns = [
+    /(\d+)\s*suíte/gi,
+    /suíte[^\d]*(\d+)/gi
+  ]
+  for (const p of suitePatterns) {
+    const m = p.exec(bodyText)
+    if (m) { suites = m[1]; break }
+  }
+
+  // ============ BATHROOMS ============
+  let bathrooms = ''
+  const bathPatterns = [
+    /(\d+)\s*(?:banheiro|banh|wc)/gi,
+    /(?:banheiro|banh)[^\d]*(\d+)/gi
+  ]
+  for (const p of bathPatterns) {
+    const m = p.exec(bodyText)
+    if (m) { bathrooms = m[1]; break }
+  }
+
+  // ============ PARKING ============
+  let parking = ''
+  const parkPatterns = [
+    /(\d+)\s*vaga/gi,
+    /vaga[^\d]*(\d+)/gi
+  ]
+  for (const p of parkPatterns) {
+    const m = p.exec(bodyText)
+    if (m) { parking = m[1]; break }
+  }
+
+  // ============ LOCATION ============
+  let location = ''
+  // og:locality or region
+  location = getMeta('og:locality') || getMeta('og:region')
+  // Try address selectors
+  if (!location) {
+    location = getText(
+      '[class*="endereco"]', '[class*="address"]',
+      '[class*="localizacao"]', '[class*="location"]',
+      '[class*="Endereco"]', '[class*="Address"]',
+      'address'
+    )
+  }
+  // Try og:title split (often "Tipo em Bairro - Cidade/UF")
+  if (!location && title) {
+    const parts = title.split(' - ')
+    if (parts.length > 1) location = parts[parts.length - 1].trim()
+  }
+  // Fallback: find city/state pattern
+  if (!location) {
+    const cityMatch = bodyText.match(
+      /(?:Londrina|Sertaneja|Cambé|Ibiporã|Rolândia|Maringá|Curitiba|São Paulo)[^\n]*\/\s*(?:PR|SP|RJ|MG|SC|RS|BA|GO|DF)/i
+    )
+    if (cityMatch) location = cityMatch[0].trim()
+  }
+
+  // ============ CONDO FEE ============
+  let condoFee = ''
+  const condoMatch = bodyText.match(/condomínio\s*R?\$?\s*([\d.,]+)/i)
+  if (condoMatch) condoFee = 'R$ ' + condoMatch[1]
+
+  // ============ DESCRIPTION ============
+  let description = ''
+  description = getText(
+    '[class*="descricao"]', '[class*="description"]',
+    '[class*="detalhe"]', '[class*="detail"]',
+    '[class*="Descricao"]', '[class*="Description"]',
+    '.property-description', '.listing-description',
+    'article', '.text-content'
+  )
+  // Limit length
+  if (description.length > 1000) description = description.substring(0, 1000) + '...'
+
+  // ============ PROPERTY CODE ============
+  let propertyCode = ''
+  const codeMatch = bodyText.match(
+    /(?:código|cod|ref|referência)[.:\s]*([A-Z]{2}\d+[-]?[A-Z]*)/i
+  )
+  if (codeMatch) propertyCode = codeMatch[1]
+  // Try from URL
+  if (!propertyCode) {
+    const urlCode = sourceUrl.match(/\/([A-Z]{2}\d+[-][A-Z]+)$/i)
+    if (urlCode) propertyCode = urlCode[1]
+  }
+
+  // ============ PROPERTY TYPE ============
+  let propertyType = ''
+  const typeMatch = title.match(
+    /^(casa|apartamento|terreno|sobrado|kitnet|studio|loja|sala|galpão|chácara|sítio|fazenda|cobertura|flat)/i
+  )
+  if (typeMatch) propertyType = typeMatch[1]
+  // From URL
+  if (!propertyType) {
+    const urlType = sourceUrl.match(
+      /\/(casa|apartamento|terreno|sobrado|kitnet|comercial|rural)/i
+    )
+    if (urlType) propertyType = urlType[1]
+  }
+
+  // ============ FEATURES / AMENITIES ============
+  const features: string[] = []
+  const featureSelectors = [
+    '[class*="caracteristica"]', '[class*="feature"]',
+    '[class*="amenit"]', '[class*="comodidade"]',
+    'ul[class*="feature"] li', 'ul[class*="caracteristica"] li'
+  ]
+  for (const sel of featureSelectors) {
+    try {
+      doc.querySelectorAll(sel).forEach(el => {
+        const text = el.textContent?.trim()
+        if (text && text.length > 2 && text.length < 50) {
+          features.push(text)
+        }
+      })
+      if (features.length > 0) break
+    } catch {}
+  }
+
+  // ============ IMAGES (existing function) ============
+  const images = extractRealImagesFromHTML(html, sourceUrl)
+  const finalImages = images.slice(0, 30)
+
+  return {
+    title: title || 'Não encontrado',
+    price: price || 'Não encontrado',
+    area: area || 'Não encontrado',
+    areaTerreno,
+    bedrooms: bedrooms || '0',
+    suites: suites || '0',
+    bathrooms: bathrooms || '0',
+    parking: parking || '0',
+    location: location || 'Não encontrado',
+    address: location || 'Não encontrado',
+    condoFee,
+    description: description || 'Não encontrado',
+    property_code: propertyCode,
+    propertyType,
+    features,
+    images: finalImages,
+    source_url: sourceUrl
+  }
+}
+
+/**
+ * METHOD 1: Firecrawl (Scrape only)
  */
 async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
   const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -29,41 +291,13 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
     },
     body: JSON.stringify({
       url,
-      formats: ['extract', 'html', 'markdown', 'screenshot'],
-      waitFor: 6000,
-      timeout: 30000,
-      skipTlsVerification: false,
-      removeBase64Images: false,
+      formats: ['html', 'markdown'],
+      waitFor: 5000,
       actions: [
         { type: 'wait', milliseconds: 3000 },
         { type: 'scroll', direction: 'down', amount: 2000 },
-        { type: 'wait', milliseconds: 2000 },
-        { type: 'scroll', direction: 'down', amount: 2000 },
-        { type: 'wait', milliseconds: 1000 },
-        { type: 'scroll', direction: 'up', amount: 5000 },
-        { type: 'wait', milliseconds: 1000 }
-      ],
-      extract: {
-        schema: {
-          type: 'object',
-          properties: {
-            title: { type: 'string' },
-            price: { type: 'string' },
-            area: { type: 'string' },
-            bedrooms: { type: 'string' },
-            suites: { type: 'string' },
-            bathrooms: { type: 'string' },
-            parking: { type: 'string' },
-            location: { type: 'string' },
-            address: { type: 'string' },
-            condominium_fee: { type: 'string' },
-            description: { type: 'string' },
-            features: { type: 'array', items: { type: 'string' } },
-            property_code: { type: 'string' }
-          }
-        },
-        prompt: 'Extract real estate property data from this Brazilian listing page. Get title, price in R$, area in m², bedrooms (quartos), suites (suítes), bathrooms (banheiros), parking (vagas), full address, condo fee, description, features list, and property reference code.'
-      }
+        { type: 'wait', milliseconds: 1500 }
+      ]
     })
   })
 
@@ -73,60 +307,19 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
   }
 
   const result = await response.json()
-  const textData = result?.data?.extract || {}
   const html = result?.data?.html || ''
 
-  // Parse REAL images from HTML
-  let images = extractRealImagesFromHTML(html, url)
-
-  // ALSO try fallback if zero images
-  if (images.length === 0) {
-    console.log('Zero images from HTML, trying CORS fallback...')
-    try {
-      const corsProxies = [
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?'
-      ]
-      for (const proxy of corsProxies) {
-        try {
-          const res = await fetch(proxy + encodeURIComponent(url), {
-            signal: AbortSignal.timeout(10000)
-          })
-          if (res.ok) {
-            const fallbackHtml = await res.text()
-            const fallbackImages = extractRealImagesFromHTML(fallbackHtml, url)
-            if (fallbackImages.length > 0) {
-              images = fallbackImages
-              break
-            }
-          }
-        } catch { continue }
-      }
-    } catch {}
+  if (!html) {
+    throw new Error('Firecrawl retornou HTML vazio')
   }
 
-  // DEBUG
-  console.log('=== REAL IMAGES ===', images)
-  
-  // Limit to 30 max images
-  const finalImages = images.slice(0, 30)
-
-  return {
-    title: textData.title || extractTitleFromHTML(html) || '',
-    price: textData.price || extractPriceFromHTML(html) || '',
-    area: textData.area || '',
-    bedrooms: textData.bedrooms || '',
-    bathrooms: textData.bathrooms || '',
-    parking: textData.parking || '',
-    suites: textData.suites || '',
-    location: textData.location || '',
-    address: textData.address || '',
-    description: textData.description || '',
-    features: textData.features || [],
-    images: finalImages,
-    source_url: url,
-    property_code: textData.property_code
+  const property = parsePropertyFromHTML(html, url)
+  if (!property) {
+    throw new Error('Falha ao processar o HTML da página')
   }
+
+  console.log('=== PARSED DATA ===', property)
+  return property
 }
 
 /**
@@ -165,121 +358,12 @@ async function fallbackExtraction(url: string): Promise<ExtractedProperty> {
     throw new Error('Não foi possível acessar a página através dos proxies')
   }
 
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-  const baseUrl = new URL(url).origin
-
-  // ---- EXTRACT IMAGES ----
-  const images: string[] = []
-  
-  doc.querySelectorAll('img').forEach(img => {
-    const src = img.getAttribute('src') 
-      || img.getAttribute('data-src')
-      || img.getAttribute('data-lazy')
-      || img.getAttribute('data-original')
-    if (src) images.push(src)
-    
-    const srcset = img.getAttribute('srcset')
-    if (srcset) {
-      const parts = srcset.split(',').map(s => s.trim())
-      const last = parts[parts.length - 1]?.split(/\s+/)[0]
-      if (last) images.push(last)
-    }
-  })
-
-  doc.querySelectorAll('[style*="background"]').forEach(el => {
-    const style = el.getAttribute('style') || ''
-    const match = style.match(/url\(["']?([^"')]+)["']?\)/)
-    if (match) images.push(match[1])
-  })
-
-  const ogImage = doc.querySelector('meta[property="og:image"]')
-  if (ogImage) {
-    const content = ogImage.getAttribute('content')
-    if (content) images.push(content)
+  const property = parsePropertyFromHTML(html, url)
+  if (!property) {
+    throw new Error('Falha ao processar o HTML da página (fallback)')
   }
 
-  doc.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
-    try {
-      const data = JSON.parse(script.textContent || '')
-      if (data.image) {
-        if (Array.isArray(data.image)) images.push(...data.image)
-        else if (typeof data.image === 'string') images.push(data.image)
-        else if (data.image.url) images.push(data.image.url)
-      }
-      if (data.photo) {
-        const photos = Array.isArray(data.photo) ? data.photo : [data.photo]
-        photos.forEach((p: any) => {
-          if (typeof p === 'string') images.push(p)
-          else if (p?.contentUrl) images.push(p.contentUrl)
-          else if (p?.url) images.push(p.url)
-        })
-      }
-    } catch {}
-  })
-
-  doc.querySelectorAll('a[href]').forEach(a => {
-    const href = a.getAttribute('href') || ''
-    if (/\.(jpg|jpeg|png|webp)/i.test(href)) {
-      images.push(href)
-    }
-  })
-
-  // ---- EXTRACT TEXT DATA ----
-  const getText = (selectors: string[]): string => {
-    for (const sel of selectors) {
-      const el = doc.querySelector(sel)
-      if (el?.textContent?.trim()) return el.textContent.trim()
-    }
-    return ''
-  }
-
-  const title = getText(['h1', 'meta[property="og:title"]', 'title'])
-
-  let price = ''
-  const priceEl = doc.querySelector('[class*="preco"], [class*="price"], [class*="valor"]')
-  if (priceEl) {
-    price = priceEl.textContent?.trim() || ''
-  }
-  if (!price) {
-    const bodyText = doc.body?.textContent || ''
-    const priceMatch = bodyText.match(/R\$\s*[\d.,]+/)
-    if (priceMatch) price = priceMatch[0]
-  }
-
-  const bodyContent = doc.body?.textContent || ''
-  const areaMatch = bodyContent.match(/(\d+)\s*m²/i)
-  const bedroomMatch = bodyContent.match(/(\d+)\s*(?:quarto|dormitório|dorm)/i)
-  const bathMatch = bodyContent.match(/(\d+)\s*(?:banheiro|banh)/i)
-  const parkMatch = bodyContent.match(/(\d+)\s*vaga/i)
-  const suiteMatch = bodyContent.match(/(\d+)\s*suíte/i)
-
-  const location = getText([
-    '[class*="endereco"]', '[class*="address"]',
-    '[class*="localizacao"]', '[class*="location"]',
-    'meta[property="og:street-address"]'
-  ])
-
-  const description = getText([
-    '[class*="descricao"]', '[class*="description"]',
-    '[class*="detalhe"]', '[class*="detail"]'
-  ])
-
-  return {
-    title,
-    price,
-    area: areaMatch ? areaMatch[0] : '',
-    bedrooms: bedroomMatch ? bedroomMatch[1] : '',
-    bathrooms: bathMatch ? bathMatch[1] : '',
-    parking: parkMatch ? parkMatch[1] : '',
-    suites: suiteMatch ? suiteMatch[1] : '',
-    location,
-    address: location,
-    description: description.substring(0, 1000),
-    features: [],
-    images: extractRealImagesFromHTML(doc.documentElement.outerHTML, url),
-    source_url: url
-  }
+  return property
 }
 
 /**
@@ -292,24 +376,9 @@ export async function extractSingleProperty(url: string): Promise<ExtractedPrope
   try {
     // 1. Try Firecrawl
     property = await extractWithFirecrawl(url)
-    
-    // 2. Check if extraction was poor
-    if (!property.images || property.images.length === 0) {
-      console.log('Firecrawl returned 0 images, trying fallback...')
-      const fallback = await fallbackExtraction(url)
-      
-      if (fallback.images.length > 0) {
-        property.images = fallback.images
-        method = 'firecrawl+fallback'
-      }
-      
-      if (!property.title && fallback.title) property.title = fallback.title
-      if (!property.price && fallback.price) property.price = fallback.price
-      if (!property.description && fallback.description) property.description = fallback.description
-    }
   } catch (firecrawlError) {
     console.warn('Firecrawl failed:', firecrawlError)
-    // 3. Firecrawl failed completely, try fallback
+    // 2. Firecrawl failed completely, try fallback
     try {
       property = await fallbackExtraction(url)
       method = 'fallback'
@@ -489,19 +558,4 @@ function extractRealImagesFromHTML(html: string, sourceUrl: string): string[] {
   })
 
   return deduped
-}
-
-function extractTitleFromHTML(html: string): string {
-  const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i)
-  if (h1Match) return h1Match[1].trim()
-  const ogMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
-  if (ogMatch) return ogMatch[1].trim()
-  const titleMatch = html.match(/<title>([^<]+)<\/title>/i)
-  if (titleMatch) return titleMatch[1].split('|')[0].split('-')[0].trim()
-  return ''
-}
-
-function extractPriceFromHTML(html: string): string {
-  const priceMatch = html.match(/R\$\s*[\d.,]+/i)
-  return priceMatch ? priceMatch[0].trim() : ''
 }
