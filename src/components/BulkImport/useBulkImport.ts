@@ -24,14 +24,12 @@ export function useBulkImport() {
       if (sessErr) throw sessErr;
       setSession(sess as any);
 
-      const { error: funcErr } = await supabase.functions.invoke('scan-listing-page', {
-        body: { session_id: sess.id, url },
-        headers: {
-          Authorization: `Bearer ${authSession.access_token}`
-        }
+      const { data: funcData, error: funcErr } = await supabase.functions.invoke('scan-listing-page', {
+        body: { session_id: sess.id, url }
       });
 
       if (funcErr) throw funcErr;
+      if (funcData?.error) throw new Error(funcData.error);
     } catch (err: any) {
       toast.error("Erro ao iniciar varredura", { description: err.message });
       setStep('input');

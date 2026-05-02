@@ -14,9 +14,11 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
-  // Verify token
-  const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+  // Verify token using the authenticated supabase client
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
   if (authError || !user) {
+    console.error("Auth error:", authError);
     return new Response(JSON.stringify({ error: "Usuário não autenticado" }), { status: 401, headers: corsHeaders });
   }
 
