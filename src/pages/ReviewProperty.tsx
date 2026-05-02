@@ -71,8 +71,8 @@ export default function ReviewProperty() {
 
   if (!draft) return null;
 
-  const next = () => setStep((s) => Math.min(5, (s + 1) as Step));
-  const prev = () => setStep((s) => Math.max(0, (s - 1) as Step));
+  const next = () => setStep((s) => Math.min(5, s + 1) as Step);
+  const prev = () => setStep((s) => Math.max(0, s - 1) as Step);
 
   const publish = () => {
     if (!canPublish) { toast.error("Complete os passos obrigatórios."); return; }
