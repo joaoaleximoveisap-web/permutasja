@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     await supabase.from("import_jobs").update({ status: "processing", processed_at: new Date().toISOString() }).eq("id", job_id);
 
-    // 2. Scrape individual page
+    // 2. Scrape individual page with Firecrawl Extract
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
     const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST",
@@ -28,33 +28,53 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         url: job.property_url,
-        formats: ["markdown"],
-        waitFor: 3000,
+        formats: ["extract"],
+        waitFor: 4000,
+        extract: {
+          schema: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              price: { type: "string" },
+              area: { type: "string" },
+              bedrooms: { type: "string" },
+              bathrooms: { type: "string" },
+              parking: { type: "string" },
+              location: { type: "string" },
+              description: { type: "string" },
+              images: {
+                type: "array",
+                items: { type: "string" }
+              }
+            }
+          },
+          prompt: "Extract all real estate property details including title, price, area in m², bedrooms, bathrooms, parking spaces, full address or location, description, and all property image URLs. Return high quality image URLs only, not thumbnails."
+        }
       }),
     });
 
     const fcData = await fcRes.json();
-    const markdown = fcData.data?.markdown || "";
+    const extracted = fcData.data?.extract;
 
-    // 3. Process with Lovable AI (OpenAI GPT-5-mini via Gateway)
-    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-5-mini",
-        messages: [
-          { role: "system", content: "Extraia dados de imóveis em JSON puro. Campos: title, price (número), area (m²), bedrooms, bathrooms, parking, location, description, images (array)." },
-          { role: "user", content: `Extraia deste conteúdo: ${markdown}` }
-        ],
-        response_format: { type: "json_object" }
-      }),
+    if (!extracted?.title || !extracted?.price) {
+      throw new Error("Não foi possível extrair os dados básicos do imóvel.");
+    }
+
+    // Image quality filter
+    const filteredImages = (extracted.images || []).filter((url: string) => {
+      const low = url.toLowerCase();
+      return (
+        !low.includes('thumb') &&
+        !low.includes('icon') &&
+        !low.includes('logo') &&
+        !low.includes('sprite') &&
+        !low.includes('.svg') &&
+        !low.includes('.gif') &&
+        !low.includes('1x1') &&
+        url.startsWith('http')
+      );
     });
-
-    const aiData = await aiRes.json();
-    const extracted = JSON.parse(aiData.choices[0].message.content);
+    extracted.images = filteredImages;
 
     // 4. Update job
     await supabase.from("import_jobs").update({ 
