@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Layers, Loader2, Check, X, Building2, AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
-import { useBulkImport } from './useBulkImport';
+import { useBulkImport } from '@/hooks/useBulkImport';
 import { Progress } from "@/components/ui/progress";
 import { formatBRL } from '@/lib/property-utils';
 import { useProperties } from '@/contexts/PropertiesContext';
@@ -13,23 +13,22 @@ import { uid, buildNormalized } from '@/lib/property-utils';
 export function BulkImportModal() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
-  const { step, session, jobs, selectedJobIds, setSelectedJobIds, startScan, setStep } = useBulkImport();
+  const { step, properties, progress, startScan, setStep, toggleSelect } = useBulkImport();
   const { addProperty } = useProperties();
 
   const handleSave = async () => {
-    const toSave = jobs.filter(j => j.status === 'done' && (selectedJobIds.size === 0 || selectedJobIds.has(j.id)));
+    const toSave = properties.filter(p => p.selected);
     
-    toSave.forEach(job => {
-      const d = job.raw_data!;
+    toSave.forEach(prop => {
       const base = {
-        title: d.title,
-        price: Number(d.price) || 0,
-        area: Number(d.area) || 0,
-        bedrooms: Number(d.bedrooms) || 0,
-        description: d.description,
-        images: d.images,
-        city: d.location?.split(',')[0] || "",
-        neighborhood: d.location?.split(',')[1] || "",
+        title: prop.title,
+        price: typeof prop.price === 'string' ? Number(prop.price.replace(/[^0-9]/g, '')) || 0 : prop.price,
+        area: typeof prop.area === 'string' ? Number(prop.area.replace(/[^0-9]/g, '')) || 0 : prop.area,
+        bedrooms: typeof prop.bedrooms === 'string' ? Number(prop.bedrooms.replace(/[^0-9]/g, '')) || 0 : prop.bedrooms,
+        description: prop.description,
+        images: prop.images,
+        city: prop.location?.split(',')[0] || "",
+        neighborhood: prop.location?.split(',')[1] || "",
         type: "Apartamento",
         tags: ["importação em massa"],
         permuta: { enabled: false, details: "" }
@@ -111,29 +110,25 @@ export function BulkImportModal() {
                 <h3 className="text-2xl font-semibold">
                   {step === 'scanning' ? "Identificando imóveis..." : "Extraindo detalhes com IA..."}
                 </h3>
-                {session && (
+                {progress.total > 0 && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm font-medium">
-                      <span>{session.total_done} de {session.total_found} processados</span>
-                      <span>{Math.round((session.total_done / (session.total_found || 1)) * 100)}%</span>
+                      <span>{progress.done} de {progress.total} processados</span>
+                      <span>{Math.round((progress.done / progress.total) * 100)}%</span>
                     </div>
-                    <Progress value={(session.total_done / (session.total_found || 1)) * 100} className="h-3 rounded-full" />
+                    <Progress value={(progress.done / progress.total) * 100} className="h-3 rounded-full" />
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="glass p-3 rounded-xl">
-                  <div className="text-xl font-bold text-accent">{session?.total_found || 0}</div>
+                  <div className="text-xl font-bold text-accent">{progress.total}</div>
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Encontrados</div>
                 </div>
                 <div className="glass p-3 rounded-xl">
-                  <div className="text-xl font-bold text-green-500">{session?.total_done || 0}</div>
+                  <div className="text-xl font-bold text-green-500">{properties.length}</div>
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Sucesso</div>
-                </div>
-                <div className="glass p-3 rounded-xl">
-                  <div className="text-xl font-bold text-destructive">{session?.total_failed || 0}</div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Falhas</div>
                 </div>
               </div>
             </div>
@@ -154,33 +149,28 @@ export function BulkImportModal() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {jobs.filter(j => j.status === 'done').map((job) => (
-                  <div key={job.id} className="glass rounded-2xl overflow-hidden border border-glass-border group relative">
+                {properties.map((prop, index) => (
+                  <div key={index} className="glass rounded-2xl overflow-hidden border border-glass-border group relative">
                     <div className="aspect-video relative overflow-hidden">
-                      <img src={job.raw_data?.images?.[0]} alt="" className="w-full h-full object-cover transition-smooth group-hover:scale-110" />
+                      <img src={prop.images?.[0]} alt="" className="w-full h-full object-cover transition-smooth group-hover:scale-110" />
                       <div className="absolute top-2 left-2">
                         <input 
                           type="checkbox" 
-                          checked={selectedJobIds.size === 0 || selectedJobIds.has(job.id)}
-                          onChange={() => {
-                            const next = new Set(selectedJobIds);
-                            if (next.has(job.id)) next.delete(job.id);
-                            else next.add(job.id);
-                            setSelectedJobIds(next);
-                          }}
+                          checked={prop.selected}
+                          onChange={() => toggleSelect(index)}
                           className="h-5 w-5 rounded border-glass-border bg-black/20 accent-accent"
                         />
                       </div>
                     </div>
                     <div className="p-4 space-y-2">
-                      <div className="text-lg font-bold text-accent">{formatBRL(Number(job.raw_data?.price) || 0)}</div>
-                      <div className="text-sm font-medium line-clamp-1">{job.raw_data?.title}</div>
+                      <div className="text-lg font-bold text-accent">{prop.price}</div>
+                      <div className="text-sm font-medium line-clamp-1">{prop.title}</div>
                       <div className="text-xs text-muted-foreground flex items-center gap-2">
-                        <span>{job.raw_data?.bedrooms} qtos</span>
+                        <span>{prop.bedrooms} qtos</span>
                         <span>•</span>
-                        <span>{job.raw_data?.area}m²</span>
+                        <span>{prop.area}m²</span>
                         <span>•</span>
-                        <span className="truncate">{job.raw_data?.location}</span>
+                        <span className="truncate">{prop.location}</span>
                       </div>
                     </div>
                   </div>
