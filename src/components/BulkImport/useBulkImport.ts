@@ -12,12 +12,12 @@ export function useBulkImport() {
   const startScan = async (url: string) => {
     try {
       setStep('scanning');
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.user) throw new Error("Usuário não autenticado");
 
       const { data: sess, error: sessErr } = await supabase
         .from('import_sessions')
-        .insert({ source_url: url, user_id: user.id, status: 'scanning' })
+        .insert({ source_url: url, user_id: authSession.user.id, status: 'scanning' })
         .select()
         .single();
 
@@ -25,7 +25,10 @@ export function useBulkImport() {
       setSession(sess as any);
 
       const { error: funcErr } = await supabase.functions.invoke('scan-listing-page', {
-        body: { session_id: sess.id, url }
+        body: { session_id: sess.id, url },
+        headers: {
+          Authorization: `Bearer ${authSession.access_token}`
+        }
       });
 
       if (funcErr) throw funcErr;
