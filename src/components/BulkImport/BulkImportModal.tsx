@@ -81,10 +81,19 @@ export function BulkImportModal() {
                 </div>
                 <Button 
                   onClick={() => startScan(url)} 
-                  disabled={!url.includes('http')}
+                  disabled={isLoading || !url.trim()}
                   className="w-full h-14 bg-gradient-primary text-white text-lg rounded-2xl shadow-lg hover:opacity-90 transition-smooth gap-2"
                 >
-                  <ArrowRight className="h-5 w-5" /> Iniciar Varredura Inteligente
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                      Varrendo...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="h-5 w-5" /> Iniciar Varredura Inteligente
+                    </>
+                  )}
                 </Button>
               </div>
 
