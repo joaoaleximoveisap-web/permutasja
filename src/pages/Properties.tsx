@@ -36,73 +36,55 @@ export default function Properties() {
 
   return (
     <AppShell>
-      <div className="max-w-[1400px] mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-bold tracking-tight">Carteira de Imóveis</h1>
-            <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-              {filtered.length} imóveis filtrados de {properties.length} totais
-            </p>
+      <div className="max-w-7xl mx-auto space-y-5">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-semibold">Imóveis</h1>
+            <p className="text-sm text-muted-foreground">{filtered.length} de {properties.length} na sua carteira</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex gap-2">
             <AddPropertyDialog />
           </div>
         </div>
 
-        <div className="bg-primary rounded-[2rem] p-6 md:p-8 shadow-2xl shadow-primary/10">
-          <div className="max-w-3xl">
-            <h2 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-accent" /> Importação Rápida via Link
-            </h2>
-            <ImportBar />
-          </div>
-        </div>
+        <ImportBar />
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col md:flex-row gap-4">
           <aside className="hidden lg:block w-72 shrink-0">
-            <div className="sticky top-28 bg-white border border-border/50 rounded-3xl p-6 shadow-sm">
-              <FilterPanel filters={filters} setFilters={setFilters} />
-            </div>
+            <FilterPanel filters={filters} setFilters={setFilters} />
           </aside>
 
-          <div className="flex-1 space-y-6 min-w-0">
-            <div className="flex gap-3">
-              <div className="bg-white border border-border/50 rounded-2xl flex items-center gap-3 px-4 flex-1 shadow-sm focus-within:ring-2 focus-within:ring-primary/10 transition-all">
-                <Search className="h-5 w-5 text-muted-foreground" />
+          <div className="flex-1 space-y-4 min-w-0">
+            <div className="flex gap-2">
+              <div className="glass rounded-xl flex items-center gap-2 px-3 flex-1">
+                <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Busque por código, bairro, tipo ou palavras-chave..."
-                  className="border-0 bg-transparent focus-visible:ring-0 px-0 h-12 text-sm font-medium"
+                  placeholder="Buscar por título, bairro, tag..."
+                  className="border-0 bg-transparent focus-visible:ring-0 px-0"
                 />
               </div>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" className="lg:hidden h-12 w-12 rounded-2xl border-border/50 bg-white shadow-sm">
-                    <SlidersHorizontal className="h-5 w-5" />
+                  <Button variant="outline" className="lg:hidden glass rounded-xl">
+                    <SlidersHorizontal className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[320px] sm:w-[400px]">
-                  <div className="py-6">
-                    <FilterPanel filters={filters} setFilters={setFilters} />
-                  </div>
+                <SheetContent side="right" className="glass-strong border-glass-border">
+                  <FilterPanel filters={filters} setFilters={setFilters} />
                 </SheetContent>
               </Sheet>
             </div>
 
             {filtered.length === 0 ? (
-              <div className="bg-muted/30 rounded-[2rem] border-2 border-dashed border-border p-20 text-center">
-                <div className="h-16 w-16 rounded-2xl bg-white shadow-xl mx-auto flex items-center justify-center mb-6">
-                  <Building2 className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Sem resultados para os filtros atuais</h3>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto font-medium">
-                  Tente remover alguns filtros ou busque por um termo diferente.
-                </p>
+              <div className="glass-strong rounded-3xl p-10 text-center">
+                <Building2 className="h-10 w-10 mx-auto text-muted-foreground" />
+                <p className="mt-3 font-medium">Nenhum imóvel encontrado</p>
+                <p className="text-sm text-muted-foreground mt-1">Ajuste os filtros ou importe um novo link acima.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filtered.map(p => (
                   <PropertyCard key={p.id} property={p} onClick={() => { setSelected(p); setOpen(true); }} />
                 ))}
