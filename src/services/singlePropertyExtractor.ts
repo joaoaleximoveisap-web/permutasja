@@ -139,8 +139,13 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
     },
     body: JSON.stringify({
       url,
-      formats: ['html'],
-      waitFor: 5000
+      formats: ['html', 'markdown'],
+      waitFor: 5000,
+      actions: [
+        { type: 'wait', milliseconds: 3000 },
+        { type: 'scroll', direction: 'down', amount: 2000 },
+        { type: 'wait', milliseconds: 1500 }
+      ]
     })
   })
 
@@ -151,12 +156,13 @@ async function extractWithFirecrawl(url: string): Promise<ExtractedProperty> {
 
   const result = await response.json()
   const html = result?.data?.html || ''
+  const markdown = result?.data?.markdown || ''
 
   if (!html) {
     throw new Error('Firecrawl retornou HTML vazio')
   }
 
-  const property = parsePropertyFromHTML(html, url)
+  const property = parsePropertyFromHTML(html, markdown, url)
   if (!property) {
     throw new Error('Falha ao processar o HTML da página')
   }
@@ -200,7 +206,8 @@ async function fallbackExtraction(url: string): Promise<ExtractedProperty> {
     throw new Error('Não foi possível acessar a página através dos proxies')
   }
 
-  const property = parsePropertyFromHTML(html, url)
+  // Fallback doesn't usually give us markdown easily, so we pass empty or simple text
+  const property = parsePropertyFromHTML(html, '', url)
   if (!property) {
     throw new Error('Falha ao processar o HTML da página (fallback)')
   }
@@ -230,8 +237,12 @@ export async function extractSingleProperty(url: string): Promise<ExtractedPrope
     }
   }
 
-  console.log(`Extraction method: ${method}`)
-  console.log(`Images found: ${property.images.length}`)
+  console.log('=== EXTRACTION RESULT ===')
+  console.log('Title:', property.title)
+  console.log('Price:', property.price)
+  console.log('Images:', property.images.length)
+  console.log('Area:', property.area)
+  console.log('Bedrooms:', property.bedrooms)
   
   return property
 }
