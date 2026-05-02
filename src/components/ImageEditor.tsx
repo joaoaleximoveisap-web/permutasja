@@ -194,9 +194,9 @@ export function ImageEditor({ images, coverIndex, onChange }: Props) {
                   setDragIdx(null);
                 }}
                 className={cn(
-                  "group relative aspect-square rounded-xl overflow-hidden glass border border-glass-border",
-                  dragIdx === i && "opacity-50",
-                  i === coverIndex && "ring-2 ring-primary"
+                  "group relative aspect-video rounded-xl overflow-hidden glass border border-glass-border cursor-grab active:cursor-grabbing",
+                  dragIdx === i && "opacity-50 scale-95",
+                  i === coverIndex && "ring-2 ring-primary shadow-lg shadow-primary/20"
                 )}
               >
                 <img
