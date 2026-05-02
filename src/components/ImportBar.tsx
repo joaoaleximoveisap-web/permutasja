@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link2, Loader2, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProperties } from "@/contexts/PropertiesContext";
@@ -11,7 +12,8 @@ import { toast } from "sonner";
 export function ImportBar({ onImported }: { onImported?: () => void }) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const { addProperty, credits, consumeCredit } = useProperties();
+  const { upsertDraft, credits, consumeCredit } = useProperties();
+  const navigate = useNavigate();
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +28,7 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
       });
 
       if (error || data?.error) {
-        const msg = (data?.error as string) || error?.message || "Não conseguimos importar este link.";
+        const msg = (data?.error as string) || error?.message || "Não conseguimos acessar este link.";
         toast.error("Falha na importação", { description: msg });
         return;
       }
@@ -38,7 +40,7 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         title: string; price: number; area: number; bedrooms: number;
         bathrooms?: number; parking?: number; description: string; images: string[];
         city?: string; neighborhood?: string; type?: string;
-        permuta?: boolean; permutaDetails?: string;
+        permuta?: boolean; permutaDetails?: string; missingFields?: string[];
       };
 
       const tags = [
@@ -50,14 +52,15 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
       ].filter(Boolean) as string[];
 
       const base = {
-        title: d.title,
-        price: d.price,
-        area: d.area,
-        bedrooms: d.bedrooms,
+        title: d.title || "Imóvel importado",
+        price: d.price || 0,
+        area: d.area || 0,
+        bedrooms: d.bedrooms || 0,
         bathrooms: d.bathrooms,
         parking: d.parking,
-        description: d.description,
-        images: d.images?.length ? d.images : [],
+        description: d.description || "",
+        images: d.images || [],
+        coverIndex: 0,
         sourceUrl: url,
         city: d.city,
         neighborhood: d.neighborhood,
@@ -66,18 +69,22 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         permuta: { enabled: !!d.permuta, details: d.permutaDetails },
       };
 
-      const property: Property = {
+      const draft: Property = {
         id: uid(),
         ...base,
         normalized: buildNormalized(base as any),
         createdAt: Date.now(),
         origin: "import",
+        status: "draft",
+        originalData: d as unknown as Record<string, unknown>,
+        missingFields: d.missingFields || [],
       };
 
-      addProperty(property);
-      toast.success("Imóvel importado!", { description: d.title });
+      upsertDraft(draft);
+      toast.success("Imóvel importado!", { description: "Vamos revisar antes de publicar." });
       setUrl("");
       onImported?.();
+      navigate(`/revisar/${draft.id}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
       toast.error("Falha na importação", { description: msg });

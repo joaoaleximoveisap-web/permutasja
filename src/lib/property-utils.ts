@@ -68,5 +68,6 @@ export async function mockScrape(url: string): Promise<Property> {
     normalized: buildNormalized(base as any),
     createdAt: Date.now(),
     origin: "import",
+    status: "draft",
   };
 }

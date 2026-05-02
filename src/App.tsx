@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Login from "./pages/Login.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Properties from "./pages/Properties.tsx";
+import ReviewProperty from "./pages/ReviewProperty.tsx";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/imoveis" element={<Properties />} />
+              <Route path="/revisar/:id" element={<ReviewProperty />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
