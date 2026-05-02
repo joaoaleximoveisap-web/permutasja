@@ -193,6 +193,14 @@ export default function ReviewProperty() {
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <Label>Taxa de Condomínio (R$)</Label>
+                  <Input 
+                    value={draft.condominiumFee || ""} 
+                    onChange={(e) => update({ condominiumFee: e.target.value })} 
+                    placeholder="Não encontrado"
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <Label>Código do imóvel</Label>
                   <Input 
                     value={draft.propertyCode || ""} 
