@@ -41,6 +41,7 @@ export function PropertiesProvider({ children }: { children: React.ReactNode }) 
 
   const addProperty = useCallback((p: Property) => setProperties((cur) => [{ ...p, status: "published" }, ...cur]), []);
   const removeProperty = useCallback((id: string) => setProperties((cur) => cur.filter(p => p.id !== id)), []);
+  const updateProperty = useCallback((p: Property) => setProperties((cur) => cur.map(item => item.id === p.id ? p : item)), []);
 
   const upsertDraft = useCallback((p: Property) => setDrafts((cur) => {
     const idx = cur.findIndex(d => d.id === p.id);
