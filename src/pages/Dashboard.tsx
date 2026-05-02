@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import { ImportBar } from "@/components/ImportBar";
 import { useProperties } from "@/contexts/PropertiesContext";
-import { Building2, Coins, Repeat2, TrendingUp, ArrowRight } from "lucide-react";
+import { Building2, Coins, Repeat2, TrendingUp, ArrowRight, Sparkles, Bed } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatBRL } from "@/lib/property-utils";
 
