@@ -306,28 +306,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Manual HTML extraction (fallback if no LLM extract)
+    // Advanced Extraction Logic (Manual + Firecrawl Supplement)
+    const scrapedImages = html ? extractImagesFromHtml(html, url) : [];
+    
     if ((!extracted || !extracted.title) && html) {
       const titleMatch = 
         html.match(/property=["']og:title["']\s+content=["']([^"']+)/i) ||
         html.match(/<title>([^<]+)<\/title>/i);
-      const descMatch = html.match(/property=["']og:description["']\s+content=["']([^"']+)/i);
+      const descMatch = 
+        html.match(/property=["']og:description["']\s+content=["']([^"']+)/i) ||
+        html.match(/name=["']description["']\s+content=["']([^"']+)/i);
+      
       const priceMatch = html.match(/R\$\s*([\d.,]+)/i);
       const areaMatch = html.match(/(\d+)\s*m[²2]/i);
       const bedMatch = html.match(/(\d+)\s*(?:quartos?|dormit[óo]rios?|su[íi]tes?)/i);
       const bathMatch = html.match(/(\d+)\s*(?:banheiros?|wc)/i);
       const parkMatch = html.match(/(\d+)\s*(?:vagas?|garagens?)/i);
-
-      const imgs = new Set<string>();
-      const ogImg = html.match(/property=["']og:image["']\s+content=["']([^"']+)/i)?.[1];
-      if (ogImg) imgs.add(absolutize(ogImg, url));
-      const imgRe = /<img[^>]+src=["']([^"']+)["']/gi;
-      let m;
-      while ((m = imgRe.exec(html)) !== null) {
-        if (!JUNK_RE.test(m[1]) && /\.(jpe?g|png|webp|avif)/i.test(m[1])) {
-          imgs.add(absolutize(m[1], url));
-        }
-      }
 
       extracted = {
         title: titleMatch?.[1]?.trim() || "Imóvel importado",
@@ -337,9 +331,17 @@ Deno.serve(async (req) => {
         bedrooms: bedMatch ? parseInt(bedMatch[1], 10) : 0,
         bathrooms: bathMatch ? parseInt(bathMatch[1], 10) : 0,
         parking: parkMatch ? parseInt(parkMatch[1], 10) : 0,
-        images: Array.from(imgs).slice(0, 20),
+        images: scrapedImages,
         missingFields: ["city", "neighborhood", "type"]
       };
+    } else if (extracted) {
+      // Merge Firecrawl LLM images with our advanced scraped images
+      const llmImages = (extracted.images || []).map((u: string) => upgradeImageUrl(absolutize(u, url)));
+      const combined = Array.from(new Set([...scrapedImages, ...llmImages]))
+        .filter(u => !JUNK_RE.test(u))
+        .slice(0, 30);
+      
+      extracted.images = combined;
     }
 
     if (!extracted || !extracted.title) {
@@ -351,11 +353,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Clean and upgrade images
-    if (extracted.images && extracted.images.length) {
-      extracted.images = extracted.images
-        .map((u: string) => upgradeImageUrl(absolutize(u, url)))
-        .filter((u: string) => !JUNK_RE.test(u) && !u.startsWith("data:"));
+    // Step 7: Cover Image & Step 10: Debug Logging
+    if (extracted.images && extracted.images.length > 0) {
+      const metaOg = html ? html.match(/property=["']og:image["']\s+content=["']([^"']+)/i) : null;
+      const ogUrl = metaOg ? upgradeImageUrl(absolutize(metaOg[1], url)) : null;
+      
+      if (ogUrl && extracted.images.includes(ogUrl)) {
+        // Move OG image to front
+        extracted.images = [ogUrl, ...extracted.images.filter(img => img !== ogUrl)];
+      }
+      
+      extracted.cover_image = extracted.images[0];
+      console.log(`Extraction complete for ${url}: ${extracted.images.length} images found. Cover: ${extracted.cover_image}`);
     }
 
     return new Response(JSON.stringify({ data: extracted }), {
