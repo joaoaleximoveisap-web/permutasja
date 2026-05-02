@@ -5,10 +5,12 @@ import { Bed, Maximize2, MapPin, Repeat2, Tag, ExternalLink, Trash2, ChevronLeft
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { useState } from "react";
+import { EditPropertyDialog } from "./EditPropertyDialog";
 
 export function PropertyDetail({ property, open, onOpenChange }: { property: Property | null; open: boolean; onOpenChange: (v: boolean) => void; }) {
   const { removeProperty } = useProperties();
   const [active, setActive] = useState(0);
+  const [editOpen, setEditOpen] = useState(false);
   if (!property) return null;
 
   return (
