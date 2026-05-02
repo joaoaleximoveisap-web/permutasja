@@ -277,7 +277,7 @@ async function fallbackExtraction(url: string): Promise<ExtractedProperty> {
     address: location,
     description: description.substring(0, 1000),
     features: [],
-    images: extractRealImagesFromHTML(html, url),
+    images: extractRealImagesFromHTML(doc.documentElement.outerHTML, url),
     source_url: url
   }
 }
