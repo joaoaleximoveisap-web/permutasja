@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { buildNormalized, uid } from "@/lib/property-utils";
 import { Property } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { extractPropertyData } from "@/services/bulkImportService";
 
@@ -34,37 +33,34 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
       const ok = consumeCredit();
       if (!ok) { toast.error("Sem créditos disponíveis."); return; }
 
-      const d = data.data as {
-        title: string; price: number; area: number; bedrooms: number;
-        bathrooms?: number; parking?: number; description: string; images: string[];
-        city?: string; neighborhood?: string; type?: string;
-        permuta?: boolean; permutaDetails?: string; missingFields?: string[];
-      };
+      const priceValue = typeof d.price === 'number' ? d.price : Number(d.price.toString().replace(/[^0-9]/g, '')) || 0;
+      const areaValue = typeof d.area === 'number' ? d.area : Number(d.area.toString().replace(/[^0-9]/g, '')) || 0;
+      const bedroomsValue = typeof d.bedrooms === 'number' ? d.bedrooms : Number(d.bedrooms.toString().replace(/[^0-9]/g, '')) || 0;
 
       const tags = [
-        d.type?.toLowerCase(),
-        d.bedrooms ? `${d.bedrooms} quartos` : null,
-        d.neighborhood?.toLowerCase(),
-        d.price > 1500000 ? "alto padrão" : null,
-        d.area > 150 ? "amplo" : null,
+        (d as any).type?.toLowerCase(),
+        bedroomsValue ? `${bedroomsValue} quartos` : null,
+        (d as any).neighborhood?.toLowerCase(),
+        priceValue > 1500000 ? "alto padrão" : null,
+        areaValue > 150 ? "amplo" : null,
       ].filter(Boolean) as string[];
 
       const base = {
         title: d.title || "Imóvel importado",
-        price: d.price || 0,
-        area: d.area || 0,
-        bedrooms: d.bedrooms || 0,
-        bathrooms: d.bathrooms,
-        parking: d.parking,
+        price: priceValue,
+        area: areaValue,
+        bedrooms: bedroomsValue,
+        bathrooms: (d as any).bathrooms,
+        parking: (d as any).parking,
         description: d.description || "",
         images: d.images || [],
         coverIndex: 0,
         sourceUrl: url,
-        city: d.city,
-        neighborhood: d.neighborhood,
-        type: d.type,
+        city: (d as any).city || d.location?.split(',')[0],
+        neighborhood: (d as any).neighborhood || d.location?.split(',')[1],
+        type: (d as any).type,
         tags,
-        permuta: { enabled: !!d.permuta, details: d.permutaDetails },
+        permuta: { enabled: !!(d as any).permuta, details: (d as any).permutaDetails },
       };
 
       const fieldSources: Record<string, "imported" | "user_corrected" | "manual"> = {};

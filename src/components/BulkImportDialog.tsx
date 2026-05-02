@@ -3,8 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Layers, Loader2, Check, X, Building2, AlertTriangle, ArrowRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Layers, Building2, AlertTriangle, Check, X } from "lucide-react";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { Property } from "@/lib/types";
 import { buildNormalized, uid, formatBRL } from "@/lib/property-utils";
@@ -15,15 +14,8 @@ export function BulkImportDialog() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
   const [phase, setPhase] = useState<"idle" | "discovering" | "extracting" | "preview">("idle");
-  const [discoveredLinks, setDiscoveredLinks] = useState<string[]>([]);
   const [extractedProperties, setExtractedProperties] = useState<Property[]>([]);
   const [progress, setProgress] = useState(0);
-  const [scanDebug, setScanDebug] = useState<{
-    elementsScanned: number;
-    potentialCards: number;
-    pricesFound: number;
-    linksExtracted: number;
-  } | null>(null);
   const { addProperty, properties } = useProperties();
 
   const discoverLinks = async () => {
@@ -39,23 +31,10 @@ export function BulkImportDialog() {
         setPhase("idle");
         return;
       }
-      
-      if (links.length === 0) {
-        if (debug && (debug.potentialCards > 0 || debug.pricesFound > 0)) {
-          toast.info(`Encontrei ${debug.potentialCards} imóveis, mas os links estão protegidos.`, {
-            description: "Tente um link direto de um dos imóveis.",
-            duration: 6000
-          });
-        } else {
-          toast.error("Nenhum link de imóvel encontrado nesta página.");
-        }
-        setPhase("idle");
-        return;
-      }
 
-      setDiscoveredLinks(links);
       startExtraction(links);
     } catch (err) {
+      console.error("Discovery error:", err);
       toast.error("Erro ao descobrir links");
       setPhase("idle");
     }
@@ -73,28 +52,29 @@ export function BulkImportDialog() {
           // Check for duplicates
           if (properties.some(p => p.sourceUrl === link)) return null;
 
-          const { data } = await supabase.functions.invoke("scrape-property", {
-            body: { url: link },
-          });
+          const d = await extractPropertyData(link);
           
-          if (!data?.data) return null;
-          const d = data.data;
+          if (!d) return null;
 
           // Validation
           if (!d.title || !d.price || !d.images?.length) return null;
 
+          const priceValue = typeof d.price === 'number' ? d.price : Number(d.price.toString().replace(/[^0-9]/g, '')) || 0;
+          const areaValue = typeof d.area === 'number' ? d.area : Number(d.area.toString().replace(/[^0-9]/g, '')) || 0;
+          const bedroomsValue = typeof d.bedrooms === 'number' ? d.bedrooms : Number(d.bedrooms.toString().replace(/[^0-9]/g, '')) || 0;
+
           const base = {
             title: d.title,
-            price: d.price,
-            area: d.area || 0,
-            bedrooms: d.bedrooms || 0,
+            price: priceValue,
+            area: areaValue,
+            bedrooms: bedroomsValue,
             description: d.description || "",
             images: d.images,
-            city: d.city,
-            neighborhood: d.neighborhood,
-            type: d.type,
-            tags: [d.type?.toLowerCase(), d.neighborhood?.toLowerCase()].filter(Boolean) as string[],
-            permuta: { enabled: !!d.permuta, details: d.permutaDetails },
+            city: (d as any).city || d.location?.split(',')[0],
+            neighborhood: (d as any).neighborhood || d.location?.split(',')[1],
+            type: (d as any).type,
+            tags: [(d as any).type?.toLowerCase(), (d as any).neighborhood?.toLowerCase()].filter(Boolean) as string[],
+            permuta: { enabled: !!(d as any).permuta, details: (d as any).permutaDetails },
           };
 
           return {
@@ -139,10 +119,8 @@ export function BulkImportDialog() {
     setOpen(false);
     setUrl("");
     setPhase("idle");
-    setDiscoveredLinks([]);
     setExtractedProperties([]);
     setProgress(0);
-    setScanDebug(null);
   };
 
   return (
@@ -217,35 +195,6 @@ export function BulkImportDialog() {
                   Trocar link
                 </Button>
               </div>
-
-              {scanDebug && (
-                <div className="glass rounded-xl p-3 border border-glass-border">
-                  <details className="cursor-pointer">
-                    <summary className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center justify-between">
-                      Detalhes da varredura
-                      <span className="text-accent">Ver mais</span>
-                    </summary>
-                    <div className="mt-2 grid grid-cols-2 gap-2 text-[10px]">
-                      <div className="flex justify-between border-b border-glass-border/30 pb-1">
-                        <span className="text-muted-foreground">Tamanho do DOM:</span>
-                        <span className="font-mono">{(scanDebug.elementsScanned / 1024).toFixed(1)} KB</span>
-                      </div>
-                      <div className="flex justify-between border-b border-glass-border/30 pb-1">
-                        <span className="text-muted-foreground">Cards detectados:</span>
-                        <span className="font-mono">{scanDebug.potentialCards}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-glass-border/30 pb-1">
-                        <span className="text-muted-foreground">Preços lidos:</span>
-                        <span className="font-mono">{scanDebug.pricesFound}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-glass-border/30 pb-1">
-                        <span className="text-muted-foreground">Links extraídos:</span>
-                        <span className="font-mono">{scanDebug.linksExtracted}</span>
-                      </div>
-                    </div>
-                  </details>
-                </div>
-              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {extractedProperties.map((p, i) => (
