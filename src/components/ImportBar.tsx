@@ -24,13 +24,27 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
     setLoading(true);
     try {
       const d = await extractSingleProperty(url);
+      
+      console.log('=== IMPORT DEBUG ===');
+      console.log('Full extracted data:', JSON.stringify(d, null, 2));
+      const imgs = d?.images || [];
+      console.log('Images array:', imgs);
+      console.log('Images count:', imgs.length);
+      console.log('First image URL:', imgs[0]);
+
+      // TEMPORARY: Show alert so user can see without opening console
+      alert(
+        'DEBUG IMAGENS:\n' +
+        'Total: ' + imgs.length + '\n' +
+        'URLs:\n' + imgs.slice(0, 5).join('\n')
+      );
 
       if (!d) {
         toast.error("Falha na importação", { description: "Não conseguimos extrair dados deste link." });
         return;
       }
 
-      if (d.images.length === 0) {
+      if (imgs.length === 0) {
         toast.warning("Nenhuma foto encontrada. Você pode adicionar manualmente.");
       }
 

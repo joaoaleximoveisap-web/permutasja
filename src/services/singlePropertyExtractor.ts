@@ -350,13 +350,24 @@ function processImages(rawImages: string[], sourceUrl: string): string[] {
   const baseUrl = new URL(sourceUrl).origin
 
   return rawImages
+    .filter(img => typeof img === 'string' && img.trim().length > 0)
     .map(img => {
-      if (img.startsWith('//')) return 'https:' + img
-      if (img.startsWith('/')) return baseUrl + img
-      if (!img.startsWith('http')) return baseUrl + '/' + img
-      return img
+      let url = img.trim()
+      if (url.startsWith('//')) return 'https:' + url
+      if (url.startsWith('/')) return baseUrl + url
+      if (!url.startsWith('http')) {
+        // If it looks like a path but doesn't start with /, add /
+        if (/^[a-z0-9]/i.test(url) && !url.includes(' ')) {
+          return baseUrl + '/' + url
+        }
+        return url
+      }
+      return url
     })
     .filter(img => {
+      // Must be a URL and not placeholder text
+      if (!img.startsWith('http')) return false
+      
       const low = img.toLowerCase()
       // Filter trash
       return !(
@@ -370,7 +381,9 @@ function processImages(rawImages: string[], sourceUrl: string): string[] {
         low.includes('maps.') || low.includes('staticmap') ||
         low.includes('corretor') || low.includes('agent') ||
         low.includes('banner') || low.includes('selo') ||
-        low.includes('badge') || low.includes('watermark')
+        low.includes('badge') || low.includes('watermark') ||
+        // Check for the specific problematic text pattern mentioned by user
+        /im[oó]vel \d+/i.test(low)
       )
     })
     .map(upgradeImageResolution)
