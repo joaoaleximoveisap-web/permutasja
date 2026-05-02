@@ -36,18 +36,28 @@ export default function Properties() {
 
   return (
     <AppShell>
-      <div className="max-w-7xl mx-auto space-y-5">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-semibold">Imóveis</h1>
-            <p className="text-sm text-muted-foreground">{filtered.length} de {properties.length} na sua carteira</p>
+      <div className="max-w-[1400px] mx-auto space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-4xl font-bold tracking-tight">Carteira de Imóveis</h1>
+            <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+              {filtered.length} imóveis filtrados de {properties.length} totais
+            </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
             <AddPropertyDialog />
           </div>
         </div>
 
-        <ImportBar />
+        <div className="bg-primary rounded-[2rem] p-6 md:p-8 shadow-2xl shadow-primary/10">
+          <div className="max-w-3xl">
+            <h2 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-accent" /> Importação Rápida via Link
+            </h2>
+            <ImportBar />
+          </div>
+        </div>
 
         <div className="flex flex-col md:flex-row gap-4">
           <aside className="hidden lg:block w-72 shrink-0">
