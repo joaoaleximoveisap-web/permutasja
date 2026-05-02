@@ -314,9 +314,9 @@ export function ImageEditor({ images, coverIndex, onChange }: Props) {
             </button>
           )}
           <img
-            src={images[viewerIdx]}
+            src={displaySrc(images[viewerIdx])}
             alt={`Imóvel ${viewerIdx + 1}`}
-            className="max-w-[92vw] max-h-[92vh] object-contain rounded-lg shadow-2xl"
+            className="max-w-[92vw] max-h-[85vh] object-contain rounded-lg shadow-2xl transition-all duration-300"
             onClick={(e) => e.stopPropagation()}
           />
           <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm">
