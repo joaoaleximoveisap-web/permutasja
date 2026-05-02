@@ -218,6 +218,36 @@ export function BulkImportDialog() {
                   Trocar link
                 </Button>
               </div>
+
+              {scanDebug && (
+                <div className="glass rounded-xl p-3 border border-glass-border">
+                  <details className="cursor-pointer">
+                    <summary className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+                      Detalhes da varredura
+                      <span className="text-accent">Ver mais</span>
+                    </summary>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-[10px]">
+                      <div className="flex justify-between border-b border-glass-border/30 pb-1">
+                        <span className="text-muted-foreground">Tamanho do DOM:</span>
+                        <span className="font-mono">{(scanDebug.elementsScanned / 1024).toFixed(1)} KB</span>
+                      </div>
+                      <div className="flex justify-between border-b border-glass-border/30 pb-1">
+                        <span className="text-muted-foreground">Cards detectados:</span>
+                        <span className="font-mono">{scanDebug.potentialCards}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-glass-border/30 pb-1">
+                        <span className="text-muted-foreground">Preços lidos:</span>
+                        <span className="font-mono">{scanDebug.pricesFound}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-glass-border/30 pb-1">
+                        <span className="text-muted-foreground">Links extraídos:</span>
+                        <span className="font-mono">{scanDebug.linksExtracted}</span>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {extractedProperties.map((p, i) => (
                   <div key={i} className="glass rounded-xl overflow-hidden flex flex-col border border-glass-border">
