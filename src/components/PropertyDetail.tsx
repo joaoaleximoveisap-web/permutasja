@@ -1,7 +1,7 @@
 import { Property } from "@/lib/types";
 import { formatBRL } from "@/lib/property-utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Bed, Maximize2, MapPin, Repeat2, Tag, ExternalLink, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bed, Maximize2, MapPin, Repeat2, Tag, ExternalLink, Trash2, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { useState } from "react";
