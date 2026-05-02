@@ -8,6 +8,7 @@ import { buildNormalized, uid } from "@/lib/property-utils";
 import { Property } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { extractPropertyData } from "@/services/bulkImportService";
 
 export function ImportBar({ onImported }: { onImported?: () => void }) {
   const [url, setUrl] = useState("");
@@ -23,13 +24,10 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("scrape-property", {
-        body: { url },
-      });
+      const d = await extractPropertyData(url);
 
-      if (error || data?.error) {
-        const msg = (data?.error as string) || error?.message || "Não conseguimos acessar este link.";
-        toast.error("Falha na importação", { description: msg });
+      if (!d) {
+        toast.error("Falha na importação", { description: "Não conseguimos extrair dados deste link." });
         return;
       }
 
@@ -86,7 +84,7 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         status: "draft",
         originalData: d as unknown as Record<string, unknown>,
         fieldSources,
-        missingFields: d.missingFields || [],
+        missingFields: (d as any).missingFields || [],
       };
 
       upsertDraft(draft);

@@ -9,6 +9,7 @@ import { useProperties } from "@/contexts/PropertiesContext";
 import { Property } from "@/lib/types";
 import { buildNormalized, uid, formatBRL } from "@/lib/property-utils";
 import { toast } from "sonner";
+import { scanListingPage, extractPropertyData } from "@/services/bulkImportService";
 
 export function BulkImportDialog() {
   const [open, setOpen] = useState(false);
@@ -31,15 +32,13 @@ export function BulkImportDialog() {
 
     setPhase("discovering");
     try {
-      const { data, error } = await supabase.functions.invoke("scrape-property", {
-        body: { url, mode: "discover" },
-      });
-
-      if (error || !data) throw new Error("Falha ao escanear página");
+      const links = await scanListingPage(url);
       
-      const links = (data.data as string[]) || [];
-      const debug = data.debug;
-      setScanDebug(debug);
+      if (links.length === 0) {
+        toast.error("Nenhum link de imóvel encontrado nesta página.");
+        setPhase("idle");
+        return;
+      }
       
       if (links.length === 0) {
         if (debug && (debug.potentialCards > 0 || debug.pricesFound > 0)) {
