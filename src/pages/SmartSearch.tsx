@@ -177,40 +177,39 @@ export default function SmartSearch() {
               </div>
 
               {m.results && m.results.length > 0 && (
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 mb-2">
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                   {m.results.map(p => (
                     <div 
                       key={p.id} 
-                      className="glass rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all group flex flex-col"
+                      className="bg-white rounded-3xl overflow-hidden border border-border/50 hover:shadow-xl transition-all group flex flex-col"
                     >
                       <div className="aspect-video relative overflow-hidden">
-                        <img src={p.images[0]} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" />
-                        <div className="absolute top-2 left-2 flex gap-1">
-                          <span className="text-[10px] bg-black/60 text-white px-2 py-0.5 rounded-full backdrop-blur-md uppercase font-bold tracking-tighter">
+                        <img src={p.images[0]} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <div className="absolute top-4 left-4">
+                          <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold shadow-sm uppercase">
                             {p.type}
                           </span>
                         </div>
                         {p.permuta.enabled && (
-                          <div className="absolute top-2 right-2 bg-accent/90 text-white text-[9px] px-2 py-0.5 rounded-full backdrop-blur-sm font-bold flex items-center gap-1 shadow-lg">
+                          <div className="absolute top-4 right-4 bg-accent text-white text-[9px] px-2.5 py-1 rounded-full font-bold flex items-center gap-1 shadow-lg">
                             <Repeat2 className="h-3 w-3" /> PERMUTA
                           </div>
                         )}
                       </div>
-                      <div className="p-3 flex-1">
-                        <div className="text-lg font-bold text-gradient">{formatBRL(p.price)}</div>
-                        <h4 className="text-xs font-medium text-foreground/80 truncate mb-2">{p.title}</h4>
-                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground mb-3">
-                          <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.bedrooms} qtos</span>
-                          <span className="flex items-center gap-1"><Home className="h-3 w-3" />{p.area}m²</span>
-                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{p.city}</span>
+                      <div className="p-5 flex-1 space-y-3">
+                        <div className="text-2xl font-bold tracking-tight text-primary">{formatBRL(p.price)}</div>
+                        <h4 className="text-sm font-semibold text-foreground/80 line-clamp-1">{p.title}</h4>
+                        <div className="flex items-center gap-4 text-[11px] text-muted-foreground/80 font-medium">
+                          <span className="flex items-center gap-1.5"><Bed className="h-3.5 w-3.5" />{p.bedrooms}</span>
+                          <span className="flex items-center gap-1.5"><Home className="h-3.5 w-3.5" />{p.area}m²</span>
+                          <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{p.city}</span>
                         </div>
                         <Button 
                           size="sm" 
-                          variant="outline" 
-                          className="w-full rounded-xl text-xs h-8 border-primary/20 hover:bg-primary/10"
+                          className="w-full rounded-xl text-xs font-bold h-10 mt-2 bg-primary hover:bg-primary/90"
                           onClick={() => setSelectedProperty(p)}
                         >
-                          Ver detalhes <ArrowRight className="h-3 w-3 ml-1" />
+                          Detalhes do Imóvel <ArrowRight className="h-3.5 w-3.5 ml-2" />
                         </Button>
                       </div>
                     </div>
