@@ -22,7 +22,17 @@ export async function scanListingPage(url: string): Promise<string[]> {
   });
 
   if (!response.ok) {
-    throw new Error(`Erro Firecrawl: ${response.status}`);
+    const errorText = await response.text();
+    console.error('Firecrawl scan error:', response.status, errorText);
+    
+    if (response.status === 402) {
+      throw new Error('Créditos do Firecrawl esgotados. Verifique seu plano.');
+    } else if (response.status === 429) {
+      throw new Error('Muitas requisições ao Firecrawl. Aguarde um momento.');
+    } else if (response.status === 401) {
+      throw new Error('Chave da API do Firecrawl inválida.');
+    }
+    throw new Error(`Erro ao acessar a página (${response.status})`);
   }
 
   const result = await response.json();
