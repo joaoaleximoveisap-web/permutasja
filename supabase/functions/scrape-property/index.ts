@@ -88,11 +88,45 @@ function extractImagesFromHtml(html: string, baseUrl: string): string[] {
   // 8. Direct URLs
   for (const m of html.matchAll(/["'](https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*)["']/gi)) foundImgs.push(m[1]);
 
-  const realImages = foundImgs
+  const cdnPatterns = [
+    { name: 'kenlo', pattern: 'kenlo.io' },
+    { name: 'kenlo', pattern: 'kenlo.com' },
+    { name: 'arbo', pattern: 'arboimoveis' },
+    { name: 'jetimob', pattern: 'jetimob' },
+    { name: 'vista', pattern: 'vistacrm' },
+    { name: 'imgzap', pattern: 'imgzap' },
+    { name: 'casamineira', pattern: 'casamineira' },
+    { name: 's3', pattern: 'amazonaws.com' },
+    { name: 'cloudinary', pattern: 'cloudinary' }
+  ];
+
+  const cdnCounts: Record<string, string[]> = {};
+  for (const img of foundImgs) {
+    for (const cdn of cdnPatterns) {
+      if (img.toLowerCase().includes(cdn.pattern)) {
+        if (!cdnCounts[cdn.name]) cdnCounts[cdn.name] = [];
+        cdnCounts[cdn.name].push(img);
+      }
+    }
+  }
+
+  let bestCdnImages: string[] = [];
+  let maxCount = 0;
+  for (const [name, imgs] of Object.entries(cdnCounts)) {
+    if (imgs.length > maxCount) {
+      maxCount = imgs.length;
+      bestCdnImages = imgs;
+    }
+  }
+
+  const imagesToProcess = bestCdnImages.length >= 2 ? bestCdnImages : foundImgs;
+
+  const realImages = imagesToProcess
     .map(u => u.startsWith('//') ? 'https:' + u : u.startsWith('/') ? baseOrigin + u : u)
     .filter(u => { try { new URL(u); return true } catch { return false } })
     .filter(u => {
       const l = u.toLowerCase();
+      // Expanded reject list for stronger trash filtering
       return !(l.includes('logo') || l.includes('icon') || l.includes('favicon') ||
         l.includes('avatar') || l.includes('sprite') || l.includes('.svg') ||
         l.includes('.gif') || l.includes('.ico') || l.includes('whatsapp') ||
@@ -100,7 +134,12 @@ function extractImagesFromHtml(html: string, baseUrl: string): string[] {
         l.includes('maps.') || l.includes('staticmap') || l.includes('corretor') ||
         l.includes('agent') || l.includes('banner') || l.includes('selo') ||
         l.includes('badge') || l.includes('watermark') || l.includes('1x1') ||
-        l.includes('placeholder') || l.includes('spinner') || l.includes('loading'));
+        l.includes('placeholder') || l.includes('spinner') || l.includes('loading') ||
+        l.includes('empreendimento') || l.includes('lancamento') || l.includes('slide') || 
+        l.includes('hero') || l.includes('destaque') || l.includes('parceiro') || 
+        l.includes('partner') || l.includes('construtora') || l.includes('incorporadora') || 
+        l.includes('footer') || l.includes('header') || l.includes('menu') || 
+        l.includes('nav-') || l.includes('sidebar') || l.includes('widget'));
     })
     .map(u => upgradeImageUrl(u))
     .filter((u, i, a) => a.findIndex(x => x.replace(/\?.*$/,'').toLowerCase() === u.replace(/\?.*$/,'').toLowerCase()) === i)
