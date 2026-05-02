@@ -13,7 +13,7 @@ import { uid, buildNormalized } from '@/lib/property-utils';
 export function BulkImportModal() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
-  const { step, properties, progress, startScan, setStep, toggleSelect } = useBulkImport();
+  const { step, properties, progress, startScan, setStep, toggleSelect, isLoading } = useBulkImport();
   const { addProperty } = useProperties();
 
   const handleSave = async () => {
