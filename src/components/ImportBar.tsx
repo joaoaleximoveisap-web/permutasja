@@ -23,11 +23,15 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
 
     setLoading(true);
     try {
-      const d = await extractPropertyData(url);
+      const d = await extractSingleProperty(url);
 
       if (!d) {
         toast.error("Falha na importação", { description: "Não conseguimos extrair dados deste link." });
         return;
+      }
+
+      if (d.images.length === 0) {
+        toast.warning("Nenhuma foto encontrada. Você pode adicionar manualmente.");
       }
 
       const ok = consumeCredit();
@@ -38,9 +42,7 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
       const bedroomsValue = typeof d.bedrooms === 'number' ? d.bedrooms : Number(d.bedrooms.toString().replace(/[^0-9]/g, '')) || 0;
 
       const tags = [
-        (d as any).type?.toLowerCase(),
         bedroomsValue ? `${bedroomsValue} quartos` : null,
-        (d as any).neighborhood?.toLowerCase(),
         priceValue > 1500000 ? "alto padrão" : null,
         areaValue > 150 ? "amplo" : null,
       ].filter(Boolean) as string[];
@@ -50,21 +52,21 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         price: priceValue,
         area: areaValue,
         bedrooms: bedroomsValue,
-        bathrooms: (d as any).bathrooms,
-        parking: (d as any).parking,
+        bathrooms: Number(d.bathrooms) || 0,
+        parking: Number(d.parking) || 0,
         description: d.description || "",
         images: d.images || [],
         coverIndex: 0,
         sourceUrl: url,
-        city: (d as any).city || d.location?.split(',')[0],
-        neighborhood: (d as any).neighborhood || d.location?.split(',')[1],
-        type: (d as any).type,
+        city: d.location?.split(',')[0]?.trim() || "",
+        neighborhood: d.location?.split(',')[1]?.trim() || "",
+        type: "",
         tags,
-        permuta: { enabled: !!(d as any).permuta, details: (d as any).permutaDetails },
+        permuta: { enabled: false, details: "" },
       };
 
       const fieldSources: Record<string, "imported" | "user_corrected" | "manual"> = {};
-      ["title", "price", "area", "bedrooms", "bathrooms", "parking", "description", "city", "neighborhood", "type", "images"].forEach((k) => {
+      ["title", "price", "area", "bedrooms", "bathrooms", "parking", "description", "city", "neighborhood", "images"].forEach((k) => {
         const v = (d as any)[k];
         if (v !== undefined && v !== null && v !== "" && v !== 0 && !(Array.isArray(v) && v.length === 0)) {
           fieldSources[k] = "imported";
@@ -80,7 +82,7 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         status: "draft",
         originalData: d as unknown as Record<string, unknown>,
         fieldSources,
-        missingFields: (d as any).missingFields || [],
+        missingFields: [],
       };
 
       upsertDraft(draft);
