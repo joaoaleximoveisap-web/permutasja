@@ -88,64 +88,76 @@ function extractImagesFromHtml(html: string, baseUrl: string): string[] {
   // 8. Direct URLs
   for (const m of html.matchAll(/["'](https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*)["']/gi)) foundImgs.push(m[1]);
 
-  const cdnPatterns = [
-    { name: 'kenlo', pattern: 'kenlo.io' },
-    { name: 'kenlo', pattern: 'kenlo.com' },
-    { name: 'arbo', pattern: 'arboimoveis' },
-    { name: 'jetimob', pattern: 'jetimob' },
-    { name: 'vista', pattern: 'vistacrm' },
-    { name: 'imgzap', pattern: 'imgzap' },
-    { name: 'casamineira', pattern: 'casamineira' },
-    { name: 's3', pattern: 'amazonaws.com' },
-    { name: 'cloudinary', pattern: 'cloudinary' }
-  ];
-
-  const cdnCounts: Record<string, string[]> = {};
-  for (const img of foundImgs) {
-    for (const cdn of cdnPatterns) {
-      if (img.toLowerCase().includes(cdn.pattern)) {
-        if (!cdnCounts[cdn.name]) cdnCounts[cdn.name] = [];
-        cdnCounts[cdn.name].push(img);
+  function findPropertyImages(allImages: string[], propertyUrl: string): string[] {
+    const segmentCounts: Record<string, string[]> = {};
+    const baseOrigin = new URL(propertyUrl).origin;
+    
+    // Strategy 1: Group by URL path segments
+    for (const img of allImages) {
+      try {
+        const urlObj = new URL(img);
+        const segments = urlObj.pathname.split('/').filter(s => s.length > 3);
+        
+        for (const seg of segments) {
+          if (['images', 'image', 'img', 'photos', 'foto', 'fotos', 
+               'media', 'upload', 'uploads', 'assets', 'static',
+               'public', 'files', 'content', 'wp-content',
+               'thumb', 'full', 'large', 'medium', 'small'].includes(seg.toLowerCase())) {
+            continue;
+          }
+          if (!segmentCounts[seg]) segmentCounts[seg] = [];
+          segmentCounts[seg].push(img);
+        }
+      } catch {}
+    }
+    
+    let bestImages: string[] = [];
+    for (const [seg, imgs] of Object.entries(segmentCounts)) {
+      if (imgs.length >= 3 && imgs.length > bestImages.length) {
+        bestImages = imgs;
       }
     }
-  }
-
-  let bestCdnImages: string[] = [];
-  let maxCount = 0;
-  for (const [name, imgs] of Object.entries(cdnCounts)) {
-    if (imgs.length > maxCount) {
-      maxCount = imgs.length;
-      bestCdnImages = imgs;
+    
+    if (bestImages.length >= 3) return bestImages;
+    
+    // Strategy 2: Property code from URL
+    const codeMatch = propertyUrl.match(/\/([A-Z]{2}\d+)/i);
+    if (codeMatch) {
+      const code = codeMatch[1];
+      const codeNum = code.replace(/[A-Z]/gi, '');
+      const codeImages = allImages.filter(img => img.includes(code) || (codeNum.length > 3 && img.includes(codeNum)));
+      if (codeImages.length >= 2) return codeImages;
     }
+    
+    // Strategy 3: Filter by blocklist
+    return allImages.filter(u => {
+      const l = u.toLowerCase();
+      const path = new URL(u).pathname.toLowerCase();
+      return !(
+        path.includes('banner') || path.includes('capa') ||
+        path.includes('empreend') || path.includes('lancamento') ||
+        path.includes('slide') || path.includes('hero') ||
+        path.includes('destaque') || path.includes('home') ||
+        l.includes('logo') || l.includes('icon') || l.includes('favicon') ||
+        l.includes('avatar') || l.includes('sprite') ||
+        l.includes('.svg') || l.includes('.gif') || l.includes('.ico') ||
+        l.includes('whatsapp') || l.includes('facebook') ||
+        l.includes('instagram') || l.includes('google') ||
+        l.includes('corretor') || l.includes('agent') ||
+        l.includes('footer') || l.includes('header') ||
+        l.includes('widget') || l.includes('sidebar') ||
+        l.includes('menu') || l.includes('nav')
+      );
+    });
   }
 
-  const imagesToProcess = bestCdnImages.length >= 2 ? bestCdnImages : foundImgs;
+  const propertyPhotos = findPropertyImages(foundImgs, baseUrl);
 
-  const realImages = imagesToProcess
-    .map(u => u.startsWith('//') ? 'https:' + u : u.startsWith('/') ? baseOrigin + u : u)
-    .filter(u => { try { new URL(u); return true } catch { return false } })
-    .filter(u => {
-      const l = u.toLowerCase();
-      // Expanded reject list for stronger trash filtering
-      return !(l.includes('logo') || l.includes('icon') || l.includes('favicon') ||
-        l.includes('avatar') || l.includes('sprite') || l.includes('.svg') ||
-        l.includes('.gif') || l.includes('.ico') || l.includes('whatsapp') ||
-        l.includes('facebook') || l.includes('instagram') || l.includes('google') ||
-        l.includes('maps.') || l.includes('staticmap') || l.includes('corretor') ||
-        l.includes('agent') || l.includes('banner') || l.includes('selo') ||
-        l.includes('badge') || l.includes('watermark') || l.includes('1x1') ||
-        l.includes('placeholder') || l.includes('spinner') || l.includes('loading') ||
-        l.includes('empreendimento') || l.includes('lancamento') || l.includes('slide') || 
-        l.includes('hero') || l.includes('destaque') || l.includes('parceiro') || 
-        l.includes('partner') || l.includes('construtora') || l.includes('incorporadora') || 
-        l.includes('footer') || l.includes('header') || l.includes('menu') || 
-        l.includes('nav-') || l.includes('sidebar') || l.includes('widget'));
-    })
+  const realImages = propertyPhotos
     .map(u => upgradeImageUrl(u))
     .filter((u, i, a) => a.findIndex(x => x.replace(/\?.*$/,'').toLowerCase() === u.replace(/\?.*$/,'').toLowerCase()) === i)
     .slice(0, 30);
 
-  console.log('Real images found:', realImages.length);
   return realImages;
 }
 
