@@ -11,6 +11,7 @@ import Login from "./pages/Login.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Properties from "./pages/Properties.tsx";
 import ReviewProperty from "./pages/ReviewProperty.tsx";
+import SmartSearch from "./pages/SmartSearch.tsx";
 
 const queryClient = new QueryClient();
 
