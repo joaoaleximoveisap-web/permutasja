@@ -143,6 +143,7 @@ export function BulkImportDialog() {
     setDiscoveredLinks([]);
     setExtractedProperties([]);
     setProgress(0);
+    setScanDebug(null);
   };
 
   return (
