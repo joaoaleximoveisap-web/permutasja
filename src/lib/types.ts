@@ -19,6 +19,8 @@ export type Property = {
   images: string[];
   coverIndex?: number;
   sourceUrl?: string;
+  address?: string;
+  condominium?: string;
   city?: string;
   neighborhood?: string;
   type?: string;
@@ -39,6 +41,8 @@ export type Property = {
   responsibilityAck?: boolean;
   originalData?: Record<string, unknown>;
   userCorrected?: boolean;
+  /** Per-field provenance: "imported" | "user_corrected" | "manual" */
+  fieldSources?: Record<string, "imported" | "user_corrected" | "manual">;
   missingFields?: string[];
 };
 

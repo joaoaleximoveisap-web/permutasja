@@ -69,6 +69,14 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         permuta: { enabled: !!d.permuta, details: d.permutaDetails },
       };
 
+      const fieldSources: Record<string, "imported" | "user_corrected" | "manual"> = {};
+      ["title", "price", "area", "bedrooms", "bathrooms", "parking", "description", "city", "neighborhood", "type", "images"].forEach((k) => {
+        const v = (d as any)[k];
+        if (v !== undefined && v !== null && v !== "" && v !== 0 && !(Array.isArray(v) && v.length === 0)) {
+          fieldSources[k] = "imported";
+        }
+      });
+
       const draft: Property = {
         id: uid(),
         ...base,
@@ -77,6 +85,7 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         origin: "import",
         status: "draft",
         originalData: d as unknown as Record<string, unknown>,
+        fieldSources,
         missingFields: d.missingFields || [],
       };
 

@@ -57,7 +57,18 @@ export default function ReviewProperty() {
     return () => clearTimeout(t);
   }, [draft, upsertDraft]);
 
-  const update = (patch: Partial<Property>) => setDraft((d) => d ? { ...d, ...patch } : d);
+  const update = (patch: Partial<Property>) => setDraft((d) => {
+    if (!d) return d;
+    const sources = { ...(d.fieldSources || {}) };
+    Object.keys(patch).forEach((k) => { sources[k] = "user_corrected"; });
+    return { ...d, ...patch, fieldSources: sources, userCorrected: true };
+  });
+
+  const fieldMissing = (field: keyof Property) => {
+    if (!draft) return false;
+    const v = draft[field] as unknown;
+    return v === undefined || v === null || v === "" || v === 0;
+  };
 
   const canPublish = useMemo(() => {
     if (!draft) return false;
@@ -146,6 +157,14 @@ export default function ReviewProperty() {
                 <div className="space-y-1.5">
                   <Label>Bairro</Label>
                   <Input value={draft.neighborhood || ""} onChange={(e) => update({ neighborhood: e.target.value })} />
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label>Endereço completo</Label>
+                  <Input placeholder="Rua, número, complemento" value={draft.address || ""} onChange={(e) => update({ address: e.target.value })} />
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label>Nome do condomínio / edifício</Label>
+                  <Input placeholder="Ex: Marquês do Herval" value={draft.condominium || ""} onChange={(e) => update({ condominium: e.target.value })} />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>Descrição</Label>
@@ -241,11 +260,29 @@ export default function ReviewProperty() {
           {step === 5 && (
             <div className="space-y-4">
               <Summary draft={draft} />
-              {!canPublish && (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-                  Para publicar é preciso: título, preço &gt; 0, ao menos 1 imagem, função selecionada, autorização e responsabilidade confirmadas.
-                </div>
-              )}
+              {(() => {
+                const issues: { msg: string; goto: Step }[] = [];
+                if (!draft.title?.trim()) issues.push({ msg: "Adicione um título.", goto: 0 });
+                if (!draft.price || draft.price <= 0) issues.push({ msg: "Informe o preço do imóvel.", goto: 0 });
+                if (draft.images.length < 1) issues.push({ msg: "Inclua pelo menos 1 imagem.", goto: 1 });
+                if (!draft.role) issues.push({ msg: "Selecione sua função.", goto: 3 });
+                if (!draft.authorized) issues.push({ msg: "Confirme a autorização do proprietário.", goto: 4 });
+                if (!draft.responsibilityAck) issues.push({ msg: "Aceite o termo de responsabilidade.", goto: 4 });
+                if (!issues.length) return null;
+                return (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm space-y-2">
+                    <p className="font-medium">Faltam alguns passos para publicar:</p>
+                    <ul className="space-y-1.5">
+                      {issues.map((it, i) => (
+                        <li key={i} className="flex items-center justify-between gap-3">
+                          <span>• {it.msg}</span>
+                          <Button size="sm" variant="ghost" className="h-7 rounded-md" onClick={() => setStep(it.goto)}>Corrigir</Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
