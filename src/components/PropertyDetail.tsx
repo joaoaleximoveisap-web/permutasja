@@ -186,17 +186,25 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
                 </div>
               </div>
 
-              {/* Gallery List (All Images) */}
+              {/* Gallery List (Social Style) */}
               <div className="pt-6">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 px-1">Galeria Completa</h3>
-                <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Galeria Completa</h3>
+                  <button 
+                    onClick={() => setFullscreen(true)}
+                    className="text-[10px] font-bold text-accent hover:underline flex items-center gap-1"
+                  >
+                    Ver Imersivo <ExternalLink className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
                   {property.images.map((src, i) => (
                     <button 
                       key={i} 
                       onClick={() => setActive(i)} 
-                      className={`aspect-video rounded-lg overflow-hidden ring-2 transition-all ${i === active ? "ring-accent scale-95" : "ring-transparent opacity-60 hover:opacity-100 hover:scale-105"}`}
+                      className={`aspect-video rounded-xl overflow-hidden ring-2 transition-all group ${i === active ? "ring-accent" : "ring-transparent opacity-60 hover:opacity-100 hover:scale-[1.02]"}`}
                     >
-                      <img src={src} alt="" className="h-full w-full object-cover" />
+                      <img src={src} alt="" className="h-full w-full object-cover transition-smooth group-hover:scale-110" />
                     </button>
                   ))}
                 </div>
