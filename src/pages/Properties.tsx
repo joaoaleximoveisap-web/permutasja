@@ -137,7 +137,7 @@ export default function Properties() {
 
           <div className="flex-1 space-y-4 min-w-0">
             <div className="flex gap-2">
-              <div className="glass rounded-xl flex items-center gap-2 px-3 flex-1">
+              <div className="bg-white border border-border rounded-xl flex items-center gap-2 px-3 flex-1 shadow-sm">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   value={query}
