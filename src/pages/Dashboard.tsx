@@ -118,7 +118,7 @@ export default function Dashboard() {
             {properties.length > 2 && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 {properties.slice(2, 6).map(p => (
-                  <Link key={p.id} to="/imoveis" className="glass rounded-2xl overflow-hidden block group transition-smooth hover:scale-[1.02]">
+                  <Link key={p.id} to="/imoveis" className="bg-card border border-border rounded-2xl overflow-hidden block group transition-smooth hover:scale-[1.02] shadow-sm">
                     <div className="aspect-video overflow-hidden">
                       <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover transition-smooth group-hover:scale-110" />
                     </div>
