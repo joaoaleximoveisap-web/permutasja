@@ -19,18 +19,31 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="max-w-6xl mx-auto space-y-6">
-        <section className="glass-strong rounded-3xl p-6 md:p-10 relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-primary opacity-20 blur-3xl animate-float" />
-          <div className="relative">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Permutas Já</p>
-            <h1 className="text-3xl md:text-5xl font-semibold mt-2 leading-tight">
-              Importe um imóvel <span className="text-gradient">em segundos</span>.
-            </h1>
-            <p className="mt-3 text-muted-foreground max-w-xl">
-              Cole o link de qualquer portal. Extraímos título, fotos, preço, área e tudo mais — pronto para a sua carteira.
-            </p>
-            <div className="mt-6 max-w-2xl">
+      <div className="max-w-7xl mx-auto space-y-10">
+        <section className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden rounded-[2.5rem]">
+          {/* Dynamic Background or Default Hero */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+            style={{ 
+              backgroundImage: `url(${properties[0]?.images[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920'})`,
+            }}
+          />
+          
+          {/* Dark Immersive Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+          
+          <div className="relative z-10 w-full max-w-4xl px-6 text-center space-y-6">
+            <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <p className="text-accent font-bold uppercase tracking-[0.3em] text-xs">Exclusividade & Luxo</p>
+              <h1 className="text-4xl md:text-7xl font-bold text-white leading-tight tracking-tight drop-shadow-2xl">
+                Sua Carteira <span className="text-accent">Inteligente</span>.
+              </h1>
+              <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto font-medium">
+                Extraímos dados e imagens de qualquer portal em segundos. Otimize sua gestão de imóveis de alto padrão.
+              </p>
+            </div>
+            
+            <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
               <ImportBar />
             </div>
           </div>
@@ -69,23 +82,54 @@ export default function Dashboard() {
                 Ver todos <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {properties.slice(0, 4).map(p => (
-                <Link key={p.id} to="/imoveis" className="glass rounded-2xl overflow-hidden block group transition-smooth hover:scale-[1.02]">
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover transition-smooth group-hover:scale-110" />
-                  </div>
-                  <div className="p-3">
-                    <div className="text-sm font-semibold truncate">{formatBRL(p.price)}</div>
-                    <div className="text-xs text-muted-foreground truncate">{p.title}</div>
-                    <div className="flex items-center gap-3 pt-2 text-[10px] text-muted-foreground/80 border-t border-glass-border/50">
-                      <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.bedrooms}</span>
-                      <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3" />{p.area}m²</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {properties.slice(0, 2).map(p => (
+                <Link 
+                  key={p.id} 
+                  to="/imoveis" 
+                  className="group relative h-[450px] overflow-hidden rounded-[2rem] transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl"
+                >
+                  <img 
+                    src={p.images[0]} 
+                    alt={p.title} 
+                    className="h-full w-full object-cover transition-all duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  
+                  <div className="absolute bottom-8 left-8 right-8 text-white space-y-2">
+                    <div className="flex gap-2">
+                      {p.isExclusive && <span className="bg-accent text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Exclusivo</span>}
+                      <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Alto Padrão</span>
+                    </div>
+                    <div className="text-3xl font-bold tracking-tight">{formatBRL(p.price)}</div>
+                    <p className="text-white/80 font-medium line-clamp-1">{p.title}</p>
+                    <div className="flex items-center gap-4 pt-4 text-xs font-bold uppercase tracking-wider text-white/60">
+                      <span>{p.bedrooms} Quartos</span>
+                      <span>•</span>
+                      <span>{p.area}m²</span>
+                      <span>•</span>
+                      <span>{p.neighborhood}</span>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
+            
+            {properties.length > 2 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                {properties.slice(2, 6).map(p => (
+                  <Link key={p.id} to="/imoveis" className="glass rounded-2xl overflow-hidden block group transition-smooth hover:scale-[1.02]">
+                    <div className="aspect-video overflow-hidden">
+                      <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover transition-smooth group-hover:scale-110" />
+                    </div>
+                    <div className="p-3">
+                      <div className="text-sm font-semibold truncate">{formatBRL(p.price)}</div>
+                      <div className="text-xs text-muted-foreground truncate">{p.title}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </section>
         )}
       </div>
