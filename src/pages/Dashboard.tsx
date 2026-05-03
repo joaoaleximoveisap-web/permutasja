@@ -169,9 +169,11 @@ export default function Dashboard() {
               </Link>
             </div>
           </div>
-        </section>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppShell>
   );
 }
+
 
