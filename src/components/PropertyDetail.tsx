@@ -17,105 +17,104 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
     <Dialog open={open} onOpenChange={(v) => {
       if (!editOpen) onOpenChange(v);
     }}>
-      <DialogContent className="max-w-6xl glass-strong border-glass-border rounded-3xl p-0 overflow-hidden max-h-[95vh] overflow-y-auto z-50">
+      <DialogContent className="max-w-7xl glass-strong border-white/5 rounded-[2.5rem] p-0 overflow-hidden max-h-[96vh] overflow-y-auto z-50 shadow-2xl">
         <div className="flex flex-col">
-          {/* Hero Section Style Netflix */}
+          {/* Hero Section Style Netflix - Full Immersion */}
           <div className="relative w-full aspect-video md:aspect-[21/9] bg-black overflow-hidden group">
-            <img 
-              src={property.images[active]} 
-              alt={property.title} 
-              className="w-full h-full object-cover transition-smooth" 
-            />
+            <div className="absolute inset-0 transition-transform duration-[10000ms] ease-out group-hover:scale-110">
+              <img 
+                src={property.images[active]} 
+                alt={property.title} 
+                className="w-full h-full object-cover" 
+              />
+            </div>
             
-            {/* Dark Gradient Overlay Style Netflix */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+            {/* Ultra Dark Cinematic Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
             
-            {/* Hero Content Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 space-y-4">
-              <div className="flex flex-wrap gap-2">
+            {/* Hero Content - Bottom-Left Positioned */}
+            <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16 flex flex-col items-start gap-4">
+              <div className="flex flex-wrap gap-2 animate-fade-in">
                 {property.permuta.enabled && (
-                  <div className="bg-accent text-white rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest shadow-lg">
-                    Aceita Permuta
+                  <div className="bg-accent text-white rounded-md px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">
+                    Permuta
                   </div>
                 )}
                 {property.price > 1500000 && (
-                  <div className="bg-black/60 backdrop-blur-md text-white border border-white/20 rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest">
-                    Alto Padrão
+                  <div className="bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-md px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em]">
+                    Premium
                   </div>
                 )}
               </div>
               
-              <div className="space-y-1">
-                <DialogTitle className="text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-2xl">
-                  {property.title}
+              <div className="max-w-3xl space-y-2 animate-slide-up">
+                <DialogTitle className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[0.95] drop-shadow-2xl">
+                  {property.title.split(',')[0]}
                 </DialogTitle>
-                <div className="text-2xl md:text-4xl font-bold text-accent drop-shadow-lg">
-                  {formatBRL(property.price)}
+                
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/80 font-bold text-sm md:text-lg">
+                  <span className="text-accent text-2xl md:text-3xl font-black tracking-tight">{formatBRL(property.price)}</span>
+                  <span className="opacity-40">•</span>
+                  <span className="flex items-center gap-1.5"><Bed className="h-5 w-5 opacity-60" />{property.bedrooms} suítes</span>
+                  <span className="opacity-40">•</span>
+                  <span className="flex items-center gap-1.5"><Maximize2 className="h-5 w-5 opacity-60" />{property.area} m²</span>
+                  <span className="opacity-40">•</span>
+                  <span className="flex items-center gap-1.5"><MapPin className="h-5 w-5 opacity-60" />{property.neighborhood}</span>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-6 text-white/90 font-medium">
-                <span className="flex items-center gap-2"><MapPin className="h-5 w-5 text-accent" />{property.neighborhood}, {property.city}</span>
-                <span className="flex items-center gap-2"><Bed className="h-5 w-5 text-accent" />{property.bedrooms} Quartos</span>
-                <span className="flex items-center gap-2"><Maximize2 className="h-5 w-5 text-accent" />{property.area} m²</span>
+              <div className="flex gap-4 pt-4 animate-fade-in" style={{ animationDelay: '200ms' }}>
+                <Button className="bg-white text-black hover:bg-white/90 rounded-xl px-8 h-14 font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl">
+                  Agendar Visita
+                </Button>
+                <Button variant="outline" className="glass bg-white/5 border-white/10 text-white rounded-xl px-8 h-14 font-black uppercase tracking-widest hover:bg-white/10 transition-all hover:scale-105 active:scale-95">
+                  <Repeat2 className="h-5 w-5 mr-2" /> Avaliar Permuta
+                </Button>
               </div>
             </div>
 
-            {/* Navigation Arrows */}
+            {/* Navigation Arrows - Only visible on hover */}
             {property.images.length > 1 && (
               <>
                 <button 
                   onClick={() => setActive(prev => (prev > 0 ? prev - 1 : property.images.length - 1))}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20"
-                  aria-label="Imagem anterior"
+                  className="absolute left-6 top-1/2 -translate-y-1/2 p-4 rounded-full bg-black/20 text-white hover:bg-black/60 backdrop-blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500 hover:scale-110 z-30"
                 >
-                  <ChevronLeft className="h-8 w-8" />
+                  <ChevronLeft className="h-10 w-10" />
                 </button>
                 <button 
                   onClick={() => setActive(prev => (prev < property.images.length - 1 ? prev + 1 : 0))}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20"
-                  aria-label="Próxima imagem"
+                  className="absolute right-6 top-1/2 -translate-y-1/2 p-4 rounded-full bg-black/20 text-white hover:bg-black/60 backdrop-blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500 hover:scale-110 z-30"
                 >
-                  <ChevronRight className="h-8 w-8" />
+                  <ChevronRight className="h-10 w-10" />
                 </button>
               </>
             )}
             
-            {/* Gallery Counter */}
-            <div className="absolute top-6 right-6 bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-md z-10 border border-white/10">
-              {active + 1} / {property.images.length}
+            {/* Gallery Counter - Discrete and blurred */}
+            <div className="absolute top-8 right-8 bg-black/40 text-white text-[10px] font-black tracking-[0.2em] px-4 py-2 rounded-full backdrop-blur-2xl border border-white/10 opacity-60 group-hover:opacity-100 transition-opacity uppercase">
+              Galeria {active + 1} / {property.images.length}
             </div>
           </div>
 
-          <div className="p-8 md:p-12 grid md:grid-cols-3 gap-12">
-            <div className="md:col-span-2 space-y-8">
-              <section>
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
-                  <Sparkles className="h-5 w-5 text-accent" /> Sobre este imóvel
+          <div className="p-8 md:p-16 grid lg:grid-cols-3 gap-16 bg-[#0a0a0a] text-white">
+            <div className="lg:col-span-2 space-y-12">
+              <section className="animate-fade-in">
+                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-accent mb-6 flex items-center gap-3">
+                  <div className="h-px w-8 bg-accent" /> Sobre a Residência
                 </h3>
-                <p className="text-lg leading-relaxed text-muted-foreground font-medium italic border-l-4 border-accent pl-6 py-2">
+                <p className="text-xl md:text-2xl leading-[1.6] text-white/70 font-medium tracking-tight">
                   {property.description}
                 </p>
               </section>
 
-              {property.permuta.enabled && (
-                <section className="glass rounded-3xl p-6 border border-accent/20 bg-accent/5">
-                  <h3 className="text-lg font-bold mb-2 flex items-center gap-2 text-accent">
-                    <Repeat2 className="h-5 w-5" /> Detalhes da Permuta
-                  </h3>
-                  <p className="text-muted-foreground font-medium">
-                    {property.permuta.details || "Este proprietário avalia propostas de permuta. Entre em contato para saber quais bens podem ser aceitos como parte do pagamento."}
-                  </p>
-                </section>
-              )}
-
               {property.tags.length > 0 && (
-                <section>
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">Tags em destaque</h3>
-                  <div className="flex flex-wrap gap-2">
+                <section className="animate-fade-in" style={{ animationDelay: '300ms' }}>
+                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-6">Destaques</h3>
+                  <div className="flex flex-wrap gap-3">
                     {property.tags.map(t => (
-                      <span key={t} className="glass border-white/5 rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-2 text-foreground/80">
-                        <Tag className="h-4 w-4 text-accent" />{t}
+                      <span key={t} className="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-sm font-bold flex items-center gap-2 hover:bg-white/10 transition-colors cursor-default">
+                        <Sparkles className="h-4 w-4 text-accent" />{t}
                       </span>
                     ))}
                   </div>
@@ -123,47 +122,55 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
               )}
             </div>
 
-            <div className="space-y-6">
-              <div className="glass-strong rounded-3xl p-6 border border-white/5 space-y-4 sticky top-6">
-                <h3 className="font-bold text-center text-sm uppercase tracking-widest text-muted-foreground">Ações Rápidas</h3>
-                <Button 
-                  onClick={() => setEditOpen(true)}
-                  className="w-full rounded-2xl h-12 bg-white/5 hover:bg-white/10 border-white/10 text-foreground font-bold"
-                  variant="outline"
-                >
-                  <Pencil className="h-4 w-4 mr-2 text-accent" /> Editar Imóvel
-                </Button>
-
-                {property.sourceUrl && (
-                  <Button asChild variant="outline" className="w-full rounded-2xl h-12 bg-white/5 hover:bg-white/10 border-white/10 text-foreground font-bold">
-                    <a href={property.sourceUrl} target="_blank" rel="noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2 text-accent" /> Ver Link Original
-                    </a>
+            <div className="space-y-8 animate-fade-in" style={{ animationDelay: '500ms' }}>
+              <div className="glass-strong bg-white/5 rounded-[2rem] p-8 border border-white/5 space-y-6">
+                <h3 className="font-black text-xs uppercase tracking-[0.3em] text-white/40">Gerenciamento</h3>
+                <div className="grid gap-3">
+                  <Button 
+                    onClick={() => setEditOpen(true)}
+                    className="w-full rounded-2xl h-14 bg-white/5 hover:bg-white/10 border-white/10 text-white font-black uppercase tracking-widest text-xs"
+                    variant="outline"
+                  >
+                    <Pencil className="h-4 w-4 mr-3 text-accent" /> Editar
                   </Button>
-                )}
-                
-                <div className="pt-4 border-t border-white/5">
+
+                  {property.sourceUrl && (
+                    <Button asChild variant="outline" className="w-full rounded-2xl h-14 bg-white/5 hover:bg-white/10 border-white/10 text-white font-black uppercase tracking-widest text-xs">
+                      <a href={property.sourceUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-3 text-accent" /> Link de Origem
+                      </a>
+                    </Button>
+                  )}
+                  
                   <Button
                     variant="ghost"
-                    className="w-full rounded-2xl h-12 text-destructive hover:bg-destructive/10 font-bold"
+                    className="w-full rounded-2xl h-14 text-white/40 hover:text-destructive hover:bg-destructive/10 font-black uppercase tracking-widest text-xs mt-4"
                     onClick={() => { removeProperty(property.id); onOpenChange(false); }}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" /> Excluir da Carteira
+                    <Trash2 className="h-4 w-4 mr-3" /> Remover
                   </Button>
                 </div>
               </div>
 
-              {/* Gallery Preview Grid */}
-              <div className="grid grid-cols-2 gap-3 pt-6">
-                {property.images.slice(0, 4).map((src, i) => (
-                  <button 
-                    key={i} 
-                    onClick={() => setActive(i)} 
-                    className={`aspect-video rounded-xl overflow-hidden ring-2 transition-all ${i === active ? "ring-accent scale-95" : "ring-transparent opacity-60 hover:opacity-100 hover:scale-105"}`}
-                  >
-                    <img src={src} alt="" className="h-full w-full object-cover" />
-                  </button>
-                ))}
+              {/* Gallery Preview - Netflix Style Horizontal or Grid */}
+              <div className="space-y-4">
+                <h3 className="font-black text-xs uppercase tracking-[0.3em] text-white/40">Galeria Completa</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {property.images.slice(0, 4).map((src, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setActive(i)} 
+                      className={`aspect-video rounded-2xl overflow-hidden ring-2 transition-all duration-500 ${i === active ? "ring-accent scale-95 shadow-[0_0_30px_rgba(234,179,8,0.3)]" : "ring-transparent opacity-40 hover:opacity-100 hover:scale-105"}`}
+                    >
+                      <img src={src} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                  {property.images.length > 4 && (
+                    <button className="aspect-video rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-xs uppercase tracking-widest text-white/60 hover:bg-white/10 transition-all">
+                      +{property.images.length - 4} Fotos
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
