@@ -51,14 +51,14 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-6 py-10">
           {stats.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="glass rounded-2xl p-4">
+            <div key={label} className="bg-white/50 border border-border/50 rounded-3xl p-6 transition-all hover:bg-white hover:shadow-xl group">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{label}</span>
-                <Icon className="h-4 w-4 text-accent" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{label}</span>
+                <Icon className="h-5 w-5 text-accent opacity-50 group-hover:opacity-100 transition-opacity" />
               </div>
-              <div className="mt-2 text-2xl font-semibold">{value}</div>
+              <div className="mt-3 text-3xl font-bold tracking-tighter">{value}</div>
             </div>
           ))}
         </section>
