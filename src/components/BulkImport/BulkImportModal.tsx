@@ -78,7 +78,7 @@ export function BulkImportModal() {
       <DialogContent className="glass-strong border-glass-border rounded-2xl max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="p-6 pb-4 border-b border-glass-border">
           <DialogTitle className="flex items-center gap-2 text-2xl font-semibold">
-            <Sparkles className="h-6 w-6 text-accent animate-pulse" /> Importação em Massa
+            <Sparkles className="h-6 w-6 text-accent animate-pulse" /> Extração de Dados
           </DialogTitle>
         </DialogHeader>
 
@@ -109,7 +109,7 @@ export function BulkImportModal() {
                   ) : (
                     <ArrowRight className="h-5 w-5" />
                   )}
-                  {isValidating ? "Validando URL..." : (step as string) === 'scanning' ? "Iniciando..." : "Iniciar Varredura Inteligente"}
+                  {isValidating ? "Validando URL..." : (step as string) === 'scanning' ? "Iniciando..." : "Iniciar Extração de Dados"}
                 </Button>
               </div>
 

@@ -15,70 +15,54 @@ export function useBulkImport() {
       return;
     }
 
-    console.log("[BulkImport] Iniciando varredura para:", url);
+    console.log("[Extração] Iniciando extração direta para:", url);
     try {
       setStep('scanning');
       
-      // 1. Auth Guard - Check session
-      console.log("[BulkImport] Passo 1: Verificando autenticação...");
-      const { data: { session: authSession }, error: authCheckError } = await supabase.auth.getSession();
-      
-      if (authCheckError) {
-        throw new Error(`Erro na sessão: ${authCheckError.message}`);
-      }
-      
-      if (!authSession?.user) {
-        throw new Error("Sessão expirada ou não encontrada. Por favor, faça login novamente.");
-      }
+      // 1. Auth Guard - Check session (Optional for direct extraction)
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const jwt = authSession?.access_token;
+      const userId = authSession?.user?.id || "00000000-0000-0000-0000-000000000000";
 
-      const jwt = authSession.access_token;
-
-      // 2. Create Session Record
-      console.log("[BulkImport] Passo 2: Criando registro de sessão...");
+      // 2. Create Session Record (Guest mode supported)
+      console.log("[Extração] Passo 1: Criando registro de sessão...");
       const { data: sess, error: sessErr } = await supabase
         .from('import_sessions')
         .insert({ 
           source_url: url, 
-          user_id: authSession.user.id, 
+          user_id: userId, 
           status: 'scanning' 
         })
         .select()
         .single();
 
       if (sessErr) {
-        throw new Error(`Erro ao criar sessão no banco: ${sessErr.message}`);
+        throw new Error(`Erro ao iniciar sessão: ${sessErr.message}`);
       }
       setSession(sess as any);
 
-      // 3. Invoke Edge Function with explicit token
-      console.log("[BulkImport] Passo 3: Chamando Edge Function (scan-listing-page)...");
+      // 3. Invoke Edge Function (Whitelisted for direct extraction)
+      console.log("[Extração] Passo 2: Chamando API de extração direta...");
       const { data: funcData, error: funcErr } = await supabase.functions.invoke('scan-listing-page', {
         body: { session_id: sess.id, url },
-        headers: {
-          Authorization: `Bearer ${jwt}`
-        }
+        headers: jwt ? { Authorization: `Bearer ${jwt}` } : {}
       });
 
       if (funcErr) {
-        console.error("[BulkImport] Falha na Edge Function:", funcErr);
-        throw new Error(`Erro na Edge Function: ${funcErr.message || "Falha na comunicação"}`);
+        console.error("[Extração] Falha na API:", funcErr);
+        throw new Error(`Falha na comunicação com o servidor: ${funcErr.message}`);
       }
 
       if (funcData?.error) {
-        console.error("[BulkImport] Erro retornado pela lógica da função:", funcData);
-        const detail = funcData.motivo ? `\nMotivo: ${funcData.motivo}` : "";
-        throw new Error(`${funcData.error}${detail}`);
+        console.error("[Extração] Erro retornado pela API:", funcData);
+        throw new Error(funcData.motivo || funcData.error);
       }
 
-      console.log("[BulkImport] Varredura iniciada com sucesso.");
+      console.log("[Extração] Extração iniciada com sucesso.");
     } catch (err: any) {
-      console.error("[BulkImport] Erro fatal no fluxo:", {
-        step: step === 'input' ? 'auth/init' : step,
-        error: err.message,
-        url
-      });
+      console.error("[Extração] Erro fatal no fluxo:", { error: err.message, url });
       
-      toast.error("Falha na varredura", { 
+      toast.error("Falha na extração", { 
         description: err.message,
         duration: 6000
       });

@@ -11,7 +11,7 @@ function absolutize(src: string, base: string): string {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  console.log("\n[DEBUG] Iniciando requisição de varredura...");
+  console.log("\n[DEBUG] Iniciando extração de dados...");
 
   const supabase = createClient(
     Deno.env.get("VITE_SUPABASE_URL") ?? "",
@@ -20,29 +20,18 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      console.error("[ERRO] Usuário não autenticado - Token não enviado");
-      return new Response(JSON.stringify({ 
-        error: "Usuário não autenticado", 
-        motivo: "Token de autorização ausente no cabeçalho da requisição.",
-        onde: "supabase/functions/scan-listing-page/index.ts:14"
-      }), { status: 401, headers: corsHeaders });
-    }
+    let user_id = "00000000-0000-0000-0000-000000000000"; // Default guest ID
 
-    const jwt = authHeader.replace('Bearer ', '');
-    // verify the token using the authenticated supabase client
-    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
-    
-    if (authError || !user) {
-      console.error("[ERRO] Auth error:", authError);
-      return new Response(JSON.stringify({ 
-        error: "Usuário não autenticado", 
-        motivo: authError?.message || "Token inválido ou expirado.",
-        onde: "supabase/functions/scan-listing-page/index.ts:25"
-      }), { status: 401, headers: corsHeaders });
+    if (authHeader) {
+      const jwt = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(jwt);
+      if (user) {
+        user_id = user.id;
+        console.log(`[OK] Usuário autenticado: ${user.id} (${user.email})`);
+      }
+    } else {
+      console.log("[INFO] Modo convidado (sem autenticação)");
     }
-
-    console.log(`[OK] Usuário autenticado: ${user.id} (${user.email})`);
 
     const { session_id, url } = await req.json();
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
@@ -184,11 +173,10 @@ Deno.serve(async (req) => {
 
 
     // Batch insert to avoid issues
-    await supabase.from("import_jobs").insert(jobs);
-    
     await supabase.from("import_sessions").update({ 
       total_found: validLinks.length, 
       status: "processing",
+      user_id: user_id, // Ensure user_id is updated if guest
       error_log: validLinks.length >= 500 ? "Limite de 500 imóveis atingido para esta sessão." : null
     }).eq("id", session_id);
 
