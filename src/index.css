@@ -7,9 +7,8 @@
 @layer base {
   :root {
     /* Default theme: Areia & Pedra (Quiet Luxury) */
-    --background: 35 15% 95%; /* Fundo mais sólido/areia */
-    --background-2: 35 15% 92%;
-    --foreground: 0 0% 10%; /* Texto primário quase preto */
+    --background: 35 15% 95%;
+    --foreground: 0 0% 10%;
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 10%;
@@ -17,14 +16,14 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
 
-    --primary: 37 40% 63%; /* Dourado C6A87D */
+    --primary: 37 40% 63%; 
     --primary-foreground: 0 0% 0%;
 
     --secondary: 35 10% 88%;
     --secondary-foreground: 0 0% 20%;
 
     --muted: 35 10% 85%;
-    --muted-foreground: 0 0% 42%; /* Texto secundário legível */
+    --muted-foreground: 0 0% 40%;
 
     --accent: 37 40% 63%;
     --accent-foreground: 0 0% 0%;
@@ -32,13 +31,13 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 35 10% 82%;
-    --input: 35 10% 82%;
+    --border: 0 0% 0% / 0.1;
+    --input: 0 0% 0% / 0.1;
     --ring: 37 40% 63%;
 
     --radius: 1rem;
 
-    /* Materiality & Depth */
+    /* Materiality */
     --glass-bg: 0 0% 100% / 0.85;
     --glass-border: 0 0% 0% / 0.08;
     --glass-highlight: 0 0% 100% / 1;
@@ -48,14 +47,14 @@
     --shadow-glass: 0 4px 20px -2px hsl(var(--glass-shadow)), inset 0 1px 0 0 hsl(var(--glass-highlight));
     --shadow-elevated: 0 20px 40px -12px hsla(0, 0%, 0%, 0.12);
 
-    /* Sidebar Refinement (Default/Dark) */
-    --sidebar-background: 0 0% 4%; /* #0B0B0B */
-    --sidebar-foreground: 0 0% 100%;
+    /* Sidebar Defaults (Light) */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 10%;
     --sidebar-primary: 37 40% 63%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 37 40% 63% / 0.15;
-    --sidebar-accent-foreground: 37 40% 63%;
-    --sidebar-border: 0 0% 100% / 0.05;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 37 40% 63% / 0.1;
+    --sidebar-accent-foreground: 0 0% 5%;
+    --sidebar-border: 0 0% 0% / 0.06;
     --sidebar-ring: 37 40% 63%;
   }
 
