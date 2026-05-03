@@ -4,7 +4,7 @@ import { useProperties } from "@/contexts/PropertiesContext";
 import { Link } from "react-router-dom";
 
 export function Topbar() {
-  const { credits } = useProperties();
+  const { credits, creditSystemEnabled } = useProperties();
   return (
     <header className="sticky top-0 z-30 mt-4 mx-4 md:mx-0 md:mt-4 md:mr-4">
       <div className="glass rounded-2xl px-4 py-3 flex items-center justify-between">
