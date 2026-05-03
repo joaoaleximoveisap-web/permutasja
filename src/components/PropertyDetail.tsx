@@ -31,34 +31,8 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
             
             {/* Hero Content Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {property.permuta.enabled && (
-                  <div className="bg-accent text-white rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest shadow-lg">
-                    Aceita Permuta
-                  </div>
-                )}
-                {property.price > 1500000 && (
-                  <div className="bg-black/60 backdrop-blur-md text-white border border-white/20 rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest">
-                    Alto Padrão
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-1">
-                <DialogTitle className="text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-2xl">
-                  {property.title}
-                </DialogTitle>
-                <div className="text-2xl md:text-4xl font-bold text-accent drop-shadow-lg">
-                  {formatBRL(property.price)}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-6 text-white/90 font-medium">
-                <span className="flex items-center gap-2"><MapPin className="h-5 w-5 text-accent" />{property.neighborhood}, {property.city}</span>
-                <span className="flex items-center gap-2"><Bed className="h-5 w-5 text-accent" />{property.bedrooms} Quartos</span>
-                <span className="flex items-center gap-2"><Maximize2 className="h-5 w-5 text-accent" />{property.area} m²</span>
-              </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              {/* Only Image, no text on top */}
             </div>
 
             {/* Navigation Arrows */}
@@ -89,6 +63,36 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
 
           <div className="p-8 md:p-12 grid md:grid-cols-3 gap-12">
             <div className="md:col-span-2 space-y-8">
+              <section className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {property.permuta.enabled && (
+                    <div className="bg-accent text-white rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest shadow-lg">
+                      Aceita Permuta
+                    </div>
+                  )}
+                  {property.price > 1500000 && (
+                    <div className="bg-primary/10 text-primary border border-primary/20 rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest">
+                      Alto Padrão
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
+                    {property.title}
+                  </h2>
+                  <div className="text-3xl md:text-4xl font-bold text-accent">
+                    {formatBRL(property.price)}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-6 text-muted-foreground font-medium text-lg border-b border-border pb-6">
+                  <span className="flex items-center gap-2"><MapPin className="h-5 w-5 text-accent" />{property.neighborhood}, {property.city}</span>
+                  <span className="flex items-center gap-2"><Bed className="h-5 w-5 text-accent" />{property.bedrooms} Quartos</span>
+                  <span className="flex items-center gap-2"><Maximize2 className="h-5 w-5 text-accent" />{property.area} m²</span>
+                </div>
+              </section>
+
               <section>
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
                   <Sparkles className="h-5 w-5 text-accent" /> Sobre este imóvel
@@ -153,17 +157,20 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
                 </div>
               </div>
 
-              {/* Gallery Preview Grid */}
-              <div className="grid grid-cols-2 gap-3 pt-6">
-                {property.images.slice(0, 4).map((src, i) => (
-                  <button 
-                    key={i} 
-                    onClick={() => setActive(i)} 
-                    className={`aspect-video rounded-xl overflow-hidden ring-2 transition-all ${i === active ? "ring-accent scale-95" : "ring-transparent opacity-60 hover:opacity-100 hover:scale-105"}`}
-                  >
-                    <img src={src} alt="" className="h-full w-full object-cover" />
-                  </button>
-                ))}
+              {/* Gallery List (All Images) */}
+              <div className="pt-6">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 px-1">Galeria Completa</h3>
+                <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                  {property.images.map((src, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setActive(i)} 
+                      className={`aspect-video rounded-lg overflow-hidden ring-2 transition-all ${i === active ? "ring-accent scale-95" : "ring-transparent opacity-60 hover:opacity-100 hover:scale-105"}`}
+                    >
+                      <img src={src} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
