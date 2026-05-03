@@ -265,14 +265,13 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
             )}
           </div>
 
-          {/* Full Screen Image */}
-          <div className="w-full h-full flex items-center justify-center overflow-hidden">
+          {/* Full Screen Image - Contain mode to avoid cropping */}
+          <div className="w-full h-full flex items-center justify-center bg-black">
             <img 
               src={property.images[active]} 
               alt="" 
-              className="w-full h-full object-cover md:object-contain select-none transition-all duration-500 animate-in zoom-in-95" 
+              className="max-w-full max-h-full w-auto h-auto object-contain select-none transition-all duration-500 animate-in zoom-in-95" 
               onClick={(e) => {
-                // Click on right side of image goes next, left goes prev
                 const rect = (e.target as HTMLElement).getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 if (x > rect.width / 2) nextImg();
