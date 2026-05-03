@@ -44,8 +44,7 @@ export function useBulkImport() {
       // 3. Invoke Edge Function (Whitelisted for direct extraction)
       console.log("[Extração] Passo 2: Chamando API de extração direta...");
       const { data: funcData, error: funcErr } = await supabase.functions.invoke('scan-listing-page', {
-        body: { session_id: sess.id, url },
-        headers: jwt ? { Authorization: `Bearer ${jwt}` } : {}
+        body: { session_id: sess.id, url }
       });
 
       if (funcErr) {
