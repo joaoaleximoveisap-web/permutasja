@@ -109,7 +109,7 @@ export function BulkImportModal() {
                   ) : (
                     <ArrowRight className="h-5 w-5" />
                   )}
-                  {isValidating ? "Validando URL..." : (step as string) === 'scanning' ? "Iniciando..." : "Iniciar Varredura Inteligente"}
+                  {isValidating ? "Validando URL..." : (step as string) === 'scanning' ? "Iniciando..." : "Iniciar Extração de Dados"}
                 </Button>
               </div>
 
