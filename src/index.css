@@ -48,16 +48,49 @@
     --shadow-glass: 0 4px 20px -2px hsl(var(--glass-shadow)), inset 0 1px 0 0 hsl(var(--glass-highlight));
     --shadow-elevated: 0 20px 40px -12px hsla(0, 0%, 0%, 0.12);
 
-    /* Sidebar Refinement */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 15%;
+    /* Sidebar Refinement (Default/Dark) */
+    --sidebar-background: 0 0% 4%; /* #0B0B0B */
+    --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 37 40% 63%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 37 40% 63% / 0.12;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 0% / 0.06;
+    --sidebar-accent: 37 40% 63% / 0.15;
+    --sidebar-accent-foreground: 37 40% 63%;
+    --sidebar-border: 0 0% 100% / 0.05;
     --sidebar-ring: 37 40% 63%;
   }
+
+  .theme-light {
+    --background: 35 15% 95%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --primary: 37 40% 63%;
+    --sidebar-background: 35 15% 90%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-border: 0 0% 0% / 0.1;
+    --sidebar-accent: 37 40% 63% / 0.1;
+    --sidebar-accent-foreground: 37 40% 63%;
+  }
+
+  .theme-verde {
+    --background: 155 30% 8%;
+    --foreground: 155 20% 95%;
+    --primary: 45 60% 50%; /* Dourado mais clássico */
+    --sidebar-background: 155 35% 6%;
+    --sidebar-foreground: 155 20% 90%;
+    --sidebar-border: 155 20% 100% / 0.05;
+    --sidebar-accent: 45 60% 50% / 0.15;
+    --sidebar-accent-foreground: 45 60% 50%;
+  }
+
+  .theme-classic {
+    --background: 35 25% 12%;
+    --foreground: 35 15% 95%;
+    --primary: 37 40% 63%;
+    --sidebar-background: 35 25% 10%;
+    --sidebar-foreground: 35 15% 90%;
+    --sidebar-border: 35 15% 100% / 0.05;
+  }
+
 
   /* THEME 2 — Ônix Dourado (Preto Premium) */
   [data-theme="midnight"] {
