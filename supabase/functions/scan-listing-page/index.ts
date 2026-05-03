@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
         error_log: { 
           code: "incompatible_page", 
           message: "Nenhum link de imóvel individual encontrado. O site pode estar protegendo os dados via API dinâmica.",
-          debug: { htmlLength: html.length, apiDetected: !!apiEndpoint }
+          debug: { htmlLength: html.length, apiDetected: false }
         } 
       }).eq("id", session_id);
       return new Response(JSON.stringify({ found: 0 }), { headers: corsHeaders });
