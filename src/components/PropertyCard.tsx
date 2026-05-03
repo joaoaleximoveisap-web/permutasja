@@ -34,8 +34,11 @@ export function PropertyCard({
             loading="lazy"
             className="h-full w-full object-cover transition-smooth group-hover:scale-105"
           />
-          {/* Gradient Overlay for Text Legibility */}
+          {/* Automatic Dark Overlay for Legibility - rgba(0,0,0,0.4) as requested */}
+          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
+          {/* Gradient Overlay for bottom text */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
           
           {selectionMode && (
             <div className={cn(
