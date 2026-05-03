@@ -11,17 +11,17 @@ export function Sidebar() {
   const { pathname } = useLocation();
   return (
     <aside className="hidden md:flex sticky top-0 h-screen w-64 flex-col p-4 gap-4 border-r border-sidebar-border bg-sidebar-background">
-      <div className="glass rounded-2xl p-4 flex items-center gap-3">
+      <div className="p-4 flex items-center gap-3">
         <div className="h-10 w-10 rounded-xl bg-gradient-primary grid place-items-center shadow-glass">
           <Sparkles className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
           <div className="font-semibold tracking-tight">Permutas Já</div>
-          <div className="text-xs text-muted-foreground">para corretores</div>
+          <div className="text-xs text-muted-foreground font-medium">para corretores</div>
         </div>
       </div>
 
-      <nav className="glass rounded-2xl p-2 flex-1">
+      <nav className="p-2 flex-1">
         <ul className="space-y-1">
           {items.map(({ to, label, icon: Icon }) => {
             const active = pathname.startsWith(to);
