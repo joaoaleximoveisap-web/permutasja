@@ -139,6 +139,7 @@ Deno.serve(async (req) => {
       // Emergency: if patterns fail, try to find any link inside a "card" structure
       const cardLinksMatch = html.matchAll(/<(?:div|section|li|a)[^>]+(?:card|item|listing|property|result)[^>]*?>[\s\S]*?<a[^>]+href=["']([^"']+)["']/gi);
       const emergencyLinks = new Set<string>();
+      const domain = new URL(url).hostname;
       for (const m of cardLinksMatch) {
         try {
           const abs = absolutize(m[1], url);
@@ -152,25 +153,38 @@ Deno.serve(async (req) => {
       }
     }
 
-    const batchSize = 50;
-    for (let i = 0; i < jobs.length; i += batchSize) {
-      const batch = jobs.slice(i, i + batchSize);
-      await supabase.from("import_jobs").insert(batch);
+    if (validLinks.length === 0) {
+      await supabase.from("import_sessions").update({ 
+        status: "failed", 
+        error_log: { 
+          code: "incompatible_page", 
+          message: "Nenhum link de imóvel individual encontrado. O site pode estar protegendo os dados via API dinâmica.",
+          debug: { htmlLength: html.length, apiDetected: false }
+        } 
+      }).eq("id", session_id);
+      return new Response(JSON.stringify({ found: 0 }), { headers: corsHeaders });
     }
 
-    // 2. Create jobs - DO NOT extract anything here (it will be extracted in process-import-job)
+    // 2. Create jobs
     const jobs = validLinks.map(link => ({
       session_id,
       property_url: link,
       status: "pending"
     }));
 
-
-    // Batch insert to avoid issues
+    // Batch insert jobs
+    const batchSize = 50;
+    for (let i = 0; i < jobs.length; i += batchSize) {
+      const batch = jobs.slice(i, i + batchSize);
+      const { error: jobErr } = await supabase.from("import_jobs").insert(batch);
+      if (jobErr) console.error("Error inserting jobs batch:", jobErr);
+    }
+    
+    // Update session status
     await supabase.from("import_sessions").update({ 
       total_found: validLinks.length, 
       status: "processing",
-      user_id: user_id, // Ensure user_id is updated if guest
+      user_id: user_id,
       error_log: validLinks.length >= 500 ? "Limite de 500 imóveis atingido para esta sessão." : null
     }).eq("id", session_id);
 
