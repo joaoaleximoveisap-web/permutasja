@@ -1,45 +1,61 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { ThemeId } from "@/lib/types";
-import { THEMES } from "@/lib/themes";
-import { getContrastColor } from "@/lib/color-utils";
+import { createContext, useContext, useState, useEffect } from "react";
+import DESIGN_SYSTEM from "@/lib/design-system";
 
-type Ctx = { theme: ThemeId; setTheme: (t: ThemeId) => void };
-const ThemeCtx = createContext<Ctx | null>(null);
+export type ThemeMode = "light" | "dark" | "sand" | "midnight" | "forest" | "ocean" | "rose" | "mist" | "sunset";
 
-const KEY = "permutasja:theme";
+interface ThemeContextType {
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
+  tokens: typeof DESIGN_SYSTEM;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeId>(() => {
-    if (typeof window === "undefined") return "sand";
-    return (localStorage.getItem(KEY) as ThemeId) || "sand";
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem("aurora-theme");
+    return (saved as ThemeMode) || "light";
   });
 
   useEffect(() => {
-    // 1. Set the data-theme attribute
-    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("aurora-theme", theme);
+    const root = window.document.documentElement;
     
-    // 2. Automatic Contrast Rule: Calculate luminance of background
-    const selectedTheme = THEMES.find(t => t.id === theme);
-    if (selectedTheme && selectedTheme.swatch.length > 0) {
-      const bgColor = selectedTheme.swatch[0];
-      const textColor = getContrastColor(bgColor);
-      
-      // Force the contrast color globally
-      document.documentElement.style.setProperty("--foreground", textColor === "#000000" ? "0 0% 0%" : "0 0% 100%");
-      // Also sync sidebar foreground for consistency
-      document.documentElement.style.setProperty("--sidebar-foreground", textColor === "#000000" ? "0 0% 0%" : "0 0% 100%");
-    }
+    // Default to light tokens if the specific theme is not in DESIGN_SYSTEM.themes
+    const themeKey = (theme === "dark" || theme === "light") ? theme : "light";
+    const activeTheme = DESIGN_SYSTEM.themes[themeKey as "light" | "dark"];
+    
+    root.style.setProperty("--background", activeTheme.background.main);
+    root.style.setProperty("--foreground", activeTheme.text.primary);
+    
+    // Remove all possible theme classes
+    root.classList.remove(
+      "dark", "light", "sand", "midnight", "forest", 
+      "ocean", "rose", "mist", "sunset"
+    );
+    root.classList.add(theme);
 
-    localStorage.setItem(KEY, theme);
+    // Apply specific dark mode class for tailwind
+    // Add any dark themes here
+    const darkThemes = ["dark", "midnight", "forest", "ocean", "rose", "mist", "sunset"];
+    if (darkThemes.includes(theme)) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
   }, [theme]);
 
-  const value = useMemo(() => ({ theme, setTheme: setThemeState }), [theme]);
-  return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, tokens: DESIGN_SYSTEM }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {
-  const ctx = useContext(ThemeCtx);
-  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
-  return ctx;
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return context;
 }
-
