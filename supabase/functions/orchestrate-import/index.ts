@@ -19,15 +19,18 @@ serve(async (req) => {
   try {
     const { targetUrl } = await req.json()
     let currentPage = 1
-    let totalImported = 0
+    let totalExtracted = 0
+    const processedIds = new Set<string>();
 
-    while (currentPage <= 5) {
+    while (currentPage <= 10) {
+      // 1. Log start of page
       await supabase.from('import_logs').insert({
-        status: 'processing',
-        message: `Iniciando extração da página ${currentPage} de ${targetUrl}...`
+        status: 'running',
+        message: `Extraindo página ${currentPage}...`,
+        page_number: currentPage
       })
 
-      // Call scan function
+      // 2. Fetch from scan function
       const scanResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/scan-listing-page`, {
         method: 'POST',
         headers: {
@@ -37,33 +40,42 @@ serve(async (req) => {
         body: JSON.stringify({ url: targetUrl, page: currentPage })
       })
 
+      if (!scanResponse.ok) throw new Error(`Scan failed on page ${currentPage}`);
+      
       const { properties, hasNextPage } = await scanResponse.json()
 
-      if (!properties || properties.length === 0) {
-        await supabase.from('import_logs').insert({
-          status: 'info',
-          message: `Nenhum objeto encontrado na página ${currentPage}. Encerrando.`
-        })
-        break
-      }
+      if (!properties || properties.length === 0) break
 
+      // 3. Process and Upsert
+      let pageExtracted = 0;
       for (const prop of properties) {
+        if (processedIds.has(prop.id)) {
+          console.log(`[Orchestrator] Duplicate detected: ${prop.id}. Stopping.`);
+          return new Response(JSON.stringify({ success: true, totalExtracted, reason: 'duplicate_found' }), { headers: corsHeaders });
+        }
+        processedIds.add(prop.id);
+
         const { error } = await supabase.from('properties').upsert({
           external_id: prop.id,
           title: prop.titulo,
           price: prop.preco,
-          location_json: prop.localizacao,
-          features_json: prop.caracteristicas,
-          media_urls: prop.midia,
           url: prop.url,
-          source: 'Aurora Imobi'
+          source: 'auroraimobi',
+          data: prop, // Store full JSON-First object
+          scraped_at: new Date().toISOString()
         }, { onConflict: 'external_id' })
 
         if (!error) {
-          totalImported++
+          pageExtracted++;
+          totalExtracted++;
           await supabase.from('import_logs').insert({
             status: 'success',
-            message: `Objeto [${prop.titulo}] criado/atualizado com sucesso.`
+            message: `✔ Imóvel capturado: ${prop.titulo}`,
+            details: { 
+              price: prop.preco, 
+              images: prop.midia.length,
+              type: "property-card"
+            }
           })
         }
       }
@@ -73,7 +85,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, totalImported }),
+      JSON.stringify({ success: true, totalExtracted }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
