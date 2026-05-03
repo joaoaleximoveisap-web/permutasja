@@ -35,6 +35,7 @@ export type Property = {
   createdAt: number;
   origin: "import" | "manual";
   status: "draft" | "published";
+  isExclusive?: boolean;
   // Enrichment / learning
   role?: UserRole;
   authorized?: boolean;
