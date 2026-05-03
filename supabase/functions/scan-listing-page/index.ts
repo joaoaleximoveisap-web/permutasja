@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ found: 0 }), { headers: corsHeaders });
     }
 
-    // 2. Create jobs - DO NOT extract images here (they will be extracted in process-import-job)
+    // 2. Create jobs - DO NOT extract anything here (it will be extracted in process-import-job)
     const jobs = validLinks.map(link => ({
       session_id,
       property_url: link,

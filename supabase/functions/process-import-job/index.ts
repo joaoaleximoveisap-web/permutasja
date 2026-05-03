@@ -23,7 +23,9 @@ Deno.serve(async (req) => {
 
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
 
-    // Phase 2A - Scrape with scroll
+    // Phase 2A - Scrape with individual property URL (STRICT)
+    console.log(`Analyzing property: ${job.property_url}`);
+    
     const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST",
       headers: {
@@ -32,11 +34,11 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         url: job.property_url,
-        formats: ["html", "markdown", "extract"],
+        formats: ["html", "extract"],
         waitFor: 5000,
         actions: [
           { type: "wait", milliseconds: 2000 },
-          { type: "scroll", direction: "down", amount: 800 },
+          { type: "scroll", direction: "down", amount: 1500 }, // More aggressive scroll
           { type: "wait", milliseconds: 1000 }
         ],
         extract: {
@@ -50,12 +52,10 @@ Deno.serve(async (req) => {
               bathrooms: { type: "string" },
               parking: { type: "string" },
               location: { type: "string" },
-              description: { type: "string" },
-              permuta: { type: "boolean" },
-              permutaDetails: { type: "string" }
+              description: { type: "string" }
             }
           },
-          prompt: "Extraia os detalhes do imóvel brasileiro: título, preço (R$), área (m²), quartos, banheiros, vagas, endereço completo, descrição e se aceita permuta."
+          prompt: "Extraia título (h1 ou og:title), preço (padrão R$), área, quartos, banheiros, vagas, endereço e descrição deste imóvel."
         }
       }),
     });
@@ -66,94 +66,73 @@ Deno.serve(async (req) => {
     const html = fcData.data?.html || "";
     const extracted = fcData.data?.extract || {};
     
-    // --- PHASE 3: IMAGE HANDLING (INTELLIGENT GROUPING) ---
-    // Extract all images from HTML if Firecrawl didn't get enough
+    // --- STEP 3 & 4: IMAGE EXTRACTION (STRICT) ---
     const foundImgs: string[] = [];
     if (html) {
+      // img src
       for (const m of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
+      // data-src
       for (const m of html.matchAll(/data-src=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
+      // srcset (largest)
       for (const m of html.matchAll(/srcset=["']([^"']+)["']/gi)) {
-        const last = m[1].split(',').pop()?.trim().split(/\s+/)[0];
-        if (last) foundImgs.push(last);
+        const parts = m[1].split(',').map(s => s.trim());
+        const largest = parts[parts.length - 1].split(/\s+/)[0];
+        if (largest) foundImgs.push(largest);
       }
-      for (const m of html.matchAll(/["'](https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*)["']/gi)) foundImgs.push(m[1]);
-    }
-    
-    const allImgs = Array.from(new Set([...foundImgs, ...(extracted.images || [])]));
-
-    function findPropertyImages(allImages: string[], propertyUrl: string): string[] {
-      const segmentCounts: Record<string, string[]> = {};
-      
-      for (const img of allImages) {
+      // background-image
+      for (const m of html.matchAll(/url\(["']?([^"')]+\.(?:jpg|jpeg|png|webp)[^"']*)["']?\)/gi)) foundImgs.push(m[1]);
+      // JSON-LD images
+      for (const m of html.matchAll(/<script[^>]+ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
         try {
-          const u = img.startsWith('http') ? img : new URL(img, propertyUrl).toString();
-          const urlObj = new URL(u);
-          const segments = urlObj.pathname.split('/').filter(s => s.length > 3);
-          
-          for (const seg of segments) {
-            if (['images', 'image', 'img', 'photos', 'foto', 'fotos', 'media', 'upload', 'uploads', 'assets', 'static', 'content', 'wp-content'].includes(seg.toLowerCase())) continue;
-            if (!segmentCounts[seg]) segmentCounts[seg] = [];
-            segmentCounts[seg].push(u);
-          }
+          const d = JSON.parse(m[1]);
+          const images = d.image || d.photo || d.gallery;
+          if (Array.isArray(images)) images.forEach(i => foundImgs.push(typeof i === 'string' ? i : i.url));
+          else if (typeof images === 'string') foundImgs.push(images);
         } catch {}
       }
-      
-      let bestImages: string[] = [];
-      for (const [seg, imgs] of Object.entries(segmentCounts)) {
-        if (imgs.length >= 3 && imgs.length > bestImages.length) {
-          bestImages = imgs;
-        }
-      }
-      
-      if (bestImages.length >= 3) return bestImages;
-      return allImages.filter(img => img.startsWith('http'));
     }
-
-    const junkWords = ['logo', 'icon', 'favicon', 'avatar', 'sprite', 'placeholder', 'blank', 'pixel', 'spacer', 'watermark', 'whatsapp', 'facebook', 'instagram', 'header', 'footer', 'banner-site', 'widget'];
-    const junkPatterns = [/\/100x/, /\/150x/, /\/200x/, /w=100/, /w=150/, /h=100/, /\.svg/, /\.gif/, /\.ico/];
-
-    const allExtractedImages = allImgs
+    
+    // STRICT REJECTION
+    const rejectKeywords = ['logo', 'icon', 'avatar', 'sprite', 'placeholder', 'banner', 'header', 'footer', 'thumb', 'thumbnail', 'small', '.svg', '.gif'];
+    
+    const validImgs = Array.from(new Set(foundImgs))
+      .map(src => {
+        try {
+          if (src.startsWith('//')) return "https:" + src;
+          if (src.startsWith('http')) return src;
+          return new URL(src, job.property_url).toString();
+        } catch { return null; }
+      })
       .filter(url => {
-        if (!url || typeof url !== 'string') return false;
+        if (!url) return false;
         const low = url.toLowerCase();
-        if (junkWords.some(w => low.includes(w))) return false;
-        if (junkPatterns.some(p => p.test(low))) return false;
-        return true;
-      });
+        return !rejectKeywords.some(k => low.includes(k));
+      }) as string[];
 
-    let filteredImages = findPropertyImages(allExtractedImages, job.property_url)
-      .map(url => {
-        // Phase 2D - Resolution Upgrade (Aggressive)
-        return url
-          .replace('/400x300/', '/1200x900/')
-          .replace('/600x400/', '/1200x800/')
-          .replace(/-medium\./i, '-large.')
-          .replace(/-small\./i, '-large.')
-          .replace(/_300\./i, '_1200.')
-          .replace(/\?width=\d+/i, '?width=1200')
-          .replace(/\?w=\d+/i, '?w=1200')
-          .replace(/\/thumbs?\//i, '/full/')
-          .replace(/\/small\//i, '/large/');
-      });
-
-    if (filteredImages.length === 0 && extracted.images?.length > 0) {
-      filteredImages = extracted.images;
+    // --- STEP 5: REQUIRE MULTIPLE IMAGES ---
+    if (validImgs.length < 2) {
+      throw new Error("Imóvel sem imagens válidas");
     }
 
-    // Phase 2F - Validation
-    if (filteredImages.length === 0) {
-      // Don't fail completely if we have title/price, but warn
-      console.warn("No images found for job", job_id);
-    }
-
+    // --- STEP 6: DATA EXTRACTION VALIDATION ---
     if (!extracted.title || extracted.title.length < 5) {
-       const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
-       extracted.title = h1Match ? h1Match[1].replace(/<[^>]*>/g, '').trim() : "Imóvel sem título";
+      const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
+      extracted.title = h1Match ? h1Match[1].replace(/<[^>]*>/g, '').trim() : "";
+    }
+
+    if (!extracted.title) {
+      throw new Error("Não foi possível extrair o título do imóvel");
     }
 
     const rawData = {
       ...extracted,
-      images: filteredImages.slice(0, 30)
+      images: validImgs.slice(0, 30),
+      debug: {
+        analyzedUrl: job.property_url,
+        totalFound: foundImgs.length,
+        validFound: validImgs.length,
+        status: "success"
+      }
     };
 
     // 4. Update job
@@ -163,7 +142,7 @@ Deno.serve(async (req) => {
       processed_at: new Date().toISOString() 
     }).eq("id", job_id);
 
-    // 5. Update session stats - Deduct credits only AFTER successful extraction (UI/Trigger logic)
+    // 5. Update session stats
     await supabase.rpc("increment_session_done", { session_uuid: job.session_id });
 
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
