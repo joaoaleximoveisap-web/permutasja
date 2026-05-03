@@ -43,7 +43,6 @@ Deno.serve(async (req) => {
 
     console.log(`[OK] Usuário autenticado: ${user.email}`);
 
-  try {
     const { session_id, url } = await req.json();
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
 
