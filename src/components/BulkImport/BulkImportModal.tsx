@@ -101,15 +101,15 @@ export function BulkImportModal() {
                 </div>
                 <Button 
                   onClick={handleStartScan} 
-                  disabled={!url.includes('http') || isValidating || step !== 'input'}
+                  disabled={!url.includes('http') || isValidating || (step as string) !== 'input'}
                   className="w-full h-14 bg-gradient-primary text-white text-lg rounded-2xl shadow-lg hover:opacity-90 transition-smooth gap-2"
                 >
-                  {isValidating || step === 'scanning' ? (
+                  {isValidating || (step as string) === 'scanning' ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <ArrowRight className="h-5 w-5" />
                   )}
-                  {isValidating ? "Validando URL..." : step === 'scanning' ? "Iniciando..." : "Iniciar Varredura Inteligente"}
+                  {isValidating ? "Validando URL..." : (step as string) === 'scanning' ? "Iniciando..." : "Iniciar Varredura Inteligente"}
                 </Button>
               </div>
 
