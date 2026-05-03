@@ -59,18 +59,18 @@ export function PropertyCard({
             )}
           </div>
 
-          <div className="absolute bottom-6 left-6 right-6 text-white space-y-1">
-            <div className="flex gap-2">
-               <span className="bg-white/10 backdrop-blur-md border border-white/10 text-white/90 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Alto Padrão</span>
+          <div className="absolute bottom-6 left-6 right-6 text-white transform transition-transform duration-500 group-hover:-translate-y-2">
+            <div className="flex gap-2 mb-2">
+               <span className="bg-white/10 backdrop-blur-md border border-white/10 text-white/90 text-[8px] font-bold px-2 py-0.5 rounded uppercase tracking-widest">Ativo de Luxo</span>
             </div>
-            <div className="text-3xl font-bold tracking-tight drop-shadow-xl">{formatBRL(property.price)}</div>
-            <div className="text-base font-medium line-clamp-1 opacity-90 group-hover:opacity-100 transition-opacity">
+            <div className="text-4xl font-bold tracking-tighter drop-shadow-2xl mb-1">{formatBRL(property.price)}</div>
+            <div className="text-sm font-semibold line-clamp-1 opacity-80 mb-4">
               {property.title}
             </div>
-            <div className="flex items-center gap-4 pt-3 text-xs font-bold uppercase tracking-widest opacity-70 group-hover:opacity-100 transition-opacity">
-              <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-accent" />{property.neighborhood ?? "—"}</span>
-              <span className="flex items-center gap-1.5"><Bed className="h-4 w-4 text-accent" />{property.bedrooms} qtos</span>
-              <span className="flex items-center gap-1.5"><Maximize2 className="h-4 w-4 text-accent" />{property.area}m²</span>
+            <div className="flex items-center gap-5 text-[10px] font-bold uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all duration-500">
+              <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-accent" />{property.neighborhood}</span>
+              <span className="flex items-center gap-1.5">{property.bedrooms} beds</span>
+              <span className="flex items-center gap-1.5">{property.area}m²</span>
             </div>
           </div>
         </div>
