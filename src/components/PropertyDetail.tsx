@@ -221,6 +221,67 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
           />
         )}
       </DialogContent>
+      {/* Fullscreen Immersive Viewer */}
+      {fullscreen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl animate-in fade-in duration-300 flex flex-col">
+          {/* Header */}
+          <div className="p-6 flex items-center justify-between z-10">
+            <div className="text-white space-y-1">
+              <h3 className="font-bold text-lg leading-none">{property.title}</h3>
+              <p className="text-white/60 text-xs font-medium">{active + 1} de {property.images.length} fotos</p>
+            </div>
+            <button 
+              onClick={() => setFullscreen(false)}
+              className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 relative flex items-center justify-center p-4 md:p-12 overflow-hidden">
+            <img 
+              src={property.images[active]} 
+              alt="" 
+              className="max-w-full max-h-full object-contain select-none shadow-2xl rounded-sm transition-all duration-500 animate-in zoom-in-95" 
+            />
+
+            {/* Navigation */}
+            {property.images.length > 1 && (
+              <>
+                <button 
+                  onClick={prevImg}
+                  className="absolute left-4 md:left-8 p-4 rounded-full bg-white/5 text-white hover:bg-white/10 backdrop-blur-md transition-all group"
+                >
+                  <ChevronLeft className="h-8 w-8 group-hover:-translate-x-1 transition-transform" />
+                </button>
+                <button 
+                  onClick={nextImg}
+                  className="absolute right-4 md:right-8 p-4 rounded-full bg-white/5 text-white hover:bg-white/10 backdrop-blur-md transition-all group"
+                >
+                  <ChevronRight className="h-8 w-8 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Mini-feed Footer (Instagram Style) */}
+          <div className="p-6 bg-gradient-to-t from-black to-transparent">
+            <div className="max-w-4xl mx-auto flex gap-2 overflow-x-auto no-scrollbar justify-center py-2 px-4">
+              {property.images.map((src, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => setActive(i)} 
+                  className={`h-12 w-20 md:h-16 md:w-28 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${i === active ? "border-accent scale-110" : "border-transparent opacity-40 hover:opacity-100"}`}
+                >
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </Dialog>
+
   );
 }
