@@ -51,7 +51,7 @@ export function PropertyCard({
                 <Repeat2 className="h-3 w-3" /> Permuta
               </div>
             )}
-            {property.price > 1500000 && (
+            {property.isExclusive && (
               <div className="bg-accent/80 backdrop-blur-md rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                 Exclusivo
               </div>
