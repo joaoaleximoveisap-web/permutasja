@@ -82,18 +82,33 @@ export default function Dashboard() {
                 Ver todos <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {properties.slice(0, 4).map(p => (
-                <Link key={p.id} to="/imoveis" className="glass rounded-2xl overflow-hidden block group transition-smooth hover:scale-[1.02]">
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover transition-smooth group-hover:scale-110" />
-                  </div>
-                  <div className="p-3">
-                    <div className="text-sm font-semibold truncate">{formatBRL(p.price)}</div>
-                    <div className="text-xs text-muted-foreground truncate">{p.title}</div>
-                    <div className="flex items-center gap-3 pt-2 text-[10px] text-muted-foreground/80 border-t border-glass-border/50">
-                      <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.bedrooms}</span>
-                      <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3" />{p.area}m²</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {properties.slice(0, 2).map(p => (
+                <Link 
+                  key={p.id} 
+                  to="/imoveis" 
+                  className="group relative h-[450px] overflow-hidden rounded-[2rem] transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl"
+                >
+                  <img 
+                    src={p.images[0]} 
+                    alt={p.title} 
+                    className="h-full w-full object-cover transition-all duration-700 group-hover:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  
+                  <div className="absolute bottom-8 left-8 right-8 text-white space-y-2">
+                    <div className="flex gap-2">
+                      {p.isExclusive && <span className="bg-accent text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Exclusivo</span>}
+                      <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Alto Padrão</span>
+                    </div>
+                    <div className="text-3xl font-bold tracking-tight">{formatBRL(p.price)}</div>
+                    <p className="text-white/80 font-medium line-clamp-1">{p.title}</p>
+                    <div className="flex items-center gap-4 pt-4 text-xs font-bold uppercase tracking-wider text-white/60">
+                      <span>{p.bedrooms} Quartos</span>
+                      <span>•</span>
+                      <span>{p.area}m²</span>
+                      <span>•</span>
+                      <span>{p.neighborhood}</span>
                     </div>
                   </div>
                 </Link>
