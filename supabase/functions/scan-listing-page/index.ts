@@ -173,11 +173,10 @@ Deno.serve(async (req) => {
 
 
     // Batch insert to avoid issues
-    await supabase.from("import_jobs").insert(jobs);
-    
     await supabase.from("import_sessions").update({ 
       total_found: validLinks.length, 
       status: "processing",
+      user_id: user_id, // Ensure user_id is updated if guest
       error_log: validLinks.length >= 500 ? "Limite de 500 imóveis atingido para esta sessão." : null
     }).eq("id", session_id);
 
