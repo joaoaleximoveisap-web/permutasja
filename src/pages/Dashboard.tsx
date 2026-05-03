@@ -1,13 +1,16 @@
 import { AppShell } from "@/components/AppShell";
 import { ImportBar } from "@/components/ImportBar";
 import { useProperties } from "@/contexts/PropertiesContext";
-import { Building2, Coins, Repeat2, TrendingUp, ArrowRight, Sparkles, Bed } from "lucide-react";
+import { Building2, Coins, Repeat2, TrendingUp, ArrowRight, Sparkles, Database, Settings } from "lucide-react";
 import { PropertyCard } from "@/components/PropertyCard";
 import { Link } from "react-router-dom";
 import { formatBRL } from "@/lib/property-utils";
+import ScraperManager from "@/components/ScraperManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
   const { properties, credits, creditSystemEnabled } = useProperties();
+
   const totalValue = properties.reduce((s, p) => s + p.price, 0);
   const permutas = properties.filter(p => p.permuta.enabled).length;
 
