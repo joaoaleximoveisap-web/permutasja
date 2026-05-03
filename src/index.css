@@ -7,63 +7,56 @@
 @layer base {
   :root {
     /* Default theme: Areia & Pedra (Quiet Luxury) */
-    --background: 35 40% 98%;
-    --background-2: 35 25% 94%;
-    --foreground: 25 15% 15%;
+    --background: 35 15% 95%; /* Fundo mais sólido/areia */
+    --background-2: 35 15% 92%;
+    --foreground: 0 0% 10%; /* Texto primário quase preto */
 
     --card: 0 0% 100%;
-    --card-foreground: 25 15% 15%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 25 15% 15%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 43 45% 55%; /* Dourado Sutil */
-    --primary-foreground: 0 0% 100%;
+    --primary: 37 40% 63%; /* Dourado C6A87D */
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 35 20% 90%;
-    --secondary-foreground: 25 15% 15%;
+    --secondary: 35 10% 88%;
+    --secondary-foreground: 0 0% 20%;
 
-    --muted: 35 20% 92%;
-    --muted-foreground: 25 10% 45%;
+    --muted: 35 10% 85%;
+    --muted-foreground: 0 0% 42%; /* Texto secundário legível */
 
-    --accent: 43 45% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 37 40% 63%;
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 70% 45%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 35 20% 88%;
-    --input: 35 20% 88%;
-    --ring: 43 45% 55%;
+    --border: 35 10% 82%;
+    --input: 35 10% 82%;
+    --ring: 37 40% 63%;
 
-    --radius: 0.85rem;
+    --radius: 1rem;
 
     /* Materiality & Depth */
-    --glass-bg: 0 0% 100% / 0.8;
-    --glass-border: 35 20% 85% / 0.5;
+    --glass-bg: 0 0% 100% / 0.85;
+    --glass-border: 0 0% 0% / 0.08;
     --glass-highlight: 0 0% 100% / 1;
-    --glass-shadow: 25 20% 10% / 0.05;
-
-    /* Refined Gradients */
-    --gradient-bg: linear-gradient(135deg, hsl(var(--background)), hsl(var(--background-2)));
-    --gradient-primary: linear-gradient(135deg, hsl(43 45% 60%), hsl(43 45% 50%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(35 20% 98%));
+    --glass-shadow: 0 0% 0% / 0.05;
 
     /* Elevated Shadows */
     --shadow-glass: 0 4px 20px -2px hsl(var(--glass-shadow)), inset 0 1px 0 0 hsl(var(--glass-highlight));
-    --shadow-elevated: 0 20px 40px -12px hsl(var(--glass-shadow));
+    --shadow-elevated: 0 20px 40px -12px hsla(0, 0%, 0%, 0.12);
 
-    /* Standardized Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
+    /* Sidebar Refinement */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 25 15% 20%;
-    --sidebar-primary: 43 45% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 43 45% 55% / 0.08;
-    --sidebar-accent-foreground: 25 15% 15%;
-    --sidebar-border: 35 20% 88%;
-    --sidebar-ring: 43 45% 55%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 37 40% 63%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 37 40% 63% / 0.12;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 0% / 0.06;
+    --sidebar-ring: 37 40% 63%;
   }
 
   /* THEME 2 — Ônix Dourado (Preto Premium) */
