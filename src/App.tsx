@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ThemeEditorProvider } from "@/contexts/ThemeEditorContext";
+import { BuilderProvider } from "@/contexts/BuilderContext";
 import { PropertiesProvider } from "@/contexts/PropertiesContext";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -14,6 +15,8 @@ import Properties from "./pages/Properties.tsx";
 import ReviewProperty from "./pages/ReviewProperty.tsx";
 import SmartSearch from "./pages/SmartSearch.tsx";
 import Editor from "./pages/Editor.tsx";
+import VisualBuilderPage from "./pages/VisualBuilder.tsx";
+
 
 const queryClient = new QueryClient();
 
