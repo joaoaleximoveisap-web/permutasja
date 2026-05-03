@@ -2,9 +2,27 @@ import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
 function parseNumber(s: string | undefined | null): number {
   if (!s) return 0;
-  const cleaned = String(s).replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3})/g, "").replace(",", ".");
+  // Handle R$ 4.500.000,00 -> 4500000
+  const cleaned = String(s)
+    .replace(/[^\d,.-]/g, "")
+    .replace(/\.(?=\d{3})/g, "")
+    .replace(",", ".");
   const n = parseFloat(cleaned);
   return isNaN(n) ? 0 : n;
+}
+
+function cleanTitle(title: string): string {
+  if (!title) return "";
+  const junk = [
+    /Facilitado por/i, /Powered by/i, /Kenlo/i, /VivaReal/i, /Zap/i, 
+    /Imóveis/i, /Imobiliária/i, /Software/i, /Plataforma/i
+  ];
+  let cleaned = title;
+  junk.forEach(re => {
+    cleaned = cleaned.replace(re, "").trim();
+  });
+  // Remove trailing dashes/pipes
+  return cleaned.replace(/\s*[-|]\s*$/, "").trim();
 }
 
 function absolutize(src: string, base: string): string {
@@ -234,8 +252,8 @@ Deno.serve(async (req) => {
     // --- MODE: SINGLE EXTRACTION ---
     let extracted: any = null;
     let html = "";
+    let markdown = "";
 
-    // Attempt 1: Firecrawl (Scrape + Extract)
     if (FIRECRAWL_API_KEY) {
       try {
         const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
@@ -246,155 +264,80 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             url,
-            formats: ["html", "extract"],
+            formats: ["html", "markdown"], // Use markdown for clean text extraction
             waitFor: 5000,
-            extract: {
-              schema: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  price: { type: "number" },
-                  area: { type: "number" },
-                  bedrooms: { type: "number" },
-                  bathrooms: { type: "number" },
-                  parking: { type: "number" },
-                  description: { type: "string" },
-                  city: { type: "string" },
-                  neighborhood: { type: "string" },
-                  type: { type: "string" },
-                  images: { type: "array", items: { type: "string" } }
-                }
-              }
-            }
+            actions: [
+              { type: "wait", milliseconds: 2000 },
+              { type: "scroll", direction: "down", amount: 1500 },
+              { type: "wait", milliseconds: 1000 }
+            ]
           }),
         });
         const result = await fcRes.json();
         if (fcRes.ok) {
-          const doc = result.data || result;
-          extracted = doc.extract || doc.json || null;
-          html = doc.html || "";
-        } else {
-          console.warn("Firecrawl failed:", result);
-          if (result.error?.includes("token")) {
-             // Let the user know specifically about the token issue
-             return new Response(JSON.stringify({ error: "Erro de autenticação no Firecrawl. Verifique sua API Key." }), { status: 401, headers: corsHeaders });
-          }
+          html = result.data?.html || "";
+          markdown = result.data?.markdown || "";
         }
-      } catch (e) {
-        console.error("Firecrawl error:", e);
-      }
+      } catch (e) { console.error("Firecrawl error:", e); }
     }
 
-    // Attempt 2: Direct fetch fallback (if no Firecrawl HTML)
-    if (!html) {
-      try {
-        const directRes = await fetch(url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml",
-            "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
-          },
-        });
-        if (directRes.ok) html = await directRes.text();
-      } catch (e) {
-        console.error("Direct fetch failed:", e);
-      }
-    }
-
-    // Advanced Extraction Logic (Manual + Firecrawl Supplement)
-    const scrapedImages = html ? extractImagesFromHtml(html, url) : [];
+    // Step 2: Advanced Extraction from Visible Content (Markdown/Text)
+    const pageText = markdown || html.replace(/<[^>]*>/g, ' ');
     
-    // --- NEW: SPA DATA EXTRACTION (Next.js, Nuxt, etc.) ---
-    let spaData: any = null;
-    if (html) {
-      try {
-        const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]+?)<\/script>/);
-        if (nextDataMatch) {
-          const fullData = JSON.parse(nextDataMatch[1]);
-          // Try to find property data in common Next.js structures
-          spaData = fullData.props?.pageProps?.property || 
-                    fullData.props?.pageProps?.listing || 
-                    fullData.props?.pageProps?.data;
-        }
-        
-        if (!spaData) {
-          const initialStateMatch = html.match(/window\.__INITIAL_STATE__\s*=\s*({[\s\S]+?});/i);
-          if (initialStateMatch) spaData = JSON.parse(initialStateMatch[1]);
-        }
-      } catch (e) {
-        console.warn("SPA extraction failed:", e);
+    // PATTERN MATCHING (Human-like reading)
+    const priceMatch = pageText.match(/R\$\s*([\d.,]+)/i);
+    const areaMatch = pageText.match(/(\d+)\s*m[²2]/i);
+    const bedMatch = pageText.match(/(\d+)\s*(?:quartos?|dormit[óo]rios?|su[íi]tes?|beds?)/i);
+    const bathMatch = pageText.match(/(\d+)\s*(?:banheiros?|wc|baths?)/i);
+    const parkMatch = pageText.match(/(\d+)\s*(?:vagas?|garagens?|parking)/i);
+    
+    // TITLE FIX (H1 priority)
+    let title = "";
+    const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    if (h1Match) {
+      title = cleanTitle(h1Match[1].replace(/<[^>]*>/g, '').trim());
+    }
+    
+    if (!title) {
+      const ogTitle = html.match(/property=["']og:title["']\s+content=["']([^"']+)/i);
+      title = ogTitle ? cleanTitle(ogTitle[1]) : "";
+    }
+
+    // JSON-LD Fallback
+    let ldData: any = {};
+    const ldMatch = html.match(/<script[^>]+ld\+json[^>]*>([\s\S]*?)<\/script>/i);
+    if (ldMatch) {
+      try { ldData = JSON.parse(ldMatch[1]); } catch {}
+    }
+
+    extracted = {
+      title: title || ldData.name || "Imóvel sem título",
+      price: priceMatch ? parseNumber(priceMatch[1]) : (ldData.offers?.price || 0),
+      area: areaMatch ? parseInt(areaMatch[1], 10) : (ldData.floorSize?.value || 0),
+      bedrooms: bedMatch ? parseInt(bedMatch[1], 10) : (ldData.numberOfRooms || 0),
+      bathrooms: bathMatch ? parseInt(bathMatch[1], 10) : 0,
+      parking: parkMatch ? parseInt(parkMatch[1], 10) : 0,
+      description: ldData.description || html.match(/meta name=["']description["'] content=["']([^"']+)["']/i)?.[1] || "",
+      images: extractImagesFromHtml(html, url),
+      debug: {
+        price_found: !!priceMatch,
+        area_found: !!areaMatch,
+        raw_text_snippet: pageText.slice(0, 500).replace(/\n/g, ' ')
       }
-    }
+    };
 
-    if ((!extracted || !extracted.title) && (html || spaData)) {
-      const titleMatch = 
-        html?.match(/property=["']og:title["']\s+content=["']([^"']+)/i) ||
-        html?.match(/<title>([^<]+)<\/title>/i);
-      const descMatch = 
-        html?.match(/property=["']og:description["']\s+content=["']([^"']+)/i) ||
-        html?.match(/name=["']description["']\s+content=["']([^"']+)/i);
-      
-      const priceMatch = html?.match(/R\$\s*([\d.,]+)/i);
-      const areaMatch = html?.match(/(\d+)\s*m[²2]/i);
-      const bedMatch = html?.match(/(\d+)\s*(?:quartos?|dormit[óo]rios?|su[íi]tes?)/i);
-      const bathMatch = html?.match(/(\d+)\s*(?:banheiros?|wc)/i);
-      const parkMatch = html?.match(/(\d+)\s*(?:vagas?|garagens?)/i);
-
-      extracted = {
-        title: spaData?.title || spaData?.name || titleMatch?.[1]?.trim() || "Imóvel importado",
-        description: spaData?.description || descMatch?.[1]?.trim() || "",
-        price: spaData?.price || (priceMatch ? parseNumber(priceMatch[1]) : 0),
-        area: spaData?.area || spaData?.total_area || (areaMatch ? parseInt(areaMatch[1], 10) : 0),
-        bedrooms: spaData?.bedrooms || spaData?.rooms || (bedMatch ? parseInt(bedMatch[1], 10) : 0),
-        bathrooms: spaData?.bathrooms || (bathMatch ? parseInt(bathMatch[1], 10) : 0),
-        parking: spaData?.parking || spaData?.garages || (parkMatch ? parseInt(parkMatch[1], 10) : 0),
-        images: spaData?.images?.map((img: any) => typeof img === 'string' ? img : img.url) || scrapedImages,
-        city: spaData?.city || spaData?.address?.city,
-        neighborhood: spaData?.neighborhood || spaData?.address?.neighborhood,
-        type: spaData?.type,
-        missingFields: []
-      };
-      
-      if (!extracted.city) extracted.missingFields.push("city");
-      if (!extracted.neighborhood) extracted.missingFields.push("neighborhood");
-      if (!extracted.type) extracted.missingFields.push("type");
-    } else if (extracted) {
-      // Merge Firecrawl LLM images with our advanced scraped images
-      const llmImages = (extracted.images || []).map((u: string) => upgradeImageUrl(absolutize(u, url)));
-      const combined = Array.from(new Set([...scrapedImages, ...llmImages]))
-        .filter(u => !JUNK_RE.test(u))
-        .slice(0, 30);
-      
-      extracted.images = combined;
-    }
-
-    if (!extracted || !extracted.title) {
-      return new Response(JSON.stringify({ 
-        error: "Não foi possível acessar este link. Verifique a URL ou adicione manualmente." 
+    // STEP 5: VALIDATION
+    if (!priceMatch && !areaMatch) {
+       return new Response(JSON.stringify({ 
+        error: "Dados não encontrados no conteúdo visível (Preço e Área não detectados)." 
       }), {
         status: 422,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Step 7: Cover Image & Step 10: Debug Logging
-    if (extracted.images && extracted.images.length > 0) {
-      const metaOg = html ? html.match(/property=["']og:image["']\s+content=["']([^"']+)/i) : null;
-      const ogUrl = metaOg ? upgradeImageUrl(absolutize(metaOg[1], url)) : null;
-      
-      if (ogUrl && extracted.images.includes(ogUrl)) {
-        // Move OG image to front
-        extracted.images = [ogUrl, ...extracted.images.filter(img => img !== ogUrl)];
-      }
-      
-      extracted.cover_image = extracted.images[0];
-      console.log(`Extraction complete for ${url}: ${extracted.images.length} images found. Cover: ${extracted.cover_image}`);
-    }
-
     return new Response(JSON.stringify({ data: extracted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-
-
     });
 
   } catch (error) {
