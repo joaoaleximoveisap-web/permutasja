@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { AppShell } from "@/components/AppShell";
 import { ImportBar } from "@/components/ImportBar";
 import { PropertyCard } from "@/components/PropertyCard";
@@ -9,16 +9,20 @@ import { FilterPanel, defaultFilters, Filters } from "@/components/FilterPanel";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { Property } from "@/lib/types";
 import { Input } from "@/components/ui/input";
-import { Search, SlidersHorizontal, Building2, Sparkles } from "lucide-react";
+import { Search, SlidersHorizontal, Building2, Trash2, CheckSquare, Square, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function Properties() {
-  const { properties } = useProperties();
+  const { properties, removeProperty } = useProperties();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Property | null>(null);
   const [open, setOpen] = useState(false);
+  
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -35,6 +39,41 @@ export default function Properties() {
     });
   }, [properties, filters, query]);
 
+  const toggleSelection = useCallback((id: string) => {
+    setSelectedIds(cur => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAll = useCallback(() => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(p => p.id)));
+    }
+  }, [filtered, selectedIds]);
+
+  const deleteSelected = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    
+    if (window.confirm(`Deseja realmente excluir ${selectedIds.size} imóveis?`)) {
+      selectedIds.forEach(id => removeProperty(id));
+      toast.success(`${selectedIds.size} imóveis removidos com sucesso.`);
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+    }
+  }, [selectedIds, removeProperty]);
+
+  const handleDeleteSingle = useCallback((id: string) => {
+    if (window.confirm("Deseja realmente excluir este imóvel?")) {
+      removeProperty(id);
+      toast.success("Imóvel removido com sucesso.");
+    }
+  }, [removeProperty]);
+
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-5">
@@ -44,8 +83,48 @@ export default function Properties() {
             <p className="text-sm text-muted-foreground">{filtered.length} de {properties.length} na sua carteira</p>
           </div>
           <div className="flex gap-2">
-            <BulkImportModal />
-            <AddPropertyDialog />
+            {!selectionMode ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="glass rounded-xl gap-2"
+                  onClick={() => setSelectionMode(true)}
+                >
+                  <CheckSquare className="h-4 w-4" /> Selecionar
+                </Button>
+                <BulkImportModal />
+                <AddPropertyDialog />
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="glass rounded-xl gap-2"
+                  onClick={selectAll}
+                >
+                  {selectedIds.size === filtered.length ? <Square className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
+                  {selectedIds.size === filtered.length ? "Desmarcar todos" : "Selecionar todos"}
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  className="rounded-xl gap-2"
+                  onClick={deleteSelected}
+                  disabled={selectedIds.size === 0}
+                >
+                  <Trash2 className="h-4 w-4" /> Excluir ({selectedIds.size})
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="rounded-xl"
+                  onClick={() => {
+                    setSelectionMode(false);
+                    setSelectedIds(new Set());
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -88,7 +167,15 @@ export default function Properties() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filtered.map(p => (
-                  <PropertyCard key={p.id} property={p} onClick={() => { setSelected(p); setOpen(true); }} />
+                  <PropertyCard 
+                    key={p.id} 
+                    property={p} 
+                    onClick={() => { setSelected(p); setOpen(true); }} 
+                    onDelete={handleDeleteSingle}
+                    selected={selectedIds.has(p.id)}
+                    onSelect={toggleSelection}
+                    selectionMode={selectionMode}
+                  />
                 ))}
               </div>
             )}
