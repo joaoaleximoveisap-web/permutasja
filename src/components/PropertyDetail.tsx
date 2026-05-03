@@ -112,6 +112,8 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
                   <span className="flex items-center gap-2"><Bed className="h-5 w-5 text-accent" />{property.bedrooms} Quartos</span>
                   <span className="flex items-center gap-2"><Maximize2 className="h-5 w-5 text-accent" />{property.area} m²</span>
                 </div>
+              </section>
+
               <section>
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-foreground">
                   <Sparkles className="h-5 w-5 text-accent" /> Sobre este imóvel
