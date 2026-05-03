@@ -79,93 +79,58 @@ function extractImagesFromHtml(html: string, baseUrl: string): string[] {
   const foundImgs: string[] = [];
   const baseOrigin = new URL(baseUrl).origin;
 
-  // 1. img src
+  // 1. img src (Standard)
   for (const m of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
-  // 2. data-src
-  for (const m of html.matchAll(/data-src=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
-  // 3. data-lazy
-  for (const m of html.matchAll(/data-(?:lazy|original)=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
-  // 4. srcset largest
+  // 2. data-src, data-lazy, data-original (Common lazy loading)
+  for (const m of html.matchAll(/data-(?:src|lazy|original|full|large|img|source)=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
+  // 3. srcset largest resolution
   for (const m of html.matchAll(/srcset=["']([^"']+)["']/gi)) {
-    const last = m[1].split(',').pop()?.trim().split(/\s+/)[0];
-    if (last) foundImgs.push(last);
+    const parts = m[1].split(',').map(s => s.trim().split(/\s+/)[0]);
+    if (parts.length > 0) foundImgs.push(parts[parts.length - 1]);
   }
-  // 5. background-image
-  for (const m of html.matchAll(/url\(["']?([^"')]+\.(?:jpg|jpeg|png|webp)[^"']*)["']?\)/gi)) foundImgs.push(m[1]);
-  // 6. og:image
-  const ogM = html.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+  // 4. background-image in inline styles
+  for (const m of html.matchAll(/style=["'][^"']*background-image\s*:\s*url\(["']?([^"')]+\.(?:jpg|jpeg|png|webp|avif)[^"']*)["']?\)/gi)) foundImgs.push(m[1]);
+  // 5. og:image and twitter:image meta tags
+  const ogM = html.match(/property=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/i);
   if (ogM) foundImgs.push(ogM[1]);
-  // 7. JSON-LD
+  // 6. JSON-LD (Strict property schema)
   for (const m of html.matchAll(/<script[^>]+ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       const d = JSON.parse(m[1]);
-      if (typeof d.image === 'string') foundImgs.push(d.image);
-      if (Array.isArray(d.image)) d.image.forEach((i: any) => typeof i === 'string' ? foundImgs.push(i) : i?.url && foundImgs.push(i.url));
+      const processImage = (img: any) => {
+        if (typeof img === 'string') foundImgs.push(img);
+        else if (img?.url) foundImgs.push(img.url);
+        else if (img?.contentUrl) foundImgs.push(img.contentUrl);
+      };
+      if (d.image) Array.isArray(d.image) ? d.image.forEach(processImage) : processImage(d.image);
+      if (d.photo) Array.isArray(d.photo) ? d.photo.forEach(processImage) : processImage(d.photo);
     } catch {}
   }
-  // 8. Direct URLs
-  for (const m of html.matchAll(/["'](https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*)["']/gi)) foundImgs.push(m[1]);
+  // 7. Regex for any image URL inside quotes (last resort for JS-rendered arrays)
+  for (const m of html.matchAll(/["'](https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp|avif)(?:\?[^"'\s]*)?)["']/gi)) foundImgs.push(m[1]);
 
   function findPropertyImages(allImages: string[], propertyUrl: string): string[] {
-    const segmentCounts: Record<string, string[]> = {};
-    const baseOrigin = new URL(propertyUrl).origin;
+    const uniqueImages = Array.from(new Set(allImages.map(img => absolutize(img, propertyUrl))));
     
-    // Strategy 1: Group by URL path segments
-    for (const img of allImages) {
+    // Strategy: Filter by relevance and size patterns
+    return uniqueImages.filter(u => {
       try {
-        const urlObj = new URL(img);
-        const segments = urlObj.pathname.split('/').filter(s => s.length > 3);
+        const urlObj = new URL(u);
+        const l = u.toLowerCase();
         
-        for (const seg of segments) {
-          if (['images', 'image', 'img', 'photos', 'foto', 'fotos', 
-               'media', 'upload', 'uploads', 'assets', 'static',
-               'public', 'files', 'content', 'wp-content',
-               'thumb', 'full', 'large', 'medium', 'small'].includes(seg.toLowerCase())) {
-            continue;
-          }
-          if (!segmentCounts[seg]) segmentCounts[seg] = [];
-          segmentCounts[seg].push(img);
-        }
-      } catch {}
-    }
-    
-    let bestImages: string[] = [];
-    for (const [seg, imgs] of Object.entries(segmentCounts)) {
-      if (imgs.length >= 3 && imgs.length > bestImages.length) {
-        bestImages = imgs;
-      }
-    }
-    
-    if (bestImages.length >= 3) return bestImages;
-    
-    // Strategy 2: Property code from URL
-    const codeMatch = propertyUrl.match(/\/([A-Z]{2}\d+)/i);
-    if (codeMatch) {
-      const code = codeMatch[1];
-      const codeNum = code.replace(/[A-Z]/gi, '');
-      const codeImages = allImages.filter(img => img.includes(code) || (codeNum.length > 3 && img.includes(codeNum)));
-      if (codeImages.length >= 2) return codeImages;
-    }
-    
-    // Strategy 3: Filter by blocklist
-    return allImages.filter(u => {
-      const l = u.toLowerCase();
-      const path = new URL(u).pathname.toLowerCase();
-      return !(
-        path.includes('banner') || path.includes('capa') ||
-        path.includes('empreend') || path.includes('lancamento') ||
-        path.includes('slide') || path.includes('hero') ||
-        path.includes('destaque') || path.includes('home') ||
-        l.includes('logo') || l.includes('icon') || l.includes('favicon') ||
-        l.includes('avatar') || l.includes('sprite') ||
-        l.includes('.svg') || l.includes('.gif') || l.includes('.ico') ||
-        l.includes('whatsapp') || l.includes('facebook') ||
-        l.includes('instagram') || l.includes('google') ||
-        l.includes('corretor') || l.includes('agent') ||
-        l.includes('footer') || l.includes('header') ||
-        l.includes('widget') || l.includes('sidebar') ||
-        l.includes('menu') || l.includes('nav')
-      );
+        // REJECT JUNK
+        if (JUNK_RE.test(u)) return false;
+        if (l.includes('.svg') || l.includes('.gif') || l.includes('.ico')) return false;
+        
+        // PRIORITIZE PROPERTY IMAGES
+        // Common paths for property galleries
+        const isGalleryPath = /imovel|property|listing|venda|aluguel|fotos?|gall?ery|media|uploads?|assets/i.test(urlObj.pathname);
+        
+        // Reject very small icons or tracking pixels
+        if (l.includes('1x1') || l.includes('favicon')) return false;
+        
+        return true;
+      } catch { return false; }
     });
   }
 
@@ -174,7 +139,7 @@ function extractImagesFromHtml(html: string, baseUrl: string): string[] {
   const realImages = propertyPhotos
     .map(u => upgradeImageUrl(u))
     .filter((u, i, a) => a.findIndex(x => x.replace(/\?.*$/,'').toLowerCase() === u.replace(/\?.*$/,'').toLowerCase()) === i)
-    .slice(0, 30);
+    .slice(0, 40); // Increased limit to ensure gallery capture
 
   return realImages;
 }
