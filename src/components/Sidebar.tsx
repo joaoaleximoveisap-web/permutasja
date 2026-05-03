@@ -10,7 +10,7 @@ const items = [
 export function Sidebar() {
   const { pathname } = useLocation();
   return (
-    <aside className="hidden md:flex sticky top-0 h-screen w-64 flex-col p-4 gap-4">
+    <aside className="hidden md:flex sticky top-0 h-screen w-64 flex-col p-4 gap-4 border-r border-sidebar-border bg-sidebar-background">
       <div className="glass rounded-2xl p-4 flex items-center gap-3">
         <div className="h-10 w-10 rounded-xl bg-gradient-primary grid place-items-center shadow-glass">
           <Sparkles className="h-5 w-5 text-primary-foreground" />
