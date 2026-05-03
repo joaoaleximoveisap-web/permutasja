@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ThemeEditorProvider } from "@/contexts/ThemeEditorContext";
 import { BuilderProvider } from "@/contexts/BuilderContext";
+import { LiveEditProvider } from "@/contexts/LiveEditContext";
+import { LiveEditor } from "@/components/LiveEditor";
 import { PropertiesProvider } from "@/contexts/PropertiesContext";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -25,11 +27,13 @@ const App = () => (
     <ThemeProvider>
       <ThemeEditorProvider>
         <BuilderProvider>
+          <LiveEditProvider>
           <PropertiesProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <LiveEditor />
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
