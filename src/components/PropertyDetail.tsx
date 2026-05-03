@@ -1,16 +1,18 @@
 import { Property } from "@/lib/types";
 import { formatBRL } from "@/lib/property-utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Bed, Maximize2, MapPin, Repeat2, Tag, ExternalLink, Trash2, ChevronLeft, ChevronRight, Pencil, Sparkles } from "lucide-react";
+import { Bed, Maximize2, MapPin, Repeat2, Tag, ExternalLink, Trash2, ChevronLeft, ChevronRight, Pencil, Sparkles, X, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/contexts/PropertiesContext";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { EditPropertyDialog } from "./EditPropertyDialog";
 
 export function PropertyDetail({ property, open, onOpenChange }: { property: Property | null; open: boolean; onOpenChange: (v: boolean) => void; }) {
   const { removeProperty } = useProperties();
   const [active, setActive] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+
   if (!property) return null;
 
   return (
