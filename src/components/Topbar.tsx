@@ -13,7 +13,7 @@ export function Topbar() {
 
         <div className="flex items-center gap-2">
           {creditSystemEnabled && (
-            <div className="glass rounded-full px-3 py-1.5 flex items-center gap-2 text-sm">
+            <div className="bg-white border border-border rounded-full px-3 py-1.5 flex items-center gap-2 text-sm shadow-sm">
               <Coins className="h-4 w-4 text-accent" />
               <span className="font-medium">{credits}</span>
               <span className="text-muted-foreground hidden sm:inline">créditos</span>
