@@ -71,7 +71,6 @@ export function PropertyCard({
             </div>
           </div>
         </div>
-        </div>
       </button>
 
       {!selectionMode && onDelete && (
