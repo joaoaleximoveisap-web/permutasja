@@ -136,10 +136,13 @@ export function LiveEditor() {
           console.log("Live Editor: Ativado via botão");
           setActive(true);
         }}
-        className="fixed bottom-10 right-10 z-[1000000] h-16 w-16 rounded-full bg-accent text-white shadow-[0_0_50px_rgba(198,168,125,0.5)] grid place-items-center hover:scale-110 transition-all border-4 border-white animate-bounce"
+        className="fixed bottom-10 right-10 z-[1000005] h-20 w-20 rounded-full bg-[#C5A46D] text-black shadow-[0_0_60px_rgba(198,168,125,0.7)] grid place-items-center hover:scale-110 active:scale-95 transition-all border-4 border-white animate-bounce group"
         title="Modo Editor Visual"
       >
-        <Wand2 className="h-8 w-8" />
+        <Wand2 className="h-10 w-10 fill-current" />
+        <div className="absolute -top-12 right-0 bg-black text-white text-[10px] font-black px-3 py-1 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-tighter shadow-xl border border-white/20">
+          Ativar Editor Canva
+        </div>
       </button>
     );
   }
@@ -157,83 +160,98 @@ export function LiveEditor() {
 
   return (
     <>
-      {/* Top bar */}
+      {/* Top bar — High Contrast */}
       <div
         data-live-editor-ui
-        className="fixed top-0 left-0 right-0 z-[9999] bg-black text-white px-4 py-2 flex items-center justify-between shadow-2xl"
+        className="fixed top-0 left-0 right-0 z-[1000001] bg-[#C5A46D] text-black px-4 py-2 flex items-center justify-between shadow-2xl border-b border-black/20"
       >
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-          <Sparkles className="h-4 w-4 text-accent" />
-          Live Editor — clique em qualquer elemento
+        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest italic">
+          <Sparkles className="h-4 w-4 text-black fill-black" />
+          Live Editor Ativo — Clique em algo para editar
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {selectedSelector && (
-            <span className="text-[10px] opacity-60 max-w-[280px] truncate font-mono hidden md:inline">
-              {selectedSelector}
-            </span>
+            <div className="bg-black/10 px-3 py-1 rounded-full text-[10px] font-bold font-mono hidden md:block border border-black/10">
+              ID: {selectedSelector.split('>').pop()?.trim()}
+            </div>
           )}
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 text-white hover:bg-white/10"
+            className="h-7 text-black font-black hover:bg-black/10 border border-black/20 px-4"
             onClick={() => {
               setActive(false);
               setSelectedSelector(null);
             }}
           >
-            <X className="h-4 w-4 mr-1" /> Sair
+            <X className="h-4 w-4 mr-2" /> SAIR DO EDITOR
           </Button>
         </div>
       </div>
 
-      {/* Hover outline */}
+      {/* Hover outline — High Contrast Magenta */}
       {hoverRect && !selectedRect && (
         <div
           data-live-editor-ui
-          className="fixed pointer-events-none z-[9998] border-2 border-blue-400/70 bg-blue-400/10 transition-all"
+          className="fixed pointer-events-none z-[1000000] border-[3px] border-[#FF00FF] bg-[#FF00FF]/10 transition-none"
           style={{
             top: hoverRect.top, left: hoverRect.left,
             width: hoverRect.width, height: hoverRect.height,
           }}
-        />
+        >
+          <div className="absolute top-0 left-0 bg-[#FF00FF] text-white text-[9px] font-bold px-1 uppercase leading-none">
+            Click to edit
+          </div>
+        </div>
       )}
 
-      {/* Selected outline */}
+      {/* Selected outline — High Contrast Yellow */}
       {selectedRect && (
         <div
           data-live-editor-ui
-          className="fixed pointer-events-none z-[9998] border-2 border-accent shadow-[0_0_0_3px_rgba(198,168,125,0.25)] transition-all"
+          className="fixed pointer-events-none z-[1000000] border-[4px] border-[#FFFF00] shadow-[0_0_20px_rgba(255,255,0,0.8)] transition-none"
           style={{
             top: selectedRect.top, left: selectedRect.left,
             width: selectedRect.width, height: selectedRect.height,
           }}
-        />
+        >
+          <div className="absolute -top-4 -left-1 bg-[#FFFF00] text-black text-[10px] font-black px-2 uppercase shadow-md">
+            Selecionado
+          </div>
+          {/* Resize handles visualization */}
+          <div className="absolute top-0 left-0 w-2 h-2 bg-white border border-black -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute top-0 right-0 w-2 h-2 bg-white border border-black translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 left-0 w-2 h-2 bg-white border border-black -translate-x-1/2 translate-y-1/2" />
+          <div className="absolute bottom-0 right-0 w-2 h-2 bg-white border border-black translate-x-1/2 translate-y-1/2" />
+        </div>
       )}
 
       {/* Side panel */}
       {selectedSelector && (
         <aside
           data-live-editor-ui
-          className="fixed top-10 right-0 bottom-0 w-[360px] z-[9999] bg-background border-l shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+          className="fixed top-12 right-2 bottom-2 w-[380px] z-[1000001] bg-white text-black border-2 border-black/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col rounded-2xl overflow-hidden animate-in slide-in-from-right duration-300"
         >
-          <div className="p-3 border-b flex items-center justify-between bg-muted/40">
-            <div className="text-xs font-bold uppercase tracking-widest">Editar elemento</div>
-            <div className="flex gap-1">
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeOverride(selectedSelector)} title="Resetar">
-                <Trash2 className="h-3.5 w-3.5" />
+          <div className="p-4 border-b-2 border-black/5 flex items-center justify-between bg-black text-white">
+            <div className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#C5A46D] fill-[#C5A46D]" /> Painel de Edição
+            </div>
+            <div className="flex gap-2">
+              <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white/20 text-white" onClick={() => removeOverride(selectedSelector)} title="Resetar Original">
+                <Trash2 className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSelectedSelector(null)}>
-                <X className="h-3.5 w-3.5" />
+              <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white/20 text-white" onClick={() => setSelectedSelector(null)}>
+                <X className="h-5 w-5" />
               </Button>
             </div>
           </div>
 
-          <Tabs defaultValue="text" className="flex-1 flex flex-col">
-            <TabsList className="grid grid-cols-4 m-2">
-              <TabsTrigger value="text"><Type className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="color"><Palette className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="image"><ImageIcon className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="box"><Box className="h-3.5 w-3.5" /></TabsTrigger>
+          <Tabs defaultValue="text" className="flex-1 flex flex-col bg-white">
+            <TabsList className="grid grid-cols-4 p-1 m-3 bg-black/5 rounded-xl border border-black/5">
+              <TabsTrigger value="text" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-lg transition-all"><Type className="h-4 w-4" /></TabsTrigger>
+              <TabsTrigger value="color" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-lg transition-all"><Palette className="h-4 w-4" /></TabsTrigger>
+              <TabsTrigger value="image" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-lg transition-all"><ImageIcon className="h-4 w-4" /></TabsTrigger>
+              <TabsTrigger value="box" className="data-[state=active]:bg-black data-[state=active]:text-white rounded-lg transition-all"><Box className="h-4 w-4" /></TabsTrigger>
             </TabsList>
 
             <ScrollArea className="flex-1 px-4 pb-6">
