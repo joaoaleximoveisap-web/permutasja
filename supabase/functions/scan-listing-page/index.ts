@@ -1,4 +1,4 @@
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.41.1";
 function absolutize(src: string, base: string): string {
   try {
@@ -9,7 +9,13 @@ function absolutize(src: string, base: string): string {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  // 1. Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { 
+      status: 204, 
+      headers: corsHeaders 
+    });
+  }
 
   console.log("\n[DEBUG] Iniciando extração de dados...");
 
