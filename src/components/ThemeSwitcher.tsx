@@ -22,7 +22,7 @@ export function ThemeSwitcher() {
               <button
                 key={t.id}
                 onClick={() => setTheme(t.id)}
-                className={`group flex items-center gap-3 rounded-xl px-2 py-2 text-left transition-smooth hover:bg-sidebar-accent ${active ? "bg-sidebar-accent" : ""}`}
+                className={`group flex items-center gap-3 rounded-xl px-2 py-2 text-left transition-smooth hover:bg-white/10 ${active ? "bg-white/15 ring-1 ring-white/20" : ""}`}
               >
                 <div className="flex h-8 w-12 overflow-hidden rounded-lg ring-1 ring-border">
                   {t.swatch.map((c, i) => (
