@@ -246,11 +246,11 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 relative flex items-center justify-center p-4 md:p-12 overflow-hidden">
+          <div className="flex-1 relative flex items-center justify-center overflow-hidden w-full h-full">
             <img 
               src={property.images[active]} 
               alt="" 
-              className="max-w-full max-h-full object-contain select-none shadow-2xl rounded-sm transition-all duration-500 animate-in zoom-in-95" 
+              className="w-full h-full object-contain md:object-cover select-none transition-all duration-500 animate-in zoom-in-95" 
             />
 
             {/* Navigation */}
