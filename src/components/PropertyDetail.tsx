@@ -13,6 +13,27 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
   const [editOpen, setEditOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
+  const nextImg = useCallback(() => {
+    if (!property) return;
+    setActive(prev => (prev < property.images.length - 1 ? prev + 1 : 0));
+  }, [property]);
+
+  const prevImg = useCallback(() => {
+    if (!property) return;
+    setActive(prev => (prev > 0 ? prev - 1 : property.images.length - 1));
+  }, [property]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (!fullscreen) return;
+      if (e.key === "ArrowRight") nextImg();
+      if (e.key === "ArrowLeft") prevImg();
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [fullscreen, nextImg, prevImg]);
+
   if (!property) return null;
 
   return (
