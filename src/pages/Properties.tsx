@@ -159,13 +159,17 @@ export default function Properties() {
             </div>
 
             {filtered.length === 0 ? (
-              <div className="glass-strong rounded-3xl p-10 text-center">
-                <Building2 className="h-10 w-10 mx-auto text-muted-foreground" />
-                <p className="mt-3 font-medium">Nenhum imóvel encontrado</p>
-                <p className="text-sm text-muted-foreground mt-1">Ajuste os filtros ou importe um novo link acima.</p>
+              <div className="bg-white/50 border border-border/50 rounded-[3rem] p-20 text-center space-y-4">
+                <div className="h-16 w-16 bg-accent/10 rounded-full mx-auto grid place-items-center">
+                  <Building2 className="h-8 w-8 text-accent" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold tracking-tight">Nenhum imóvel encontrado</p>
+                  <p className="text-muted-foreground mt-1 font-medium">Ajuste os filtros ou importe um novo link para sua curadoria.</p>
+                </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {filtered.map(p => (
                   <PropertyCard 
                     key={p.id} 
