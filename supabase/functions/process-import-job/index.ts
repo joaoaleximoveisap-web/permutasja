@@ -145,6 +145,27 @@ Deno.serve(async (req) => {
     // 5. Update session stats
     await supabase.rpc("increment_session_done", { session_uuid: job.session_id });
 
+    // 6. Save to properties table (Upsert)
+    const d = rawData;
+    const priceClean = String(d.price).replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3})/g, "").replace(",", ".");
+    
+    await supabase.from("properties").upsert({
+      title: d.title || "Imóvel extraído",
+      description: d.description || "",
+      price: parseFloat(priceClean) || 0,
+      area: parseFloat(String(d.area).replace(/[^\d]/g, "")) || 0,
+      bedrooms: parseInt(String(d.bedrooms).replace(/[^\d]/g, "")) || 0,
+      bathrooms: parseInt(String(d.bathrooms).replace(/[^\d]/g, "")) || 0,
+      parking: parseInt(String(d.parking).replace(/[^\d]/g, "")) || 0,
+      city: d.location?.split(',')[1]?.trim() || "Londrina",
+      neighborhood: d.location?.split(',')[0]?.trim() || "",
+      type: "Apartamento", // Default, can be refined
+      images: d.images,
+      source_url: job.property_url,
+      status: "published",
+      original_data: d
+    }, { onConflict: "source_url" });
+
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
 
   } catch (error) {
