@@ -19,18 +19,31 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="max-w-6xl mx-auto space-y-6">
-        <section className="glass-strong rounded-3xl p-6 md:p-10 relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-primary opacity-20 blur-3xl animate-float" />
-          <div className="relative">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Permutas Já</p>
-            <h1 className="text-3xl md:text-5xl font-semibold mt-2 leading-tight">
-              Importe um imóvel <span className="text-gradient">em segundos</span>.
-            </h1>
-            <p className="mt-3 text-muted-foreground max-w-xl">
-              Cole o link de qualquer portal. Extraímos título, fotos, preço, área e tudo mais — pronto para a sua carteira.
-            </p>
-            <div className="mt-6 max-w-2xl">
+      <div className="max-w-7xl mx-auto space-y-10">
+        <section className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden rounded-[2.5rem]">
+          {/* Dynamic Background or Default Hero */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+            style={{ 
+              backgroundImage: `url(${properties[0]?.images[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920'})`,
+            }}
+          />
+          
+          {/* Dark Immersive Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+          
+          <div className="relative z-10 w-full max-w-4xl px-6 text-center space-y-6">
+            <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <p className="text-accent font-bold uppercase tracking-[0.3em] text-xs">Exclusividade & Luxo</p>
+              <h1 className="text-4xl md:text-7xl font-bold text-white leading-tight tracking-tight drop-shadow-2xl">
+                Sua Carteira <span className="text-accent">Inteligente</span>.
+              </h1>
+              <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto font-medium">
+                Extraímos dados e imagens de qualquer portal em segundos. Otimize sua gestão de imóveis de alto padrão.
+              </p>
+            </div>
+            
+            <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
               <ImportBar />
             </div>
           </div>
