@@ -48,10 +48,18 @@ export function LiveEditor() {
 
   // Capture clicks + hover when active
   useEffect(() => {
+    // Atalho de teclado: Alt + E para ativar
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey && e.key.toLowerCase() === 'e') {
+        setActive(!active);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+
     if (!active) {
       setHoverRect(null);
       setSelectedRect(null);
-      return;
+      return () => window.removeEventListener("keydown", onKey);
     }
 
     const onMove = (e: MouseEvent) => {
@@ -77,10 +85,11 @@ export function LiveEditor() {
     document.addEventListener("mousemove", onMove, true);
     document.addEventListener("click", onClick, true);
     return () => {
+      window.removeEventListener("keydown", onKey);
       document.removeEventListener("mousemove", onMove, true);
       document.removeEventListener("click", onClick, true);
     };
-  }, [active, setSelectedSelector]);
+  }, [active, setSelectedSelector, setActive]);
 
   // Update selectedRect on resize/scroll
   useEffect(() => {
@@ -123,11 +132,14 @@ export function LiveEditor() {
     return (
       <button
         data-live-editor-ui
-        onClick={() => setActive(true)}
-        className="fixed bottom-6 right-6 z-[9999] h-14 w-14 rounded-full bg-accent text-white shadow-2xl shadow-accent/40 grid place-items-center hover:scale-110 transition-all"
+        onClick={() => {
+          console.log("Live Editor: Ativado via botão");
+          setActive(true);
+        }}
+        className="fixed bottom-10 right-10 z-[1000000] h-16 w-16 rounded-full bg-accent text-white shadow-[0_0_50px_rgba(198,168,125,0.5)] grid place-items-center hover:scale-110 transition-all border-4 border-white animate-bounce"
         title="Modo Editor Visual"
       >
-        <Wand2 className="h-6 w-6" />
+        <Wand2 className="h-8 w-8" />
       </button>
     );
   }
