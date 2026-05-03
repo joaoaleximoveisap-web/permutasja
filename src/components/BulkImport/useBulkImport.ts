@@ -29,7 +29,10 @@ export function useBulkImport() {
       });
 
       if (funcErr) throw funcErr;
-      if (funcData?.error) throw new Error(funcData.error);
+      if (funcData?.error) {
+        const detail = funcData.motivo ? `\nMotivo: ${funcData.motivo}` : "";
+        throw new Error(`${funcData.error}${detail}`);
+      }
     } catch (err: any) {
       toast.error("Erro ao iniciar varredura", { description: err.message });
       setStep('input');
