@@ -131,40 +131,33 @@
     --sidebar-accent-foreground: 0 0% 100%;
   }
 
-  /* THEME 4 — Ocean (azul profundo) */
+  /* THEME 4 — Azul Monarca (Patrimonial) */
   [data-theme="ocean"] {
-    --background: 215 40% 12%;
-    --background-2: 220 45% 7%;
-    --foreground: 200 20% 95%;
-    --card: 215 35% 16%;
-    --card-foreground: 200 20% 95%;
-    --popover: 215 35% 16%;
-    --popover-foreground: 200 20% 95%;
-    --primary: 195 90% 65%;
-    --primary-foreground: 215 45% 10%;
-    --secondary: 215 30% 22%;
-    --secondary-foreground: 200 20% 95%;
-    --muted: 215 30% 22%;
-    --muted-foreground: 200 15% 70%;
-    --accent: 180 70% 55%;
-    --accent-foreground: 215 45% 10%;
-    --border: 215 30% 30% / 0.6;
-    --input: 215 30% 30%;
-    --ring: 195 90% 65%;
-    --glass-bg: 215 35% 18% / 0.55;
-    --glass-border: 195 60% 50% / 0.3;
-    --glass-highlight: 200 100% 90% / 0.08;
-    --glass-shadow: 220 50% 4% / 0.6;
-    --gradient-bg: radial-gradient(ellipse at 20% 0%, hsl(195 80% 35% / 0.5), transparent 60%),
-                   radial-gradient(ellipse at 80% 100%, hsl(220 60% 25% / 0.5), transparent 60%),
-                   linear-gradient(135deg, hsl(var(--background)), hsl(var(--background-2)));
-    --gradient-primary: linear-gradient(135deg, hsl(195 90% 65%), hsl(220 80% 55%));
-    --gradient-card: linear-gradient(135deg, hsl(200 100% 90% / 0.1), hsl(215 35% 18% / 0.5));
-    --sidebar-background: 215 40% 14% / 0.7;
-    --sidebar-foreground: 200 20% 92%;
-    --sidebar-accent: 195 90% 65% / 0.18;
-    --sidebar-accent-foreground: 200 20% 98%;
-    --sidebar-border: 215 30% 30% / 0.5;
+    --background: 221 74% 15%;
+    --background-2: 221 74% 12%;
+    --foreground: 0 0% 100%;
+    --card: 221 74% 18%;
+    --card-foreground: 0 0% 100%;
+    --popover: 221 74% 18%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 38 43% 59%; /* Champagne Gold */
+    --primary-foreground: 221 74% 15%;
+    --secondary: 221 50% 20%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 221 50% 20%;
+    --muted-foreground: 221 30% 70%;
+    --accent: 38 43% 59%;
+    --accent-foreground: 221 74% 15%;
+    --border: 221 50% 25%;
+    --input: 221 50% 25%;
+    --ring: 38 43% 59%;
+    --glass-bg: 221 74% 16% / 0.75;
+    --glass-border: 221 50% 40% / 0.4;
+    --gradient-primary: linear-gradient(135deg, hsl(38 43% 65%), hsl(38 43% 50%));
+    --sidebar-background: 221 74% 13% / 0.8;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-accent: 38 43% 59% / 0.15;
+    --sidebar-accent-foreground: 0 0% 100%;
   }
 
   /* THEME 5 — Rose Quartz (rosa claro) */
