@@ -78,10 +78,13 @@ export default function Dashboard() {
           </section>
         ) : (
           <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Adicionados recentemente</h2>
-              <Link to="/imoveis" className="text-sm text-accent hover:underline flex items-center gap-1">
-                Ver todos <ArrowRight className="h-4 w-4" />
+            <div className="flex items-end justify-between border-b border-border pb-6 mb-8">
+              <div className="space-y-1">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Curadoria Exclusiva</h2>
+                <p className="text-muted-foreground font-medium">Os ativos mais recentes da sua carteira inteligente.</p>
+              </div>
+              <Link to="/imoveis" className="text-sm font-bold text-accent hover:underline flex items-center gap-2 uppercase tracking-widest bg-accent/5 px-4 py-2 rounded-xl transition-all">
+                Ver Portfólio <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
