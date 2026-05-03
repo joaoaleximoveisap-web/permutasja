@@ -41,36 +41,41 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
       if (!editOpen) onOpenChange(v);
     }}>
       <DialogContent className="max-w-6xl glass-strong border-glass-border rounded-3xl p-0 overflow-hidden max-h-[95vh] overflow-y-auto z-50">
-        <div className="flex flex-col">
+        <div className="flex flex-col relative">
           {/* Hero Section Style Netflix */}
-          <div className="relative w-full aspect-video md:aspect-[21/9] bg-black overflow-hidden group">
+          <div 
+            className="relative w-full aspect-video md:aspect-[21/9] bg-black overflow-hidden group cursor-zoom-in"
+            onClick={() => setFullscreen(true)}
+          >
             <img 
               src={property.images[active]} 
               alt={property.title} 
-              className="w-full h-full object-cover transition-smooth" 
+              className="w-full h-full object-cover transition-smooth group-hover:scale-105" 
             />
             
             {/* Dark Gradient Overlay Style Netflix */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
             
-            {/* Hero Content Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              {/* Only Image, no text on top */}
+            {/* Immersive Badge */}
+            <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+              <div className="glass-strong bg-white/10 backdrop-blur-md border-white/20 rounded-xl px-4 py-2 flex items-center gap-2 text-white font-bold text-sm">
+                <ZoomIn className="h-4 w-4" /> Ver em tela cheia
+              </div>
             </div>
 
             {/* Navigation Arrows */}
             {property.images.length > 1 && (
               <>
                 <button 
-                  onClick={() => setActive(prev => (prev > 0 ? prev - 1 : property.images.length - 1))}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20"
+                  onClick={(e) => { e.stopPropagation(); prevImg(); }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20 sm:opacity-0 sm:group-hover:opacity-100"
                   aria-label="Imagem anterior"
                 >
                   <ChevronLeft className="h-8 w-8" />
                 </button>
                 <button 
-                  onClick={() => setActive(prev => (prev < property.images.length - 1 ? prev + 1 : 0))}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20"
+                  onClick={(e) => { e.stopPropagation(); nextImg(); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20 sm:opacity-0 sm:group-hover:opacity-100"
                   aria-label="Próxima imagem"
                 >
                   <ChevronRight className="h-8 w-8" />
@@ -83,6 +88,7 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
               {active + 1} / {property.images.length}
             </div>
           </div>
+
 
           <div className="p-8 md:p-12 grid md:grid-cols-3 gap-12">
             <div className="md:col-span-2 space-y-8">
