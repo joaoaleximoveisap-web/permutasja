@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { Property } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { buildNormalized } from "@/lib/property-utils";
 
 type Ctx = {
   properties: Property[];
@@ -47,29 +48,33 @@ export function PropertiesProvider({ children }: { children: React.ReactNode }) 
       return;
     }
     
-    const mapped: Property[] = (data || []).map(p => ({
-      id: p.id,
-      title: p.title,
-      description: p.description || "",
-      price: Number(p.price),
-      area: Number(p.area),
-      bedrooms: p.bedrooms || 0,
-      bathrooms: p.bathrooms || 0,
-      parking: p.parking || 0,
-      city: p.city || "",
-      neighborhood: p.neighborhood || "",
-      type: p.type || "",
-      images: p.images || [],
-      sourceUrl: p.source_url || "",
-      permuta: { enabled: p.permuta_enabled, details: p.permuta_details || "" },
-      tags: p.tags || [],
-      status: p.status as any,
-      createdAt: new Date(p.created_at).getTime(),
-      normalized: {
-        titleLower: p.title.toLowerCase(),
-        descriptionLower: (p.description || "").toLowerCase()
-      }
-    }));
+    const mapped: Property[] = (data || []).map(p => {
+      const base = {
+        title: p.title,
+        price: Number(p.price),
+        area: Number(p.area),
+        bedrooms: p.bedrooms || 0,
+        bathrooms: p.bathrooms || 0,
+        parking: p.parking || 0,
+        description: p.description || "",
+        images: p.images || [],
+        sourceUrl: p.source_url || "",
+        city: p.city || "",
+        neighborhood: p.neighborhood || "",
+        type: p.type || "",
+        tags: p.tags || [],
+        permuta: { enabled: p.permuta_enabled, details: p.permuta_details || "" }
+      };
+
+      return {
+        id: p.id,
+        ...base,
+        status: p.status as any,
+        origin: "import",
+        createdAt: new Date(p.created_at).getTime(),
+        normalized: buildNormalized(base as any)
+      };
+    });
     setProperties(mapped);
   }, []);
 
@@ -184,4 +189,3 @@ export function useProperties() {
   if (!ctx) throw new Error("useProperties must be used within PropertiesProvider");
   return ctx;
 }
-
