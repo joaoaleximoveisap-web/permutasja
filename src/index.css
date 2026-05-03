@@ -322,7 +322,7 @@
     color: transparent;
   }
   }
-  
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -330,7 +330,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
     height: 4px;
