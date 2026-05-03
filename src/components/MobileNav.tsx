@@ -9,7 +9,7 @@ const items = [
 export function MobileNav() {
   const { pathname } = useLocation();
   return (
-    <nav className="md:hidden fixed bottom-3 left-3 right-3 z-40 glass rounded-2xl p-2 flex justify-around">
+    <nav className="md:hidden fixed bottom-3 left-3 right-3 z-40 bg-white/95 border border-border backdrop-blur-xl rounded-2xl p-2 flex justify-around shadow-lg">
       {items.map(({ to, label, icon: Icon }) => {
         const active = pathname.startsWith(to);
         return (
