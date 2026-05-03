@@ -266,6 +266,7 @@ Deno.serve(async (req) => {
             url,
             formats: ["html", "markdown"], // Use markdown for clean text extraction
             waitFor: 5000,
+            onlyMainContent: false, // Ensure we see labels and sidebar data
             actions: [
               { type: "wait", milliseconds: 2000 },
               { type: "scroll", direction: "down", amount: 1500 },
@@ -282,20 +283,29 @@ Deno.serve(async (req) => {
     }
 
     // Step 2: Advanced Extraction from Visible Content (Markdown/Text)
+    // We behave like a human reading the page
     const pageText = markdown || html.replace(/<[^>]*>/g, ' ');
     
     // PATTERN MATCHING (Human-like reading)
+    // Price: R$ followed by numbers, dots, commas
     const priceMatch = pageText.match(/R\$\s*([\d.,]+)/i);
+    // Area: number followed by m²
     const areaMatch = pageText.match(/(\d+)\s*m[²2]/i);
+    // Rooms: number followed by keywords
     const bedMatch = pageText.match(/(\d+)\s*(?:quartos?|dormit[óo]rios?|su[íi]tes?|beds?)/i);
     const bathMatch = pageText.match(/(\d+)\s*(?:banheiros?|wc|baths?)/i);
     const parkMatch = pageText.match(/(\d+)\s*(?:vagas?|garagens?|parking)/i);
     
-    // TITLE FIX (H1 priority)
+    // TITLE FIX (H1 priority from HTML)
     let title = "";
     const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
     if (h1Match) {
       title = cleanTitle(h1Match[1].replace(/<[^>]*>/g, '').trim());
+    }
+    
+    // Discard invalid titles
+    if (title && (title.toLowerCase().includes("facilitado por") || title.toLowerCase().includes("powered by"))) {
+      title = "";
     }
     
     if (!title) {
@@ -310,10 +320,11 @@ Deno.serve(async (req) => {
       try { ldData = JSON.parse(ldMatch[1]); } catch {}
     }
 
+    // Priority Order applied here: Visible text patterns first
     extracted = {
       title: title || ldData.name || "Imóvel sem título",
-      price: priceMatch ? parseNumber(priceMatch[1]) : (ldData.offers?.price || 0),
-      area: areaMatch ? parseInt(areaMatch[1], 10) : (ldData.floorSize?.value || 0),
+      price: priceMatch ? parseNumber(priceMatch[1]) : (ldData.offers?.price || parseNumber(html.match(/itemprop=["']price["']\s+content=["']([^"']+)/i)?.[1])),
+      area: areaMatch ? parseInt(areaMatch[1], 10) : (ldData.floorSize?.value || parseInt(html.match(/itemprop=["']floorSize["'][^>]*>([\d\s]+)/i)?.[1] || "0")),
       bedrooms: bedMatch ? parseInt(bedMatch[1], 10) : (ldData.numberOfRooms || 0),
       bathrooms: bathMatch ? parseInt(bathMatch[1], 10) : 0,
       parking: parkMatch ? parseInt(parkMatch[1], 10) : 0,
