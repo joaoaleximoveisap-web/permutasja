@@ -102,40 +102,33 @@
     --sidebar-accent-foreground: 0 0% 100%;
   }
 
-  /* THEME 3 — Forest (verde escuro) */
+  /* THEME 3 — Verde Imperial (Luxo Europeu) */
   [data-theme="forest"] {
-    --background: 150 20% 10%;
-    --background-2: 150 25% 6%;
-    --foreground: 80 15% 92%;
-    --card: 150 20% 14%;
-    --card-foreground: 80 15% 92%;
-    --popover: 150 20% 14%;
-    --popover-foreground: 80 15% 92%;
-    --primary: 80 40% 70%;
-    --primary-foreground: 150 25% 10%;
-    --secondary: 150 15% 20%;
-    --secondary-foreground: 80 15% 92%;
-    --muted: 150 15% 20%;
-    --muted-foreground: 100 10% 65%;
-    --accent: 90 50% 55%;
-    --accent-foreground: 150 25% 10%;
-    --border: 150 15% 25% / 0.6;
-    --input: 150 15% 25%;
-    --ring: 90 50% 55%;
-    --glass-bg: 150 20% 16% / 0.55;
-    --glass-border: 90 30% 50% / 0.3;
-    --glass-highlight: 80 30% 80% / 0.08;
-    --glass-shadow: 150 30% 4% / 0.5;
-    --gradient-bg: radial-gradient(ellipse at 20% 0%, hsl(90 50% 30% / 0.5), transparent 60%),
-                   radial-gradient(ellipse at 80% 100%, hsl(150 40% 20% / 0.6), transparent 60%),
-                   linear-gradient(135deg, hsl(var(--background)), hsl(var(--background-2)));
-    --gradient-primary: linear-gradient(135deg, hsl(90 50% 55%), hsl(150 40% 35%));
-    --gradient-card: linear-gradient(135deg, hsl(80 30% 80% / 0.1), hsl(150 20% 16% / 0.5));
-    --sidebar-background: 150 20% 12% / 0.7;
-    --sidebar-foreground: 80 15% 88%;
-    --sidebar-accent: 90 50% 55% / 0.18;
-    --sidebar-accent-foreground: 80 15% 95%;
-    --sidebar-border: 150 15% 25% / 0.5;
+    --background: 164 47% 11%;
+    --background-2: 164 47% 8%;
+    --foreground: 0 0% 92%;
+    --card: 164 47% 14%;
+    --card-foreground: 0 0% 92%;
+    --popover: 164 47% 14%;
+    --popover-foreground: 0 0% 92%;
+    --primary: 46 65% 52%; /* Gold Premium */
+    --primary-foreground: 164 47% 11%;
+    --secondary: 164 30% 20%;
+    --secondary-foreground: 0 0% 92%;
+    --muted: 164 30% 20%;
+    --muted-foreground: 164 15% 70%;
+    --accent: 46 65% 52%;
+    --accent-foreground: 164 47% 11%;
+    --border: 164 30% 25%;
+    --input: 164 30% 25%;
+    --ring: 46 65% 52%;
+    --glass-bg: 164 47% 12% / 0.75;
+    --glass-border: 164 30% 40% / 0.4;
+    --gradient-primary: linear-gradient(135deg, hsl(46 65% 60%), hsl(46 65% 45%));
+    --sidebar-background: 164 47% 9% / 0.85;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-accent: 46 65% 52% / 0.2;
+    --sidebar-accent-foreground: 0 0% 100%;
   }
 
   /* THEME 4 — Ocean (azul profundo) */
