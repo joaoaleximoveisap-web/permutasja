@@ -66,21 +66,27 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
+          items_count: number | null
           message: string
+          page_number: number | null
           status: string
         }
         Insert: {
           created_at?: string
           details?: Json | null
           id?: string
+          items_count?: number | null
           message: string
+          page_number?: number | null
           status: string
         }
         Update: {
           created_at?: string
           details?: Json | null
           id?: string
+          items_count?: number | null
           message?: string
+          page_number?: number | null
           status?: string
         }
         Relationships: []
@@ -173,6 +179,7 @@ export type Database = {
           bedrooms: number | null
           city: string | null
           created_at: string | null
+          data: Json | null
           description: string | null
           external_id: string | null
           features_json: Json | null
@@ -187,6 +194,7 @@ export type Database = {
           permuta_details: string | null
           permuta_enabled: boolean | null
           price: number
+          scraped_at: string | null
           source_url: string | null
           status: string | null
           tags: string[] | null
@@ -200,6 +208,7 @@ export type Database = {
           bedrooms?: number | null
           city?: string | null
           created_at?: string | null
+          data?: Json | null
           description?: string | null
           external_id?: string | null
           features_json?: Json | null
@@ -214,6 +223,7 @@ export type Database = {
           permuta_details?: string | null
           permuta_enabled?: boolean | null
           price: number
+          scraped_at?: string | null
           source_url?: string | null
           status?: string | null
           tags?: string[] | null
@@ -227,6 +237,7 @@ export type Database = {
           bedrooms?: number | null
           city?: string | null
           created_at?: string | null
+          data?: Json | null
           description?: string | null
           external_id?: string | null
           features_json?: Json | null
@@ -241,6 +252,7 @@ export type Database = {
           permuta_details?: string | null
           permuta_enabled?: boolean | null
           price?: number
+          scraped_at?: string | null
           source_url?: string | null
           status?: string | null
           tags?: string[] | null
