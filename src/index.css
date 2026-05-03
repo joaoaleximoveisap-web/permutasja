@@ -240,18 +240,25 @@
 }
 
 @layer base {
-  * { @apply border-border; }
+  * { 
+    @apply border-border; 
+    /* Force minimum contrast and readability globally */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
   html, body, #root { min-height: 100vh; }
   body {
     @apply text-foreground;
-    background: var(--gradient-bg);
+    background: var(--background);
     background-attachment: fixed;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
   }
   h1, h2, h3, h4 {
     font-family: 'Fraunces', 'Playfair Display', Georgia, serif;
     letter-spacing: -0.02em;
     font-weight: 700;
+    @apply text-foreground; /* Titles must always have primary contrast */
   }
 }
 
