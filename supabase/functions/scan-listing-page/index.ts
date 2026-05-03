@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY não configurada");
 
-    // 1. Firecrawl scan - ONLY get links
+    // 1. Firecrawl scan - Detect API and Links
     const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST",
       headers: {
@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         url,
-        formats: ["links"],
+        formats: ["html", "links"],
         waitFor: 5000,
       }),
     });
@@ -45,9 +45,31 @@ Deno.serve(async (req) => {
     const fcData = await fcRes.json();
     if (!fcRes.ok) throw new Error(fcData.error || "Erro no Firecrawl");
 
+    const html = fcData.data?.html || "";
     const rawLinks = fcData.data?.links || [];
     
-    // Step 1A & 1E - Filter and Validate URLs
+    // --- PHASE 1: API DETECTION ---
+    let apiEndpoint = null;
+    
+    // Scan script tags and window data for common API patterns
+    const apiPatterns = [
+      /https?:\/\/[^"'\s]+\/api\/(?:listings|properties|search|v1|v2)[^"'\s]*/gi,
+      /https?:\/\/[^"'\s]+\/graphql/gi,
+      /window\.__INITIAL_STATE__\s*=\s*({[\s\S]+?});/i,
+      /window\.__NEXT_DATA__\s*=\s*({[\s\S]+?});/i,
+      /<script[^>]+type=["']application\/json["'][^>]*>([\s\S]+?)<\/script>/gi
+    ];
+
+    for (const pattern of apiPatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        console.log("Potential API/Data found:", match[0].substring(0, 100));
+        // We could extract and use it here, but for now we'll prioritize high-quality link extraction
+        // as a robust baseline while reporting detection.
+      }
+    }
+
+    // --- PHASE 2: ROBUST LINK EXTRACTION (FALLBACK/HYBRID) ---
     const patterns = [
       '/imovel', '/imoveis', '/property', '/properties',
       '/listing', '/listings', '/detalhe', '/detail',
@@ -58,10 +80,11 @@ Deno.serve(async (req) => {
     const rejectPatterns = [
       '/blog', '/sobre', '/contato', '/equipe', '/noticias',
       '/login', '/cadastro', '/busca', '/search',
-      '#', 'javascript:', 'mailto:'
+      '#', 'javascript:', 'mailto:', '/wp-admin/', '/wp-content/'
     ];
 
     const baseUrl = new URL(url);
+    const domain = baseUrl.hostname;
 
     let validLinks = Array.from(new Set(
       rawLinks
@@ -69,17 +92,18 @@ Deno.serve(async (req) => {
           let href = l.href;
           if (!href) return null;
           
-          // Step 1C - Handle relative URLs
           if (href.startsWith('/')) {
             href = `${baseUrl.protocol}//${baseUrl.host}${href}`;
           }
           
           try {
             const linkUrl = new URL(href);
-            // Step 1D - Normalize (remove tracking params)
+            // Ensure same domain to avoid crawling external ads
+            if (!linkUrl.hostname.includes(domain)) return null;
+
             const trackingParams = ['utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid'];
             trackingParams.forEach(p => linkUrl.searchParams.delete(p));
-            return linkUrl.toString().replace(/\/$/, ""); // Remove trailing slash
+            return linkUrl.toString().replace(/\/$/, "");
           } catch {
             return null;
           }
@@ -99,19 +123,41 @@ Deno.serve(async (req) => {
     }
 
     if (validLinks.length === 0) {
+      // Emergency: if patterns fail, try to find any link inside a "card" structure
+      const cardLinksMatch = html.matchAll(/<(?:div|section|li|a)[^>]+(?:card|item|listing|property|result)[^>]*?>[\s\S]*?<a[^>]+href=["']([^"']+)["']/gi);
+      const emergencyLinks = new Set<string>();
+      for (const m of cardLinksMatch) {
+        try {
+          const abs = absolutize(m[1], url);
+          const u = new URL(abs);
+          if (u.hostname.includes(domain)) emergencyLinks.add(abs);
+        } catch {}
+      }
+      
+      if (emergencyLinks.size > 0) {
+        validLinks = Array.from(emergencyLinks).slice(0, 500);
+      }
+    }
+
+    if (validLinks.length === 0) {
       await supabase.from("import_sessions").update({ 
         status: "failed", 
-        error_log: { code: "incompatible_page", message: "Nenhum link de imóvel individual encontrado na página de listagem." } 
+        error_log: { 
+          code: "incompatible_page", 
+          message: "Nenhum link de imóvel individual encontrado. O site pode estar protegendo os dados via API dinâmica.",
+          debug: { htmlLength: html.length, apiDetected: !!apiEndpoint }
+        } 
       }).eq("id", session_id);
       return new Response(JSON.stringify({ found: 0 }), { headers: corsHeaders });
     }
 
-    // 2. Create jobs - DO NOT extract images here
+    // 2. Create jobs - DO NOT extract images here (they will be extracted in process-import-job)
     const jobs = validLinks.map(link => ({
       session_id,
       property_url: link,
       status: "pending"
     }));
+
 
     // Batch insert to avoid issues
     await supabase.from("import_jobs").insert(jobs);
