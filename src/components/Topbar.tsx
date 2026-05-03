@@ -7,9 +7,9 @@ export function Topbar() {
   const { credits, creditSystemEnabled } = useProperties();
   return (
     <header className="sticky top-0 z-30 pt-4 px-6 md:px-10">
-      <div className="bg-white/40 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-3 flex items-center justify-between shadow-elevated">
+      <div className="bg-white/40 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-2.5 flex items-center justify-between shadow-elevated">
         <Link to="/dashboard" className="md:hidden font-bold tracking-tight text-primary">Permutas Já</Link>
-        <div className="hidden md:block text-sm text-muted-foreground font-medium italic">Bem-vindo de volta 👋</div>
+        <div className="hidden md:block text-[13px] text-muted-foreground font-medium italic opacity-60">Curadoria de Ativos Premium 👋</div>
 
         <div className="flex items-center gap-2">
           {creditSystemEnabled && (
