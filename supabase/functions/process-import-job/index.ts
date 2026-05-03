@@ -50,10 +50,12 @@ Deno.serve(async (req) => {
               bathrooms: { type: "string" },
               parking: { type: "string" },
               location: { type: "string" },
-              description: { type: "string" }
+              description: { type: "string" },
+              permuta: { type: "boolean" },
+              permutaDetails: { type: "string" }
             }
           },
-          prompt: "Extraia os detalhes do imóvel brasileiro: título, preço (R$), área (m²), quartos, banheiros, vagas, endereço completo e descrição."
+          prompt: "Extraia os detalhes do imóvel brasileiro: título, preço (R$), área (m²), quartos, banheiros, vagas, endereço completo, descrição e se aceita permuta."
         }
       }),
     });
