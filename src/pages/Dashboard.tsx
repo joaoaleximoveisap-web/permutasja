@@ -23,35 +23,61 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="max-w-7xl mx-auto">
-        {/* HERO SECTION */}
-        <section className="relative h-[90vh] min-h-[700px] flex items-center justify-center overflow-hidden rounded-[3rem] shadow-2xl mx-2 md:mx-0 mt-4 md:mt-0 group">
-          <div 
-            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform group-hover:scale-[1.03]"
-            style={{ 
-              backgroundImage: `url(${properties[0]?.images[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920'})`,
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/90" />
-          
-          <div className="relative z-10 w-full max-w-5xl px-8 text-center space-y-10">
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-              <div className="inline-block bg-accent/20 backdrop-blur-md border border-accent/40 rounded-full px-8 py-2.5 text-accent font-bold uppercase tracking-[0.5em] text-[9px] shadow-sm">
-                International Luxury Portfolios
-              </div>
-              <h1 className="text-6xl md:text-9xl font-bold text-white leading-[0.95] tracking-tighter drop-shadow-2xl">
-                The New <br /> <span className="text-accent italic font-serif">Standard</span>.
-              </h1>
-              <p className="text-xl md:text-2xl text-white/60 max-w-3xl mx-auto font-medium leading-relaxed tracking-tight">
-                Inteligência de mercado para extração e gestão de ativos de luxo. <br className="hidden md:block" /> Otimize sua carteira com design e tecnologia internacional.
-              </p>
-            </div>
-            
-            <div className="max-w-2xl mx-auto pt-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500">
-              <ImportBar />
+      <div className="max-w-7xl mx-auto px-4 md:px-0">
+        <Tabs defaultValue="overview" className="space-y-8">
+          <div className="flex items-center justify-between border-b pb-4">
+            <TabsList className="bg-transparent gap-8">
+              <TabsTrigger 
+                value="overview" 
+                className="text-xs uppercase font-bold tracking-widest data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent rounded-none bg-transparent"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger 
+                value="scraper" 
+                className="text-xs uppercase font-bold tracking-widest data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent rounded-none bg-transparent"
+              >
+                Motor de Extração
+              </TabsTrigger>
+            </TabsList>
+            <div className="hidden md:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <Settings className="h-3 w-3" /> System Status: <span className="text-green-500">Live</span>
             </div>
           </div>
-        </section>
+
+          <TabsContent value="overview" className="space-y-12 animate-in fade-in duration-500">
+            {/* HERO SECTION */}
+            <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden rounded-[3rem] shadow-2xl group">
+              <div 
+                className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform group-hover:scale-[1.03]"
+                style={{ 
+                  backgroundImage: `url(${properties[0]?.images[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920'})`,
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/90" />
+              
+              <div className="relative z-10 w-full max-w-5xl px-8 text-center space-y-10">
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-1000">
+                  <div className="inline-block bg-accent/20 backdrop-blur-md border border-accent/40 rounded-full px-8 py-2.5 text-accent font-bold uppercase tracking-[0.5em] text-[9px] shadow-sm">
+                    International Luxury Portfolios
+                  </div>
+                  <h1 className="text-6xl md:text-9xl font-bold text-white leading-[0.95] tracking-tighter drop-shadow-2xl">
+                    The New <br /> <span className="text-accent italic font-serif">Standard</span>.
+                  </h1>
+                </div>
+                
+                <div className="max-w-2xl mx-auto pt-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500">
+                  <ImportBar />
+                </div>
+              </div>
+            </section>
+          </TabsContent>
+
+          <TabsContent value="scraper" className="animate-in fade-in duration-500">
+            <ScraperManager />
+          </TabsContent>
+        </Tabs>
+
 
         {/* CURATED PROPERTIES SECTION */}
         <section className="py-24 space-y-16">
