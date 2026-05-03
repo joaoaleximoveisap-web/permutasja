@@ -60,7 +60,7 @@ export function FilterPanel({ filters, setFilters }: { filters: Filters; setFilt
         </div>
       </div>
 
-      <div className="flex items-center justify-between glass rounded-xl px-3 py-2">
+      <div className="flex items-center justify-between bg-white border border-border rounded-xl px-3 py-2 shadow-sm">
         <Label className="cursor-pointer">Apenas com permuta</Label>
         <Switch checked={filters.onlyPermuta} onCheckedChange={(v) => setFilters({ ...filters, onlyPermuta: v })} />
       </div>
