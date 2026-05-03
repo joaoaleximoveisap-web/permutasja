@@ -48,6 +48,7 @@ const App = () => (
               </BrowserRouter>
             </TooltipProvider>
           </PropertiesProvider>
+          </LiveEditProvider>
         </BuilderProvider>
       </ThemeEditorProvider>
     </ThemeProvider>
