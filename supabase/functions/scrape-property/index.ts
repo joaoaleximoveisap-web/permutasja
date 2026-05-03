@@ -172,8 +172,8 @@ Deno.serve(async (req) => {
 
     // --- MODE: DISCOVER (BULK) ---
     if (mode === "discover") {
-      console.log("Discover mode: using Firecrawl for JS rendering...");
-      const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
+      console.log("Discover mode: using Firecrawl v1 for consistency...");
+      const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
@@ -235,10 +235,10 @@ Deno.serve(async (req) => {
     let extracted: any = null;
     let html = "";
 
-    // Attempt 1: Firecrawl (LLM extract + HTML)
+    // Attempt 1: Firecrawl (Scrape + Extract)
     if (FIRECRAWL_API_KEY) {
       try {
-        const fcRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
+        const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
@@ -246,8 +246,10 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             url,
-            formats: [
-              { type: "json", schema: {
+            formats: ["html", "extract"],
+            waitFor: 5000,
+            extract: {
+              schema: {
                 type: "object",
                 properties: {
                   title: { type: "string" },
@@ -260,23 +262,23 @@ Deno.serve(async (req) => {
                   city: { type: "string" },
                   neighborhood: { type: "string" },
                   type: { type: "string" },
-                  images: { type: "array", items: { type: "string" } },
-                  permuta: { type: "boolean" },
-                  permutaDetails: { type: "string" }
+                  images: { type: "array", items: { type: "string" } }
                 }
-              }},
-              "html"
-            ],
-            waitFor: 2000,
+              }
+            }
           }),
         });
         const result = await fcRes.json();
         if (fcRes.ok) {
           const doc = result.data || result;
-          extracted = doc.json || doc.extract || null;
+          extracted = doc.extract || doc.json || null;
           html = doc.html || "";
         } else {
           console.warn("Firecrawl failed:", result);
+          if (result.error?.includes("token")) {
+             // Let the user know specifically about the token issue
+             return new Response(JSON.stringify({ error: "Erro de autenticação no Firecrawl. Verifique sua API Key." }), { status: 401, headers: corsHeaders });
+          }
         }
       } catch (e) {
         console.error("Firecrawl error:", e);
@@ -302,31 +304,60 @@ Deno.serve(async (req) => {
     // Advanced Extraction Logic (Manual + Firecrawl Supplement)
     const scrapedImages = html ? extractImagesFromHtml(html, url) : [];
     
-    if ((!extracted || !extracted.title) && html) {
+    // --- NEW: SPA DATA EXTRACTION (Next.js, Nuxt, etc.) ---
+    let spaData: any = null;
+    if (html) {
+      try {
+        const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]+?)<\/script>/);
+        if (nextDataMatch) {
+          const fullData = JSON.parse(nextDataMatch[1]);
+          // Try to find property data in common Next.js structures
+          spaData = fullData.props?.pageProps?.property || 
+                    fullData.props?.pageProps?.listing || 
+                    fullData.props?.pageProps?.data;
+        }
+        
+        if (!spaData) {
+          const initialStateMatch = html.match(/window\.__INITIAL_STATE__\s*=\s*({[\s\S]+?});/i);
+          if (initialStateMatch) spaData = JSON.parse(initialStateMatch[1]);
+        }
+      } catch (e) {
+        console.warn("SPA extraction failed:", e);
+      }
+    }
+
+    if ((!extracted || !extracted.title) && (html || spaData)) {
       const titleMatch = 
-        html.match(/property=["']og:title["']\s+content=["']([^"']+)/i) ||
-        html.match(/<title>([^<]+)<\/title>/i);
+        html?.match(/property=["']og:title["']\s+content=["']([^"']+)/i) ||
+        html?.match(/<title>([^<]+)<\/title>/i);
       const descMatch = 
-        html.match(/property=["']og:description["']\s+content=["']([^"']+)/i) ||
-        html.match(/name=["']description["']\s+content=["']([^"']+)/i);
+        html?.match(/property=["']og:description["']\s+content=["']([^"']+)/i) ||
+        html?.match(/name=["']description["']\s+content=["']([^"']+)/i);
       
-      const priceMatch = html.match(/R\$\s*([\d.,]+)/i);
-      const areaMatch = html.match(/(\d+)\s*m[²2]/i);
-      const bedMatch = html.match(/(\d+)\s*(?:quartos?|dormit[óo]rios?|su[íi]tes?)/i);
-      const bathMatch = html.match(/(\d+)\s*(?:banheiros?|wc)/i);
-      const parkMatch = html.match(/(\d+)\s*(?:vagas?|garagens?)/i);
+      const priceMatch = html?.match(/R\$\s*([\d.,]+)/i);
+      const areaMatch = html?.match(/(\d+)\s*m[²2]/i);
+      const bedMatch = html?.match(/(\d+)\s*(?:quartos?|dormit[óo]rios?|su[íi]tes?)/i);
+      const bathMatch = html?.match(/(\d+)\s*(?:banheiros?|wc)/i);
+      const parkMatch = html?.match(/(\d+)\s*(?:vagas?|garagens?)/i);
 
       extracted = {
-        title: titleMatch?.[1]?.trim() || "Imóvel importado",
-        description: descMatch?.[1]?.trim() || "",
-        price: priceMatch ? parseNumber(priceMatch[1]) : 0,
-        area: areaMatch ? parseInt(areaMatch[1], 10) : 0,
-        bedrooms: bedMatch ? parseInt(bedMatch[1], 10) : 0,
-        bathrooms: bathMatch ? parseInt(bathMatch[1], 10) : 0,
-        parking: parkMatch ? parseInt(parkMatch[1], 10) : 0,
-        images: scrapedImages,
-        missingFields: ["city", "neighborhood", "type"]
+        title: spaData?.title || spaData?.name || titleMatch?.[1]?.trim() || "Imóvel importado",
+        description: spaData?.description || descMatch?.[1]?.trim() || "",
+        price: spaData?.price || (priceMatch ? parseNumber(priceMatch[1]) : 0),
+        area: spaData?.area || spaData?.total_area || (areaMatch ? parseInt(areaMatch[1], 10) : 0),
+        bedrooms: spaData?.bedrooms || spaData?.rooms || (bedMatch ? parseInt(bedMatch[1], 10) : 0),
+        bathrooms: spaData?.bathrooms || (bathMatch ? parseInt(bathMatch[1], 10) : 0),
+        parking: spaData?.parking || spaData?.garages || (parkMatch ? parseInt(parkMatch[1], 10) : 0),
+        images: spaData?.images?.map((img: any) => typeof img === 'string' ? img : img.url) || scrapedImages,
+        city: spaData?.city || spaData?.address?.city,
+        neighborhood: spaData?.neighborhood || spaData?.address?.neighborhood,
+        type: spaData?.type,
+        missingFields: []
       };
+      
+      if (!extracted.city) extracted.missingFields.push("city");
+      if (!extracted.neighborhood) extracted.missingFields.push("neighborhood");
+      if (!extracted.type) extracted.missingFields.push("type");
     } else if (extracted) {
       // Merge Firecrawl LLM images with our advanced scraped images
       const llmImages = (extracted.images || []).map((u: string) => upgradeImageUrl(absolutize(u, url)));

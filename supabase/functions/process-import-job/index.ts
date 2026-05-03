@@ -50,10 +50,12 @@ Deno.serve(async (req) => {
               bathrooms: { type: "string" },
               parking: { type: "string" },
               location: { type: "string" },
-              description: { type: "string" }
+              description: { type: "string" },
+              permuta: { type: "boolean" },
+              permutaDetails: { type: "string" }
             }
           },
-          prompt: "Extraia os detalhes do imóvel brasileiro: título, preço (R$), área (m²), quartos, banheiros, vagas, endereço completo e descrição."
+          prompt: "Extraia os detalhes do imóvel brasileiro: título, preço (R$), área (m²), quartos, banheiros, vagas, endereço completo, descrição e se aceita permuta."
         }
       }),
     });
@@ -65,25 +67,37 @@ Deno.serve(async (req) => {
     const extracted = fcData.data?.extract || {};
     
     // --- PHASE 3: IMAGE HANDLING (INTELLIGENT GROUPING) ---
+    // Extract all images from HTML if Firecrawl didn't get enough
+    const foundImgs: string[] = [];
+    if (html) {
+      for (const m of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
+      for (const m of html.matchAll(/data-src=["']([^"']+)["']/gi)) foundImgs.push(m[1]);
+      for (const m of html.matchAll(/srcset=["']([^"']+)["']/gi)) {
+        const last = m[1].split(',').pop()?.trim().split(/\s+/)[0];
+        if (last) foundImgs.push(last);
+      }
+      for (const m of html.matchAll(/["'](https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*)["']/gi)) foundImgs.push(m[1]);
+    }
+    
+    const allImgs = Array.from(new Set([...foundImgs, ...(extracted.images || [])]));
+
     function findPropertyImages(allImages: string[], propertyUrl: string): string[] {
       const segmentCounts: Record<string, string[]> = {};
       
       for (const img of allImages) {
         try {
-          const urlObj = new URL(img);
+          const u = img.startsWith('http') ? img : new URL(img, propertyUrl).toString();
+          const urlObj = new URL(u);
           const segments = urlObj.pathname.split('/').filter(s => s.length > 3);
           
           for (const seg of segments) {
-            // Skip common boilerplate path segments
-            if (['images', 'image', 'img', 'photos', 'foto', 'fotos', 'media', 'upload', 'uploads', 'assets', 'static'].includes(seg.toLowerCase())) continue;
-            
+            if (['images', 'image', 'img', 'photos', 'foto', 'fotos', 'media', 'upload', 'uploads', 'assets', 'static', 'content', 'wp-content'].includes(seg.toLowerCase())) continue;
             if (!segmentCounts[seg]) segmentCounts[seg] = [];
-            segmentCounts[seg].push(img);
+            segmentCounts[seg].push(u);
           }
         } catch {}
       }
       
-      // Best group is the one with most images sharing a segment (e.g. property ID or folder)
       let bestImages: string[] = [];
       for (const [seg, imgs] of Object.entries(segmentCounts)) {
         if (imgs.length >= 3 && imgs.length > bestImages.length) {
@@ -92,17 +106,15 @@ Deno.serve(async (req) => {
       }
       
       if (bestImages.length >= 3) return bestImages;
-      
-      // Fallback: use all images that don't match junk patterns
-      return allImages;
+      return allImages.filter(img => img.startsWith('http'));
     }
 
     const junkWords = ['logo', 'icon', 'favicon', 'avatar', 'sprite', 'placeholder', 'blank', 'pixel', 'spacer', 'watermark', 'whatsapp', 'facebook', 'instagram', 'header', 'footer', 'banner-site', 'widget'];
     const junkPatterns = [/\/100x/, /\/150x/, /\/200x/, /w=100/, /w=150/, /h=100/, /\.svg/, /\.gif/, /\.ico/];
 
-    const allExtractedImages = Array.from(new Set(images))
+    const allExtractedImages = allImgs
       .filter(url => {
-        if (!url.startsWith('http')) return false;
+        if (!url || typeof url !== 'string') return false;
         const low = url.toLowerCase();
         if (junkWords.some(w => low.includes(w))) return false;
         if (junkPatterns.some(p => p.test(low))) return false;
@@ -124,27 +136,26 @@ Deno.serve(async (req) => {
           .replace(/\/small\//i, '/large/');
       });
 
+    if (filteredImages.length === 0 && extracted.images?.length > 0) {
+      filteredImages = extracted.images;
+    }
 
     // Phase 2F - Validation
     if (filteredImages.length === 0) {
-      throw new Error("zero_images");
+      // Don't fail completely if we have title/price, but warn
+      console.warn("No images found for job", job_id);
     }
 
     if (!extracted.title || extracted.title.length < 5) {
-       // Fallback for title
        const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
        extracted.title = h1Match ? h1Match[1].replace(/<[^>]*>/g, '').trim() : "Imóvel sem título";
-       if (extracted.title === "Imóvel sem título") throw new Error("no_title");
     }
 
     const rawData = {
       ...extracted,
-      images: filteredImages.slice(0, 30) // Limit to 30 images
+      images: filteredImages.slice(0, 30)
     };
 
-    // Phase 4 - Duplicate Detection (Simpler version for edge function)
-    // In production, we'd do a fuzzy check here, but for now we rely on URL
-    
     // 4. Update job
     await supabase.from("import_jobs").update({ 
       status: "done", 

@@ -43,79 +43,82 @@ Deno.serve(async (req) => {
     });
 
     const fcData = await fcRes.json();
-    if (!fcRes.ok) throw new Error(fcData.error || "Erro no Firecrawl");
+    if (!fcRes.ok) {
+      if (fcData.error?.toLowerCase().includes("token") || fcRes.status === 401) {
+        throw new Error("API Key do Firecrawl inválida ou não autorizada. Verifique suas configurações.");
+      }
+      throw new Error(fcData.error || "Erro no Firecrawl");
+    }
 
     const html = fcData.data?.html || "";
     const rawLinks = fcData.data?.links || [];
     
-    // --- PHASE 1: API DETECTION ---
-    let apiEndpoint = null;
+    // --- PHASE 1: API & DATA DETECTION ---
+    let validLinks: string[] = [];
     
-    // Scan script tags and window data for common API patterns
-    const apiPatterns = [
-      /https?:\/\/[^"'\s]+\/api\/(?:listings|properties|search|v1|v2)[^"'\s]*/gi,
-      /https?:\/\/[^"'\s]+\/graphql/gi,
-      /window\.__INITIAL_STATE__\s*=\s*({[\s\S]+?});/i,
-      /window\.__NEXT_DATA__\s*=\s*({[\s\S]+?});/i,
-      /<script[^>]+type=["']application\/json["'][^>]*>([\s\S]+?)<\/script>/gi
-    ];
-
-    for (const pattern of apiPatterns) {
-      const match = html.match(pattern);
-      if (match) {
-        console.log("Potential API/Data found:", match[0].substring(0, 100));
-        // We could extract and use it here, but for now we'll prioritize high-quality link extraction
-        // as a robust baseline while reporting detection.
+    // 1. Check for __NEXT_DATA__ (Next.js)
+    try {
+      const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]+?)<\/script>/);
+      if (nextDataMatch) {
+        const fullData = JSON.parse(nextDataMatch[1]);
+        // Find links in common Next.js state paths
+        const searchItems = fullData.props?.pageProps?.initialState?.search?.items || 
+                          fullData.props?.pageProps?.properties || 
+                          fullData.props?.pageProps?.listings;
+        
+        if (Array.isArray(searchItems)) {
+          searchItems.forEach((item: any) => {
+            const path = item.url || item.path || item.link;
+            if (path) {
+              try {
+                const abs = path.startsWith('http') ? path : `${new URL(url).origin}${path.startsWith('/') ? '' : '/'}${path}`;
+                validLinks.push(abs);
+              } catch {}
+            }
+          });
+        }
       }
+    } catch (e) { console.warn("Next.js link extraction failed:", e); }
+
+    // 2. Pattern-based extraction from raw links
+    if (validLinks.length === 0) {
+      const patterns = [
+        '/imovel', '/imoveis', '/property', '/properties',
+        '/listing', '/listings', '/detalhe', '/detail',
+        '/apartamento', '/casa', '/terreno', '/comercial',
+        '/empreendimento', '/residencial', '/lancamento'
+      ];
+
+      const rejectPatterns = [
+        '/blog', '/sobre', '/contato', '/equipe', '/noticias',
+        '/login', '/cadastro', '/busca', '/search',
+        '#', 'javascript:', 'mailto:', '/wp-admin/', '/wp-content/'
+      ];
+
+      const baseUrl = new URL(url);
+      const domain = baseUrl.hostname;
+
+      validLinks = Array.from(new Set(
+        rawLinks
+          .map((l: any) => {
+            let href = l.href;
+            if (!href) return null;
+            if (href.startsWith('/')) href = `${baseUrl.protocol}//${baseUrl.host}${href}`;
+            try {
+              const linkUrl = new URL(href);
+              if (!linkUrl.hostname.includes(domain)) return null;
+              return linkUrl.toString().replace(/\/$/, "");
+            } catch { return null; }
+          })
+          .filter((href: string | null) => {
+            if (!href) return false;
+            const lowHref = href.toLowerCase();
+            const isProperty = patterns.some(p => lowHref.includes(p));
+            const isJunk = rejectPatterns.some(p => lowHref.includes(p));
+            return isProperty && !isJunk;
+          })
+      )) as string[];
     }
-
-    // --- PHASE 2: ROBUST LINK EXTRACTION (FALLBACK/HYBRID) ---
-    const patterns = [
-      '/imovel', '/imoveis', '/property', '/properties',
-      '/listing', '/listings', '/detalhe', '/detail',
-      '/apartamento', '/casa', '/terreno', '/comercial',
-      '/empreendimento', '/residencial', '/lancamento'
-    ];
-
-    const rejectPatterns = [
-      '/blog', '/sobre', '/contato', '/equipe', '/noticias',
-      '/login', '/cadastro', '/busca', '/search',
-      '#', 'javascript:', 'mailto:', '/wp-admin/', '/wp-content/'
-    ];
-
-    const baseUrl = new URL(url);
-    const domain = baseUrl.hostname;
-
-    let validLinks = Array.from(new Set(
-      rawLinks
-        .map((l: any) => {
-          let href = l.href;
-          if (!href) return null;
-          
-          if (href.startsWith('/')) {
-            href = `${baseUrl.protocol}//${baseUrl.host}${href}`;
-          }
-          
-          try {
-            const linkUrl = new URL(href);
-            // Ensure same domain to avoid crawling external ads
-            if (!linkUrl.hostname.includes(domain)) return null;
-
-            const trackingParams = ['utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid'];
-            trackingParams.forEach(p => linkUrl.searchParams.delete(p));
-            return linkUrl.toString().replace(/\/$/, "");
-          } catch {
-            return null;
-          }
-        })
-        .filter((href: string | null) => {
-          if (!href) return false;
-          const lowHref = href.toLowerCase();
-          const isProperty = patterns.some(p => lowHref.includes(p));
-          const isJunk = rejectPatterns.some(p => lowHref.includes(p));
-          return isProperty && !isJunk;
-        })
-    )) as string[];
 
     // Max limit 500
     if (validLinks.length > 500) {
