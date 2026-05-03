@@ -51,7 +51,7 @@ export function FilterPanel({ filters, setFilters }: { filters: Filters; setFilt
             <button
               key={n}
               onClick={() => setFilters({ ...filters, minBedrooms: n })}
-              className={`flex-1 rounded-xl px-2 py-2 text-sm transition-smooth glass
+              className={`flex-1 rounded-xl px-2 py-2 text-sm transition-smooth border border-border bg-white shadow-sm
                 ${filters.minBedrooms === n ? "bg-gradient-primary text-primary-foreground" : "hover:bg-sidebar-accent"}`}
             >
               {n === 0 ? "Todos" : `${n}+`}
