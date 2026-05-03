@@ -99,7 +99,7 @@ export default function Properties() {
               <>
                 <Button 
                   variant="outline" 
-                  className="glass rounded-xl gap-2"
+                  className="bg-white border border-border rounded-xl gap-2"
                   onClick={selectAll}
                 >
                   {selectedIds.size === filtered.length ? <Square className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
