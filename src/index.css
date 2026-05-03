@@ -321,8 +321,6 @@
     background-clip: text;
     color: transparent;
   }
-  }
-
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
