@@ -11,23 +11,37 @@ function absolutize(src: string, base: string): string {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: "Usuário não autenticado" }), { status: 401, headers: corsHeaders });
-  }
+  console.log("\n[DEBUG] Iniciando requisição de varredura...");
 
   const supabase = createClient(
     Deno.env.get("VITE_SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
-  // Verify token using the authenticated supabase client
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  
-  if (authError || !user) {
-    console.error("Auth error:", authError);
-    return new Response(JSON.stringify({ error: "Usuário não autenticado" }), { status: 401, headers: corsHeaders });
-  }
+  try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("[ERRO] Usuário não autenticado - Token não enviado");
+      return new Response(JSON.stringify({ 
+        error: "Usuário não autenticado", 
+        motivo: "Token de autorização ausente no cabeçalho da requisição.",
+        onde: "supabase/functions/scan-listing-page/index.ts:14"
+      }), { status: 401, headers: corsHeaders });
+    }
+
+    const jwt = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
+    
+    if (authError || !user) {
+      console.error("[ERRO] Auth error:", authError);
+      return new Response(JSON.stringify({ 
+        error: "Usuário não autenticado", 
+        motivo: authError?.message || "Token inválido ou expirado.",
+        onde: "supabase/functions/scan-listing-page/index.ts:25"
+      }), { status: 401, headers: corsHeaders });
+    }
+
+    console.log(`[OK] Usuário autenticado: ${user.email}`);
 
   try {
     const { session_id, url } = await req.json();
