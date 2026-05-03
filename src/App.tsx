@@ -24,28 +24,32 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <ThemeEditorProvider>
-        <PropertiesProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/imoveis" element={<Properties />} />
-                <Route path="/revisar/:id" element={<ReviewProperty />} />
-                <Route path="/busca-inteligente" element={<SmartSearch />} />
-                <Route path="/editor" element={<Editor />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </PropertiesProvider>
+        <BuilderProvider>
+          <PropertiesProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/imoveis" element={<Properties />} />
+                  <Route path="/revisar/:id" element={<ReviewProperty />} />
+                  <Route path="/busca-inteligente" element={<SmartSearch />} />
+                  <Route path="/editor" element={<Editor />} />
+                  <Route path="/visual-builder" element={<VisualBuilderPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </PropertiesProvider>
+        </BuilderProvider>
       </ThemeEditorProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
+
 
 export default App;
 
