@@ -250,7 +250,7 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
             <img 
               src={property.images[active]} 
               alt="" 
-              className="w-full h-full object-contain select-none transition-all duration-500 animate-in zoom-in-95" 
+              className="w-full h-full object-contain md:object-cover select-none transition-all duration-500 animate-in zoom-in-95" 
             />
 
             {/* Navigation */}
