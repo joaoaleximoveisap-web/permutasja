@@ -142,6 +142,75 @@ export type Database = {
         }
         Relationships: []
       }
+      properties: {
+        Row: {
+          area: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          images: string[] | null
+          neighborhood: string | null
+          original_data: Json | null
+          parking: number | null
+          permuta_details: string | null
+          permuta_enabled: boolean | null
+          price: number
+          source_url: string | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          neighborhood?: string | null
+          original_data?: Json | null
+          parking?: number | null
+          permuta_details?: string | null
+          permuta_enabled?: boolean | null
+          price: number
+          source_url?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          area?: number | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          neighborhood?: string | null
+          original_data?: Json | null
+          parking?: number | null
+          permuta_details?: string | null
+          permuta_enabled?: boolean | null
+          price?: number
+          source_url?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
