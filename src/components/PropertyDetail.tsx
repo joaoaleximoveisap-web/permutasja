@@ -116,7 +116,7 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
                     <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
                       {property.title}
                     </h2>
-                    <div className="text-3xl md:text-4xl font-bold text-accent">
+                    <div className="text-3xl md:text-4xl font-bold text-accent drop-shadow-sm">
                       {formatBRL(property.price)}
                     </div>
                   </div>
