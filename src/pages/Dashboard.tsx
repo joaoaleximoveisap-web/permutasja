@@ -7,8 +7,10 @@ import { Link } from "react-router-dom";
 import { formatBRL } from "@/lib/property-utils";
 import ScraperManager from "@/components/ScraperManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EditableElement } from "@/components/EditableElement";
 
 export default function Dashboard() {
+
   const { properties, credits, creditSystemEnabled } = useProperties();
 
   const totalValue = properties.reduce((s, p) => s + p.price, 0);
@@ -61,10 +63,11 @@ export default function Dashboard() {
                   <div className="inline-block bg-accent/20 backdrop-blur-md border border-accent/40 rounded-full px-8 py-2.5 text-accent font-bold uppercase tracking-[0.5em] text-[9px] shadow-sm">
                     International Luxury Portfolios
                   </div>
-                  <h1 className="text-6xl md:text-9xl font-bold text-white leading-[0.95] tracking-tighter drop-shadow-2xl">
+                  <EditableElement id="dashboard-hero-title" as="h1" className="text-6xl md:text-9xl font-bold text-white leading-[0.95] tracking-tighter drop-shadow-2xl">
                     The New <br /> <span className="text-accent italic font-serif">Standard</span>.
-                  </h1>
+                  </EditableElement>
                 </div>
+
                 
                 <div className="max-w-2xl mx-auto pt-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500">
                   <ImportBar />

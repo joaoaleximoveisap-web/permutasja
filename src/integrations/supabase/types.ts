@@ -262,6 +262,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ui_config: {
+        Row: {
+          element_id: string
+          id: string
+          settings: Json
+          updated_at: string | null
+        }
+        Insert: {
+          element_id: string
+          id?: string
+          settings: Json
+          updated_at?: string | null
+        }
+        Update: {
+          element_id?: string
+          id?: string
+          settings?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

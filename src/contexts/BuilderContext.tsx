@@ -1,219 +1,187 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
-import { BuilderConfig, ElementConfig, StyleConfig, ElementType } from "@/lib/builder-types";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface BuilderElement {
+  id: string;
+  type: string;
+  name: string;
+  props: Record<string, any>;
+  styles: Record<string, any>;
+  children: string[];
+}
+
+interface BuilderConfig {
+  rootElementId: string;
+  elements: Record<string, BuilderElement>;
+  selectedElementIds: string[];
+}
 
 interface BuilderContextType {
+  isEditMode: boolean;
+  setIsEditMode: (value: boolean) => void;
+  selectedElement: string | null;
+  setSelectedElement: (id: string | null) => void;
+  uiConfigs: Record<string, any>;
+  updateConfig: (elementId: string, settings: any) => Promise<void>;
+  
+  // Advanced Visual Builder state
   config: BuilderConfig;
   selectElement: (id: string | null, multi?: boolean) => void;
-  updateElement: (id: string, updates: Partial<ElementConfig>) => void;
-  updateElementStyle: (id: string, styles: Partial<StyleConfig>) => void;
-  updateElementProps: (id: string, props: Record<string, any>) => void;
-  moveElement: (id: string, newParentId: string, index: number) => void;
-  createClass: (name: string, styles: StyleConfig) => void;
-  applyClass: (id: string, className: string) => void;
+  updateElementStyle: (id: string, style: any) => void;
+  updateElementProps: (id: string, props: any) => void;
   undo: () => void;
   redo: () => void;
 }
 
-const initialConfig: BuilderConfig = {
+const DEFAULT_CONFIG: BuilderConfig = {
+  rootElementId: "root",
   elements: {
-    "root": {
+    root: {
       id: "root",
-      type: "container",
-      name: "Page",
-      styles: { paddingLeft: 0, paddingRight: 0, paddingTop: 0, paddingBottom: 0 },
-      children: ["header-1", "hero-1"],
-      props: {},
-    },
-    "header-1": {
-      id: "header-1",
-      type: "container",
-      name: "Header",
-      parentId: "root",
-      styles: { backgroundColor: "#ffffff", paddingBottom: 20, paddingTop: 20 },
-      children: [],
-      props: {},
-    },
-    "hero-1": {
-      id: "hero-1",
       type: "section",
-      name: "Hero Section",
-      parentId: "root",
-      styles: { paddingTop: 80, paddingBottom: 80, backgroundColor: "#f9f9f9" },
-      children: ["hero-title"],
+      name: "Main Section",
       props: {},
+      styles: { backgroundColor: "#ffffff", paddingTop: 40, paddingBottom: 40 },
+      children: ["title-1", "para-1"]
     },
-    "hero-title": {
-      id: "hero-title",
+    "title-1": {
+      id: "title-1",
       type: "text",
-      name: "Title",
-      parentId: "hero-1",
-      styles: { fontSize: 48, fontWeight: "800", color: "#1a1a1a", marginBottom: 20 },
-      children: [],
-      props: { text: "Encontre o imóvel dos seus sonhos" },
+      name: "Main Title",
+      props: { text: "Bem-vindo à Aurora Imobi" },
+      styles: { fontSize: 48, fontWeight: "bold", color: "#000000", marginBottom: 20 },
+      children: []
+    },
+    "para-1": {
+      id: "para-1",
+      type: "text",
+      name: "Description",
+      props: { text: "Sua imobiliária de luxo em Londrina." },
+      styles: { fontSize: 18, color: "#666666" },
+      children: []
     }
   },
-  rootElementId: "root",
-  selectedElementIds: [],
-  classes: {},
-  globalTokens: {
-    colors: {
-      primary: "#C6A87D",
-      background: "#FFFFFF",
-      text: "#1A1A1A",
-    },
-    fonts: {
-      heading: "Fraunces",
-      body: "Inter",
-    }
-  }
+  selectedElementIds: []
 };
 
-const BuilderContext = createContext<BuilderContextType | null>(null);
+const BuilderContext = createContext<BuilderContextType | undefined>(undefined);
 
-export function BuilderProvider({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<BuilderConfig>(initialConfig);
-  const [history, setHistory] = useState<BuilderConfig[]>([initialConfig]);
-  const [historyIndex, setHistoryIndex] = useState(0);
+export function BuilderProvider({ children }: { children: React.ReactNode }) {
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedElement, setSelectedElement] = useState<string | null>(null);
+  const [uiConfigs, setUiConfigs] = useState<Record<string, any>>({});
+  
+  // Advanced State
+  const [config, setConfig] = useState<BuilderConfig>(DEFAULT_CONFIG);
+  const [history, setHistory] = useState<BuilderConfig[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
-  const saveToHistory = useCallback((newConfig: BuilderConfig) => {
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(newConfig);
-    if (newHistory.length > 50) newHistory.shift();
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  }, [history, historyIndex]);
+  useEffect(() => {
+    fetchConfigs();
+  }, []);
 
-  const selectElement = (id: string | null, multi: boolean = false) => {
+  const fetchConfigs = async () => {
+    const { data, error } = await supabase.from("ui_config").select("*");
+    if (data) {
+      const configs = data.reduce((acc, curr) => ({
+        ...acc,
+        [curr.element_id]: curr.settings
+      }), {});
+      setUiConfigs(configs);
+    }
+  };
+
+  const updateConfig = async (elementId: string, settings: any) => {
+    const newConfigs = { ...uiConfigs, [elementId]: settings };
+    setUiConfigs(newConfigs);
+
+    await supabase.from("ui_config").upsert({
+      element_id: elementId,
+      settings: settings
+    }, { onConflict: "element_id" });
+  };
+
+  const selectElement = useCallback((id: string | null, multi = false) => {
     setConfig(prev => {
-      if (!id) return { ...prev, selectedElementIds: [] };
-      if (multi) {
-        const isSelected = prev.selectedElementIds.includes(id);
-        const newIds = isSelected 
-          ? prev.selectedElementIds.filter(i => i !== id)
+      let newSelected: string[] = [];
+      if (id === null) {
+        newSelected = [];
+      } else if (multi) {
+        newSelected = prev.selectedElementIds.includes(id) 
+          ? prev.selectedElementIds.filter(sid => sid !== id)
           : [...prev.selectedElementIds, id];
-        return { ...prev, selectedElementIds: newIds };
+      } else {
+        newSelected = [id];
       }
-      return { ...prev, selectedElementIds: [id] };
+      return { ...prev, selectedElementIds: newSelected };
     });
-  };
+    setSelectedElement(id);
+  }, []);
 
-  const updateElement = (id: string, updates: Partial<ElementConfig>) => {
-    setConfig(prev => {
-      const newConfig = {
-        ...prev,
-        elements: {
-          ...prev.elements,
-          [id]: { ...prev.elements[id], ...updates }
-        }
-      };
-      saveToHistory(newConfig);
-      return newConfig;
-    });
-  };
-
-  const updateElementStyle = (id: string, styles: Partial<StyleConfig>) => {
-    setConfig(prev => {
-      const newConfig = {
-        ...prev,
-        elements: {
-          ...prev.elements,
-          [id]: {
-            ...prev.elements[id],
-            styles: { ...prev.elements[id].styles, ...styles }
-          }
-        }
-      };
-      saveToHistory(newConfig);
-      return newConfig;
-    });
-  };
-
-  const updateElementProps = (id: string, props: Record<string, any>) => {
-    setConfig(prev => {
-      const newConfig = {
-        ...prev,
-        elements: {
-          ...prev.elements,
-          [id]: {
-            ...prev.elements[id],
-            props: { ...prev.elements[id].props, ...props }
-          }
-        }
-      };
-      saveToHistory(newConfig);
-      return newConfig;
-    });
-  };
-
-  const moveElement = (id: string, newParentId: string, index: number) => {
+  const updateElementStyle = useCallback((id: string, style: any) => {
     setConfig(prev => {
       const element = prev.elements[id];
-      const oldParentId = element.parentId;
-      if (!oldParentId) return prev;
-
-      const newElements = { ...prev.elements };
+      if (!element) return prev;
       
-      newElements[oldParentId] = {
-        ...newElements[oldParentId],
-        children: newElements[oldParentId].children.filter(childId => childId !== id)
+      const newConfig = {
+        ...prev,
+        elements: {
+          ...prev.elements,
+          [id]: {
+            ...element,
+            styles: { ...element.styles, ...style }
+          }
+        }
       };
-
-      const newChildren = [...newElements[newParentId].children];
-      newChildren.splice(index, 0, id);
-      newElements[newParentId] = {
-        ...newElements[newParentId],
-        children: newChildren
-      };
-
-      newElements[id] = { ...element, parentId: newParentId };
-
-      const newConfig = { ...prev, elements: newElements };
-      saveToHistory(newConfig);
+      
       return newConfig;
     });
-  };
+  }, []);
 
-  const createClass = (name: string, styles: StyleConfig) => {
-    setConfig(prev => ({
-      ...prev,
-      classes: { ...prev.classes, [name]: styles }
-    }));
-  };
+  const updateElementProps = useCallback((id: string, props: any) => {
+    setConfig(prev => {
+      const element = prev.elements[id];
+      if (!element) return prev;
+      
+      return {
+        ...prev,
+        elements: {
+          ...prev.elements,
+          [id]: {
+            ...element,
+            props: { ...element.props, ...props }
+          }
+        }
+      };
+    });
+  }, []);
 
-  const applyClass = (id: string, className: string) => {
-    setConfig(prev => ({
-      ...prev,
-      elements: {
-        ...prev.elements,
-        [id]: { ...prev.elements[id], className }
-      }
-    }));
-  };
-
-  const undo = () => {
+  const undo = useCallback(() => {
     if (historyIndex > 0) {
       setHistoryIndex(prev => prev - 1);
       setConfig(history[historyIndex - 1]);
     }
-  };
+  }, [history, historyIndex]);
 
-  const redo = () => {
+  const redo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       setHistoryIndex(prev => prev + 1);
       setConfig(history[historyIndex + 1]);
     }
-  };
+  }, [history, historyIndex]);
 
   return (
     <BuilderContext.Provider value={{ 
-      config, 
-      selectElement, 
-      updateElement,
-      updateElementStyle, 
-      updateElementProps, 
-      moveElement, 
-      createClass, 
-      applyClass,
+      isEditMode, 
+      setIsEditMode, 
+      selectedElement, 
+      setSelectedElement,
+      uiConfigs,
+      updateConfig,
+      config,
+      selectElement,
+      updateElementStyle,
+      updateElementProps,
       undo,
       redo
     }}>
@@ -223,7 +191,9 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
 }
 
 export function useBuilder() {
-  const ctx = useContext(BuilderContext);
-  if (!ctx) throw new Error("useBuilder must be used within BuilderProvider");
-  return ctx;
+  const context = useContext(BuilderContext);
+  if (context === undefined) {
+    throw new Error("useBuilder must be used within a BuilderProvider");
+  }
+  return context;
 }
