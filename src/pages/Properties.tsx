@@ -77,10 +77,10 @@ export default function Properties() {
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-5">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-semibold">Imóveis</h1>
-            <p className="text-sm text-muted-foreground">{filtered.length} de {properties.length} na sua carteira</p>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between border-b border-border pb-8 gap-6">
+          <div className="space-y-1">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter">Your Portfolio</h1>
+            <p className="text-lg text-muted-foreground font-medium italic">Gerencie {properties.length} ativos exclusivos com inteligência.</p>
           </div>
           <div className="flex gap-2">
             {!selectionMode ? (
