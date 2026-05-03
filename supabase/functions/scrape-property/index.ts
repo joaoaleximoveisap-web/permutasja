@@ -172,8 +172,8 @@ Deno.serve(async (req) => {
 
     // --- MODE: DISCOVER (BULK) ---
     if (mode === "discover") {
-      console.log("Discover mode: using Firecrawl for JS rendering...");
-      const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
+      console.log("Discover mode: using Firecrawl v1 for consistency...");
+      const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
