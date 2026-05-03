@@ -152,16 +152,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (validLinks.length === 0) {
-      await supabase.from("import_sessions").update({ 
-        status: "failed", 
-        error_log: { 
-          code: "incompatible_page", 
-          message: "Nenhum link de imóvel individual encontrado. O site pode estar protegendo os dados via API dinâmica.",
-          debug: { htmlLength: html.length, apiDetected: false }
-        } 
-      }).eq("id", session_id);
-      return new Response(JSON.stringify({ found: 0 }), { headers: corsHeaders });
+    const batchSize = 50;
+    for (let i = 0; i < jobs.length; i += batchSize) {
+      const batch = jobs.slice(i, i + batchSize);
+      await supabase.from("import_jobs").insert(batch);
     }
 
     // 2. Create jobs - DO NOT extract anything here (it will be extracted in process-import-job)
