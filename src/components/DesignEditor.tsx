@@ -7,6 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { 
   Palette, 
   Type, 
@@ -15,7 +16,6 @@ import {
   Layout, 
   RefreshCw, 
   AlertTriangle,
-  CheckCircle2,
   Undo2,
   Redo2,
   Save,
@@ -23,6 +23,7 @@ import {
   Tablet,
   Smartphone
 } from "lucide-react";
+
 
 export function DesignEditor() {
   const { config, updateColors, updateTypography, updateLayout, resetTheme } = useThemeEditor();
