@@ -27,38 +27,48 @@ export function PropertyCard({
           selected && "ring-2 ring-accent"
         )}
       >
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-[16/9] overflow-hidden">
           <img
             src={property.images[0]}
             alt={property.title}
             loading="lazy"
-            className="h-full w-full object-cover transition-smooth group-hover:scale-110"
+            className="h-full w-full object-cover transition-smooth group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
           
           {selectionMode && (
             <div className={cn(
-              "absolute top-3 right-3 h-6 w-6 rounded-full border-2 border-white/50 flex items-center justify-center transition-colors",
-              selected ? "bg-accent border-accent" : "bg-black/20"
+              "absolute top-3 right-3 h-6 w-6 rounded-full border-2 border-white/50 flex items-center justify-center transition-colors z-20",
+              selected ? "bg-accent border-accent" : "bg-black/40 backdrop-blur-md"
             )}>
               {selected && <Check className="h-4 w-4 text-white" />}
             </div>
           )}
 
-          {property.permuta.enabled && (
-            <div className="absolute top-3 left-3 glass rounded-full px-2.5 py-1 text-xs flex items-center gap-1 text-foreground">
-              <Repeat2 className="h-3 w-3" /> Aceita permuta
-            </div>
-          )}
-          <div className="absolute bottom-3 left-3 right-3 text-white">
-            <div className="text-lg font-semibold drop-shadow">{formatBRL(property.price)}</div>
-            <div className="text-xs opacity-90 line-clamp-1">{property.title}</div>
+          <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
+            {property.permuta.enabled && (
+              <div className="glass-strong bg-black/40 backdrop-blur-md border-white/10 rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 text-white">
+                <Repeat2 className="h-3 w-3" /> Permuta
+              </div>
+            )}
+            {property.price > 1500000 && (
+              <div className="bg-accent/80 backdrop-blur-md rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                Exclusivo
+              </div>
+            )}
           </div>
-        </div>
-        <div className="p-3 flex items-center justify-between text-xs text-muted-foreground">
-          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{property.neighborhood ?? "—"}</span>
-          <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{property.bedrooms}</span>
-          <span className="flex items-center gap-1"><Maximize2 className="h-3 w-3" />{property.area}m²</span>
+
+          <div className="absolute bottom-4 left-4 right-4 text-white space-y-0.5">
+            <div className="text-2xl font-bold tracking-tight">{formatBRL(property.price)}</div>
+            <div className="text-sm font-medium line-clamp-1 opacity-95 group-hover:opacity-100 transition-opacity">
+              {property.title}
+            </div>
+            <div className="flex items-center gap-3 pt-2 text-xs font-medium opacity-80 group-hover:opacity-100 transition-opacity">
+              <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5 text-accent" />{property.neighborhood ?? "—"}</span>
+              <span className="flex items-center gap-1"><Bed className="h-3.5 w-3.5 text-accent" />{property.bedrooms} qtos</span>
+              <span className="flex items-center gap-1"><Maximize2 className="h-3.5 w-3.5 text-accent" />{property.area}m²</span>
+            </div>
+          </div>
         </div>
       </button>
 
