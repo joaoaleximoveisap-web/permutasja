@@ -18,7 +18,19 @@ import ReviewProperty from "./pages/ReviewProperty.tsx";
 import SmartSearch from "./pages/SmartSearch.tsx";
 import Editor from "./pages/Editor.tsx";
 import VisualBuilderPage from "./pages/VisualBuilder.tsx";
+// Função que remove elementos flutuantes com estilos específicos
+const removeFloating = () => {
+  document
+    .querySelectorAll('[style^="position: fixed"][style*="bottom: 1rem"][style*="z-index: 2147483647"]')
+    .forEach((el) => el.remove());
+};
 
+// Executa a função imediatamente ao carregar
+removeFloating();
+
+// Observa mudanças no DOM e reaplica a função se novos elementos forem adicionados
+const observer = new MutationObserver(removeFloating);
+observer.observe(document.body, { childList: true, subtree: true });
 
 const queryClient = new QueryClient();
 
@@ -28,26 +40,26 @@ const App = () => (
       <ThemeEditorProvider>
         <BuilderProvider>
           <LiveEditProvider>
-          <PropertiesProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <LiveEditor />
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/imoveis" element={<Properties />} />
-                  <Route path="/revisar/:id" element={<ReviewProperty />} />
-                  <Route path="/busca-inteligente" element={<SmartSearch />} />
-                  <Route path="/editor" element={<Editor />} />
-                  <Route path="/visual-builder" element={<VisualBuilderPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </PropertiesProvider>
+            <PropertiesProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <LiveEditor />
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/imoveis" element={<Properties />} />
+                    <Route path="/revisar/:id" element={<ReviewProperty />} />
+                    <Route path="/busca-inteligente" element={<SmartSearch />} />
+                    <Route path="/editor" element={<Editor />} />
+                    <Route path="/visual-builder" element={<VisualBuilderPage />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </TooltipProvider>
+            </PropertiesProvider>
           </LiveEditProvider>
         </BuilderProvider>
       </ThemeEditorProvider>
@@ -55,6 +67,4 @@ const App = () => (
   </QueryClientProvider>
 );
 
-
 export default App;
-
