@@ -43,7 +43,12 @@ Deno.serve(async (req) => {
     });
 
     const fcData = await fcRes.json();
-    if (!fcRes.ok) throw new Error(fcData.error || "Erro no Firecrawl");
+    if (!fcRes.ok) {
+      if (fcData.error?.toLowerCase().includes("token") || fcRes.status === 401) {
+        throw new Error("API Key do Firecrawl inválida ou não autorizada. Verifique suas configurações.");
+      }
+      throw new Error(fcData.error || "Erro no Firecrawl");
+    }
 
     const html = fcData.data?.html || "";
     const rawLinks = fcData.data?.links || [];
