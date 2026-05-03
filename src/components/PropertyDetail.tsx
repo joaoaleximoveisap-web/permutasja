@@ -53,8 +53,10 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
               className="w-full h-full object-cover transition-smooth group-hover:scale-105" 
             />
             
-            {/* Dark Gradient Overlay Style Netflix */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+            {/* Automatic Dark Overlay (rgba(0,0,0,0.4)) & Gradient Style Netflix */}
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+
             
             {/* Immersive Badge */}
             <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
