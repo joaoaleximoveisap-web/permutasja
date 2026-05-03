@@ -19,6 +19,13 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        aurora: {
+          blue: "hsl(212, 67%, 32%)",
+          gold: "hsl(43, 52%, 54%)",
+          crema: "#F2EEE8",
+          graphite: "#1F1F1F",
+          fendi: "hsl(220, 13%, 70%)"
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

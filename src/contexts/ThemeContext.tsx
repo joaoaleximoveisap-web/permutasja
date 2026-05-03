@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import DESIGN_SYSTEM from "@/lib/design-system";
 
-type ThemeMode = "light" | "dark";
+export type ThemeMode = "light" | "dark" | "sand" | "onyx" | "forest";
 
 interface ThemeContextType {
   theme: ThemeMode;
@@ -21,13 +21,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("aurora-theme", theme);
     const root = window.document.documentElement;
     
-    // Apply theme tokens to CSS Variables
-    const activeTheme = DESIGN_SYSTEM.themes[theme];
+    // Default to light tokens if the specific theme is not in DESIGN_SYSTEM.themes
+    const themeKey = (theme === "dark" || theme === "light") ? theme : "light";
+    const activeTheme = DESIGN_SYSTEM.themes[themeKey as "light" | "dark"];
     
     root.style.setProperty("--background", activeTheme.background.main);
     root.style.setProperty("--foreground", activeTheme.text.primary);
     
-    if (theme === "dark") {
+    // Remove all theme classes first
+    root.classList.remove("dark", "light", "sand", "onyx", "forest");
+    root.classList.add(theme);
+
+    // Apply specific dark mode class for tailwind
+    if (theme === "dark" || theme === "onyx") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
