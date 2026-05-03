@@ -178,17 +178,20 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
                 </div>
               </div>
 
-              {/* Gallery Preview Grid */}
-              <div className="grid grid-cols-2 gap-3 pt-6">
-                {property.images.slice(0, 4).map((src, i) => (
-                  <button 
-                    key={i} 
-                    onClick={() => setActive(i)} 
-                    className={`aspect-video rounded-xl overflow-hidden ring-2 transition-all ${i === active ? "ring-accent scale-95" : "ring-transparent opacity-60 hover:opacity-100 hover:scale-105"}`}
-                  >
-                    <img src={src} alt="" className="h-full w-full object-cover" />
-                  </button>
-                ))}
+              {/* Gallery List (All Images) */}
+              <div className="pt-6">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 px-1">Galeria Completa</h3>
+                <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                  {property.images.map((src, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setActive(i)} 
+                      className={`aspect-video rounded-lg overflow-hidden ring-2 transition-all ${i === active ? "ring-accent scale-95" : "ring-transparent opacity-60 hover:opacity-100 hover:scale-105"}`}
+                    >
+                      <img src={src} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
