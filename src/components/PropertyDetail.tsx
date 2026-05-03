@@ -31,29 +31,8 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
             
             {/* Hero Content Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {property.permuta.enabled && (
-                  <div className="bg-accent text-white rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest shadow-lg">
-                    Aceita Permuta
-                  </div>
-                )}
-                {property.price > 1500000 && (
-                  <div className="bg-black/60 backdrop-blur-md text-white border border-white/20 rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest">
-                    Alto Padrão
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-1">
-                <DialogTitle className="text-3xl md:text-5xl font-bold text-white tracking-tight drop-shadow-2xl">
-                  {/* Title moved to bottom section */}
-                </DialogTitle>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-6 text-white/90 font-medium">
-                {/* Info moved to bottom section */}
-              </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              {/* Only Image, no text on top */}
             </div>
 
             {/* Navigation Arrows */}
