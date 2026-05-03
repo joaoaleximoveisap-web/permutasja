@@ -64,43 +64,66 @@ Deno.serve(async (req) => {
     const html = fcData.data?.html || "";
     const extracted = fcData.data?.extract || {};
     
-    // Phase 2B & 2C - Strict Image Extraction & Filtering
-    const images: string[] = [];
-    
-    // Regex for image patterns
-    const imgRegex = /<img[^>]+src=["']([^"'>]+)["']/g;
-    const dataSrcRegex = /data-(?:src|lazy|original|srcset)=["']([^"'>]+)["']/g;
-    const ogImgRegex = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"'>]+)["']/g;
-    
-    let match;
-    while ((match = imgRegex.exec(html)) !== null) images.push(match[1]);
-    while ((match = dataSrcRegex.exec(html)) !== null) images.push(match[1]);
-    while ((match = ogImgRegex.exec(html)) !== null) images.push(match[1]);
+    // --- PHASE 3: IMAGE HANDLING (INTELLIGENT GROUPING) ---
+    function findPropertyImages(allImages: string[], propertyUrl: string): string[] {
+      const segmentCounts: Record<string, string[]> = {};
+      
+      for (const img of allImages) {
+        try {
+          const urlObj = new URL(img);
+          const segments = urlObj.pathname.split('/').filter(s => s.length > 3);
+          
+          for (const seg of segments) {
+            // Skip common boilerplate path segments
+            if (['images', 'image', 'img', 'photos', 'foto', 'fotos', 'media', 'upload', 'uploads', 'assets', 'static'].includes(seg.toLowerCase())) continue;
+            
+            if (!segmentCounts[seg]) segmentCounts[seg] = [];
+            segmentCounts[seg].push(img);
+          }
+        } catch {}
+      }
+      
+      // Best group is the one with most images sharing a segment (e.g. property ID or folder)
+      let bestImages: string[] = [];
+      for (const [seg, imgs] of Object.entries(segmentCounts)) {
+        if (imgs.length >= 3 && imgs.length > bestImages.length) {
+          bestImages = imgs;
+        }
+      }
+      
+      if (bestImages.length >= 3) return bestImages;
+      
+      // Fallback: use all images that don't match junk patterns
+      return allImages;
+    }
 
-    const junkWords = ['thumb', 'thumbnail', '-sm-', '-xs-', 'small', 'tiny', 'icon', 'logo', 'avatar', 'sprite', 'placeholder', 'blur', 'lqip', 'preview', 'watermark', 'banner-site', 'header-bg', 'footer', '.svg', '.gif', '.ico', '1x1'];
-    const junkPatterns = [/\/100x/, /\/150x/, /\/200x/, /\/50x/, /x100\//, /x150\//, /x200\//, /w=100/, /w=150/, /w=200/, /h=100/];
+    const junkWords = ['logo', 'icon', 'favicon', 'avatar', 'sprite', 'placeholder', 'blank', 'pixel', 'spacer', 'watermark', 'whatsapp', 'facebook', 'instagram', 'header', 'footer', 'banner-site', 'widget'];
+    const junkPatterns = [/\/100x/, /\/150x/, /\/200x/, /w=100/, /w=150/, /h=100/, /\.svg/, /\.gif/, /\.ico/];
 
-    let filteredImages = Array.from(new Set(images))
+    const allExtractedImages = Array.from(new Set(images))
       .filter(url => {
         if (!url.startsWith('http')) return false;
         const low = url.toLowerCase();
         if (junkWords.some(w => low.includes(w))) return false;
         if (junkPatterns.some(p => p.test(low))) return false;
         return true;
-      })
+      });
+
+    let filteredImages = findPropertyImages(allExtractedImages, job.property_url)
       .map(url => {
-        // Phase 2D - Resolution Upgrade
+        // Phase 2D - Resolution Upgrade (Aggressive)
         return url
           .replace('/400x300/', '/1200x900/')
           .replace('/600x400/', '/1200x800/')
-          .replace('-medium.', '-large.')
-          .replace('-small.', '-large.')
-          .replace('_300.', '_1200.')
-          .replace(/\?width=\d+/, '?width=1200')
-          .replace(/\?w=\d+/, '?w=1200')
-          .replace('/thumb/', '/full/')
-          .replace('/thumbs/', '/photos/');
+          .replace(/-medium\./i, '-large.')
+          .replace(/-small\./i, '-large.')
+          .replace(/_300\./i, '_1200.')
+          .replace(/\?width=\d+/i, '?width=1200')
+          .replace(/\?w=\d+/i, '?w=1200')
+          .replace(/\/thumbs?\//i, '/full/')
+          .replace(/\/small\//i, '/large/');
       });
+
 
     // Phase 2F - Validation
     if (filteredImages.length === 0) {
