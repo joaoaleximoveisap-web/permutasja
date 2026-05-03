@@ -51,7 +51,7 @@ export function LiveEditor() {
     // Atalho de teclado: Alt + E para ativar
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey && e.key.toLowerCase() === 'e') {
-        setActive(prev => !prev);
+        setActive(!active);
       }
     };
     window.addEventListener("keydown", onKey);
