@@ -130,7 +130,8 @@ Deno.serve(async (req) => {
       debug: {
         analyzedUrl: job.property_url,
         totalFound: foundImgs.length,
-        validFound: validImgs.length
+        validFound: validImgs.length,
+        status: "success"
       }
     };
 

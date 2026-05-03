@@ -74,15 +74,27 @@ export function BulkImportDialog() {
           // Check for duplicates
           if (properties.some(p => p.sourceUrl === link)) return null;
 
-          const { data } = await supabase.functions.invoke("scrape-property", {
+          const { data, error: invokeError } = await supabase.functions.invoke("scrape-property", {
             body: { url: link },
           });
           
-          if (!data?.data) return null;
+          if (invokeError || !data?.data) {
+            console.warn(`Falha na extração de ${link}:`, invokeError || "Sem dados");
+            return null;
+          }
           const d = data.data;
 
-          // Validation
-          if (!d.title || !d.price || !d.images?.length) return null;
+          // STEP 5: REQUIRE MULTIPLE IMAGES
+          if (d.images.length < 2) {
+            console.warn(`URL analisada: ${link} | Imagens encontradas: ${d.debug?.totalFound} | Imagens válidas: ${d.debug?.validFound} | Motivo de falha: Imóvel sem imagens válidas`);
+            return null;
+          }
+          
+          // STEP 7: FAIL FAST (TITLE)
+          if (!d.title || d.title.length < 5) {
+            console.warn(`URL analisada: ${link} | Motivo de falha: Título ausente ou inválido`);
+            return null;
+          }
 
           const base = {
             title: d.title,
