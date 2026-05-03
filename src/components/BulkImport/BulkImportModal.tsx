@@ -13,8 +13,27 @@ import { uid, buildNormalized } from '@/lib/property-utils';
 export function BulkImportModal() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
   const { step, session, jobs, selectedJobIds, setSelectedJobIds, startScan, setStep } = useBulkImport();
   const { addProperty } = useProperties();
+
+  const handleStartScan = async () => {
+    if (!url.trim()) return;
+    
+    setIsValidating(true);
+    try {
+      // Basic format validation
+      const urlObj = new URL(url);
+      if (!urlObj.protocol.startsWith('http')) throw new Error();
+    } catch (e) {
+      toast.error("URL inválida", { description: "Certifique-se de incluir http:// ou https://" });
+      setIsValidating(false);
+      return;
+    }
+
+    await startScan(url);
+    setIsValidating(false);
+  };
 
   const handleSave = async () => {
     const toSave = jobs.filter(j => j.status === 'done' && (selectedJobIds.size === 0 || selectedJobIds.has(j.id)));
@@ -81,11 +100,16 @@ export function BulkImportModal() {
                   />
                 </div>
                 <Button 
-                  onClick={() => startScan(url)} 
-                  disabled={!url.includes('http')}
+                  onClick={handleStartScan} 
+                  disabled={!url.includes('http') || isValidating || (step as string) !== 'input'}
                   className="w-full h-14 bg-gradient-primary text-white text-lg rounded-2xl shadow-lg hover:opacity-90 transition-smooth gap-2"
                 >
-                  <ArrowRight className="h-5 w-5" /> Iniciar Varredura Inteligente
+                  {isValidating || (step as string) === 'scanning' ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <ArrowRight className="h-5 w-5" />
+                  )}
+                  {isValidating ? "Validando URL..." : (step as string) === 'scanning' ? "Iniciando..." : "Iniciar Varredura Inteligente"}
                 </Button>
               </div>
 

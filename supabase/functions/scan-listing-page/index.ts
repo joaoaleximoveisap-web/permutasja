@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
     }
 
     const jwt = authHeader.replace('Bearer ', '');
+    // verify the token using the authenticated supabase client
     const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
     
     if (authError || !user) {
@@ -41,7 +42,7 @@ Deno.serve(async (req) => {
       }), { status: 401, headers: corsHeaders });
     }
 
-    console.log(`[OK] Usuário autenticado: ${user.email}`);
+    console.log(`[OK] Usuário autenticado: ${user.id} (${user.email})`);
 
     const { session_id, url } = await req.json();
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
