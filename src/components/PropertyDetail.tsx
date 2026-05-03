@@ -230,7 +230,7 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
       </DialogContent>
       {/* Fullscreen Immersive Viewer (Airbnb/Instagram Style) */}
       {fullscreen && (
-        <div className="fixed inset-0 z-[100] bg-black animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] bg-black animate-in fade-in duration-500 flex items-center justify-center">
           {/* Controls Overlay */}
           <div className="absolute inset-0 z-20 pointer-events-none">
             {/* Header: Counter & Close */}

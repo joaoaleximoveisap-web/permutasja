@@ -29,10 +29,10 @@ export function Sidebar() {
               <li key={to}>
                 <NavLink
                   to={to}
-                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-smooth
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all
                     ${active
-                      ? "bg-gradient-primary text-primary-foreground shadow-md"
-                      : "text-foreground/70 hover:bg-primary/5 hover:text-foreground"}`}
+                      ? "bg-accent/10 text-accent"
+                      : "text-foreground/50 hover:bg-accent/5 hover:text-foreground"}`}
                 >
                   <Icon className="h-4 w-4" />
                   {label}

@@ -103,19 +103,23 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
   };
 
   return (
-    <form onSubmit={handle} className="bg-white border border-border rounded-2xl p-2 flex flex-col sm:flex-row gap-2 shadow-sm">
-      <div className="flex-1 flex items-center gap-2 px-3">
-        <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+    <form onSubmit={handle} className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] p-2.5 flex flex-col sm:flex-row gap-3 shadow-2xl transition-all hover:bg-white/15 focus-within:ring-2 focus-within:ring-accent/50 group">
+      <div className="flex-1 flex items-center gap-4 px-6">
+        <Link2 className="h-5 w-5 text-accent opacity-50 group-focus-within:opacity-100 transition-opacity shrink-0" />
         <Input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="Cole o link do imóvel (qualquer portal)"
-          className="border-0 bg-transparent focus-visible:ring-0 px-0 text-sm"
+          placeholder="Cole o link do imóvel para extração..."
+          className="border-0 bg-transparent focus-visible:ring-0 px-0 text-white placeholder:text-white/40 font-medium text-base md:text-lg h-12"
         />
       </div>
-      <Button type="submit" disabled={loading} className="rounded-xl bg-gradient-primary text-primary-foreground hover:opacity-90 transition-smooth">
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-        {loading ? "Analisando link..." : "Importar"}
+      <Button 
+        type="submit" 
+        disabled={loading} 
+        className="rounded-[1.5rem] bg-accent text-white hover:scale-105 transition-all px-10 h-14 font-bold uppercase tracking-widest text-xs shadow-xl shadow-accent/20"
+      >
+        {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Sparkles className="h-5 w-5 mr-2" />}
+        {loading ? "Analysing..." : "Extract Data"}
       </Button>
     </form>
   );
