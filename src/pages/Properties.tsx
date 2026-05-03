@@ -87,7 +87,7 @@ export default function Properties() {
               <>
                 <Button 
                   variant="outline" 
-                  className="glass rounded-xl gap-2"
+                  className="bg-white border border-border rounded-xl gap-2 shadow-sm"
                   onClick={() => setSelectionMode(true)}
                 >
                   <CheckSquare className="h-4 w-4" /> Selecionar
