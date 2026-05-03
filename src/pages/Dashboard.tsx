@@ -51,31 +51,31 @@ export default function Dashboard() {
         </section>
 
         {/* CURATED PROPERTIES SECTION */}
-        <section className="py-24 px-6 md:px-0 space-y-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-border pb-10 gap-6">
-            <div className="space-y-2">
-              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter">Featured Selection</h2>
-              <p className="text-muted-foreground font-medium text-lg">Curadoria exclusiva dos ativos mais sofisticados da sua carteira.</p>
+        <section className="py-24 space-y-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-border pb-12 gap-8">
+            <div className="space-y-3">
+              <h2 className="text-4xl md:text-7xl font-bold tracking-tighter">Curated <span className="italic font-serif text-accent">Assets</span>.</h2>
+              <p className="text-xl text-muted-foreground font-medium max-w-2xl leading-relaxed">Uma seleção rigorosa dos ativos imobiliários mais exclusivos da sua carteira inteligente.</p>
             </div>
-            <Link to="/imoveis" className="inline-flex items-center justify-center bg-accent text-white font-bold uppercase tracking-widest text-xs px-10 py-5 rounded-2xl shadow-xl shadow-accent/20 hover:scale-105 transition-all">
-              View Portfolio <ArrowRight className="ml-3 h-4 w-4" />
+            <Link to="/imoveis" className="inline-flex items-center justify-center bg-accent text-white font-bold uppercase tracking-[0.2em] text-[10px] px-12 py-6 rounded-2xl shadow-2xl shadow-accent/30 hover:scale-105 transition-all">
+              Explore All <ArrowRight className="ml-3 h-4 w-4" />
             </Link>
           </div>
 
           {properties.length === 0 ? (
-            <div className="bg-white border border-border/50 rounded-[3rem] p-20 text-center space-y-4 shadow-sm">
-              <div className="h-20 w-20 bg-accent/10 rounded-full mx-auto grid place-items-center">
-                <Building2 className="h-10 w-10 text-accent" />
+            <div className="bg-white border border-border/50 rounded-[4rem] p-32 text-center space-y-6 shadow-sm">
+              <div className="h-24 w-24 bg-accent/5 rounded-full mx-auto grid place-items-center">
+                <Building2 className="h-12 w-12 text-accent" />
               </div>
-              <h3 className="text-2xl font-bold">Your portfolio is empty</h3>
-              <p className="text-muted-foreground max-w-md mx-auto text-lg">Comece importando um link de imóvel para ver a mágica acontecer.</p>
+              <h3 className="text-3xl font-bold tracking-tight">Portfólio em Branco</h3>
+              <p className="text-muted-foreground max-w-md mx-auto text-xl italic font-serif">A sofisticação começa com a primeira extração de dados.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
               {properties.slice(0, 4).map(p => (
-                <Link key={p.id} to="/imoveis">
+                <div key={p.id} className="space-y-6">
                   <PropertyCard property={p} onClick={() => {}} />
-                </Link>
+                </div>
               ))}
             </div>
           )}
