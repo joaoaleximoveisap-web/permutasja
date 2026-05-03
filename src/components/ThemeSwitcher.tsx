@@ -13,7 +13,7 @@ export function ThemeSwitcher() {
           <Palette className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="bg-black/90 backdrop-blur-2xl w-72 p-3 rounded-2xl border-white/10 shadow-2xl">
+      <PopoverContent align="end" className="bg-black/95 backdrop-blur-2xl w-72 p-3 rounded-2xl border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
         <p className="px-2 pb-2 text-xs uppercase tracking-widest text-muted-foreground">Temas</p>
         <div className="grid gap-1">
           {THEMES.map((t) => {
