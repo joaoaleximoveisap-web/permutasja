@@ -103,7 +103,7 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
   };
 
   return (
-    <form onSubmit={handle} className="glass-strong rounded-2xl p-2 flex flex-col sm:flex-row gap-2">
+    <form onSubmit={handle} className="bg-white border border-border rounded-2xl p-2 flex flex-col sm:flex-row gap-2 shadow-sm">
       <div className="flex-1 flex items-center gap-2 px-3">
         <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
         <Input
