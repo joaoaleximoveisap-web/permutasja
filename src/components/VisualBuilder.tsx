@@ -380,12 +380,14 @@ function CanvasRenderer({ elementId }: { elementId: string }) {
     borderRadius: element.styles.borderRadius ? `${element.styles.borderRadius}px` : undefined,
     display: element.styles.display || "block",
     flexDirection: element.styles.flexDirection as any,
-
+    alignItems: element.styles.alignItems as any,
+    justifyContent: element.styles.justifyContent as any,
     gap: element.styles.gap ? `${element.styles.gap}px` : undefined,
-    width: element.styles.width,
-    height: element.styles.height,
+    width: element.styles.width || "auto",
+    height: element.styles.height || "auto",
     cursor: "pointer"
   };
+
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
