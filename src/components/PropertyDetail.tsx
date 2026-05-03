@@ -228,64 +228,60 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
           />
         )}
       </DialogContent>
-      {/* Fullscreen Immersive Viewer */}
+      {/* Fullscreen Immersive Viewer (Airbnb/Instagram Style) */}
       {fullscreen && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl animate-in fade-in duration-300 flex flex-col">
-          {/* Header */}
-          <div className="p-6 flex items-center justify-between z-10">
-            <div className="text-white space-y-1">
-              <h3 className="font-bold text-lg leading-none">{property.title}</h3>
-              <p className="text-white/60 text-xs font-medium">{active + 1} de {property.images.length} fotos</p>
+        <div className="fixed inset-0 z-[100] bg-black animate-in fade-in duration-300">
+          {/* Controls Overlay */}
+          <div className="absolute inset-0 z-20 pointer-events-none">
+            {/* Header: Counter & Close */}
+            <div className="p-6 flex items-center justify-end gap-4 pointer-events-auto">
+              <div className="bg-black/50 text-white text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10">
+                {active + 1} / {property.images.length}
+              </div>
+              <button 
+                onClick={() => setFullscreen(false)}
+                className="p-3 rounded-full bg-black/50 text-white hover:bg-black/70 backdrop-blur-md transition-all border border-white/10"
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
-            <button 
-              onClick={() => setFullscreen(false)}
-              className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
 
-          {/* Main Content */}
-          <div className="flex-1 relative flex items-center justify-center overflow-hidden w-full h-full">
-            <img 
-              src={property.images[active]} 
-              alt="" 
-              className="w-full h-full object-contain md:object-cover select-none transition-all duration-500 animate-in zoom-in-95" 
-            />
-
-            {/* Navigation */}
+            {/* Navigation Arrows */}
             {property.images.length > 1 && (
-              <>
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 md:px-8 pointer-events-none">
                 <button 
-                  onClick={prevImg}
-                  className="absolute left-4 md:left-8 p-4 rounded-full bg-white/5 text-white hover:bg-white/10 backdrop-blur-md transition-all group"
+                  onClick={(e) => { e.stopPropagation(); prevImg(); }}
+                  className="p-4 rounded-full bg-black/30 text-white hover:bg-black/60 backdrop-blur-md transition-all group pointer-events-auto border border-white/5"
                 >
                   <ChevronLeft className="h-8 w-8 group-hover:-translate-x-1 transition-transform" />
                 </button>
                 <button 
-                  onClick={nextImg}
-                  className="absolute right-4 md:right-8 p-4 rounded-full bg-white/5 text-white hover:bg-white/10 backdrop-blur-md transition-all group"
+                  onClick={(e) => { e.stopPropagation(); nextImg(); }}
+                  className="p-4 rounded-full bg-black/30 text-white hover:bg-black/60 backdrop-blur-md transition-all group pointer-events-auto border border-white/5"
                 >
                   <ChevronRight className="h-8 w-8 group-hover:translate-x-1 transition-transform" />
                 </button>
-              </>
+              </div>
             )}
           </div>
 
-          {/* Mini-feed Footer (Instagram Style) */}
-          <div className="p-6 bg-gradient-to-t from-black to-transparent">
-            <div className="max-w-4xl mx-auto flex gap-2 overflow-x-auto no-scrollbar justify-center py-2 px-4">
-              {property.images.map((src, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => setActive(i)} 
-                  className={`h-12 w-20 md:h-16 md:w-28 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${i === active ? "border-accent scale-110" : "border-transparent opacity-40 hover:opacity-100"}`}
-                >
-                  <img src={src} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
+          {/* Full Screen Image */}
+          <div className="w-full h-full flex items-center justify-center overflow-hidden">
+            <img 
+              src={property.images[active]} 
+              alt="" 
+              className="w-full h-full object-cover md:object-contain select-none transition-all duration-500 animate-in zoom-in-95" 
+              onClick={(e) => {
+                // Click on right side of image goes next, left goes prev
+                const rect = (e.target as HTMLElement).getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                if (x > rect.width / 2) nextImg();
+                else prevImg();
+              }}
+            />
           </div>
+
+          {/* Hidden footer: only image matters */}
         </div>
       )}
     </Dialog>
