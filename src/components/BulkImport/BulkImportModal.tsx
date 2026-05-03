@@ -13,8 +13,27 @@ import { uid, buildNormalized } from '@/lib/property-utils';
 export function BulkImportModal() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
   const { step, session, jobs, selectedJobIds, setSelectedJobIds, startScan, setStep } = useBulkImport();
   const { addProperty } = useProperties();
+
+  const handleStartScan = async () => {
+    if (!url.trim()) return;
+    
+    setIsValidating(true);
+    try {
+      // Basic format validation
+      const urlObj = new URL(url);
+      if (!urlObj.protocol.startsWith('http')) throw new Error();
+    } catch (e) {
+      toast.error("URL inválida", { description: "Certifique-se de incluir http:// ou https://" });
+      setIsValidating(false);
+      return;
+    }
+
+    await startScan(url);
+    setIsValidating(false);
+  };
 
   const handleSave = async () => {
     const toSave = jobs.filter(j => j.status === 'done' && (selectedJobIds.size === 0 || selectedJobIds.has(j.id)));
