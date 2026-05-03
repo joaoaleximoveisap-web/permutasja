@@ -63,10 +63,12 @@ export default function Login() {
 
       <div className="flex items-center justify-center p-6 relative">
         <div className="absolute top-4 right-4"><ThemeSwitcher /></div>
-        <form onSubmit={submit} className="glass-strong rounded-3xl p-8 w-full max-w-md space-y-5 animate-scale-in">
+        <form onSubmit={handleAuth} className="glass-strong rounded-3xl p-8 w-full max-w-md space-y-5 animate-scale-in">
           <div>
-            <h2 className="text-3xl font-semibold">Entrar</h2>
-            <p className="text-sm text-muted-foreground mt-1">Acesse sua conta de corretor.</p>
+            <h2 className="text-3xl font-semibold">{isSignUp ? "Criar conta" : "Entrar"}</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isSignUp ? "Crie sua conta de corretor gratuitamente." : "Acesse sua conta de corretor."}
+            </p>
           </div>
           <div className="space-y-3">
             <div>
@@ -75,13 +77,22 @@ export default function Login() {
             </div>
             <div>
               <Label>Senha</Label>
-              <Input type="password" required defaultValue="demo1234" />
+              <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
           </div>
-          <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground rounded-xl h-11">
-            Entrar na plataforma
+          <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground rounded-xl h-11">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {isSignUp ? "Criar conta agora" : "Entrar na plataforma"}
           </Button>
-          <p className="text-xs text-center text-muted-foreground">Demo — qualquer email/senha funciona.</p>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-xs text-accent hover:underline"
+            >
+              {isSignUp ? "Já tem uma conta? Entre aqui" : "Ainda não tem conta? Crie uma agora"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
