@@ -205,7 +205,17 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ found: validLinks.length }), { headers: corsHeaders });
 
   } catch (error) {
-    console.error("Scan error:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+    console.error("\n[ERRO DETECTADO]");
+    console.error(error.message);
+    console.error(error.stack);
+
+    return new Response(JSON.stringify({ 
+      error: "Falha na varredura",
+      motivo: error.message,
+      onde: error.stack
+    }), { 
+      status: 500, 
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
   }
 });
