@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* Default/Global: Dark Theme by Default */
+    /* Global Base: Dark Mode by Default (Midnight) */
     --background: 0 0% 4%;
     --foreground: 0 0% 98%;
 
@@ -58,7 +58,7 @@
     --sidebar-ring: 37 40% 63%;
   }
 
-  /* Theme mappings for data-theme attribute */
+  /* Specific Theme Overrides using [data-theme] */
   [data-theme="sand"] {
     --background: 35 15% 95%;
     --foreground: 0 0% 10%;
@@ -80,204 +80,61 @@
     --sidebar-border: 0 0% 0% / 0.06;
   }
 
-  [data-theme="midnight"] {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
-    /* Already defaults to dark, but keeping for specificity */
-  }
-
   [data-theme="forest"] {
     --background: 164 47% 11%;
-    --foreground: 0 0% 92%;
-    --card: 164 47% 14%;
-    --sidebar-background: 164 47% 9% / 0.85;
-    --primary: 46 65% 52%;
-  }
-
-
-  /* THEME 2 — Ônix Dourado (Preto Premium) */
-  [data-theme="midnight"] {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 37 40% 63%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 37 40% 63%;
-    --accent-foreground: 0 0% 0%;
-    --border: 0 0% 100% / 0.1;
-    --input: 0 0% 100% / 0.1;
-    --ring: 37 40% 63%;
-    --glass-bg: 240 10% 6% / 0.7;
-    --glass-border: 240 5% 30% / 0.4;
-    --glass-highlight: 0 0% 100% / 0.05;
-    --glass-shadow: 0 0% 0% / 0.8;
-    --gradient-bg: radial-gradient(ellipse at 20% 0%, hsl(43 50% 20% / 0.2), transparent 60%),
-                   linear-gradient(135deg, hsl(var(--background)), hsl(var(--background-2)));
-    --gradient-primary: linear-gradient(135deg, hsl(43 50% 65%), hsl(43 50% 45%));
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0.01));
-    --sidebar-background: 240 10% 4% / 0.8;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-accent: 43 50% 60% / 0.15;
-    --sidebar-accent-foreground: 0 0% 100%;
-  }
-
-  /* THEME 3 — Verde Imperial (Luxo Europeu) */
-  [data-theme="forest"] {
-    --background: 164 47% 11%;
-    --background-2: 164 47% 8%;
     --foreground: 0 0% 92%;
     --card: 164 47% 14%;
     --card-foreground: 0 0% 92%;
-    --popover: 164 47% 14%;
-    --popover-foreground: 0 0% 92%;
-    --primary: 46 65% 52%; /* Gold Premium */
-    --primary-foreground: 164 47% 11%;
-    --secondary: 164 30% 20%;
-    --secondary-foreground: 0 0% 92%;
-    --muted: 164 30% 20%;
-    --muted-foreground: 164 15% 70%;
-    --accent: 46 65% 52%;
-    --accent-foreground: 164 47% 11%;
-    --border: 164 30% 25%;
-    --input: 164 30% 25%;
-    --ring: 46 65% 52%;
-    --glass-bg: 164 47% 12% / 0.75;
-    --glass-border: 164 30% 40% / 0.4;
-    --gradient-primary: linear-gradient(135deg, hsl(46 65% 60%), hsl(46 65% 45%));
+    --primary: 46 65% 52%;
     --sidebar-background: 164 47% 9% / 0.85;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-accent: 46 65% 52% / 0.2;
-    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 100% / 0.05;
   }
 
-  /* THEME 4 — Azul Monarca (Patrimonial) */
   [data-theme="ocean"] {
     --background: 221 74% 15%;
-    --background-2: 221 74% 12%;
     --foreground: 0 0% 100%;
     --card: 221 74% 18%;
     --card-foreground: 0 0% 100%;
-    --popover: 221 74% 18%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 38 43% 59%; /* Champagne Gold */
-    --primary-foreground: 221 74% 15%;
-    --secondary: 221 50% 20%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 221 50% 20%;
-    --muted-foreground: 221 30% 70%;
-    --accent: 38 43% 59%;
-    --accent-foreground: 221 74% 15%;
-    --border: 221 50% 25%;
-    --input: 221 50% 25%;
-    --ring: 38 43% 59%;
-    --glass-bg: 221 74% 16% / 0.75;
-    --glass-border: 221 50% 40% / 0.4;
-    --gradient-primary: linear-gradient(135deg, hsl(38 43% 65%), hsl(38 43% 50%));
+    --primary: 38 43% 59%;
     --sidebar-background: 221 74% 13% / 0.8;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-accent: 38 43% 59% / 0.15;
-    --sidebar-accent-foreground: 0 0% 100%;
   }
 
-  /* THEME 5 — Vinho Premium (Sofisticado) */
   [data-theme="rose"] {
     --background: 355 64% 14%;
-    --background-2: 355 64% 10%;
     --foreground: 36 33% 96%;
     --card: 355 64% 18%;
     --card-foreground: 36 33% 96%;
-    --popover: 355 64% 18%;
-    --popover-foreground: 36 33% 96%;
-    --primary: 34 50% 77%; /* Bege Quente Premium */
-    --primary-foreground: 355 64% 14%;
-    --secondary: 355 40% 22%;
-    --secondary-foreground: 36 33% 96%;
-    --muted: 355 40% 22%;
-    --muted-foreground: 355 20% 70%;
-    --accent: 34 50% 77%;
-    --accent-foreground: 355 64% 14%;
-    --border: 355 40% 30%;
-    --input: 355 40% 30%;
-    --ring: 34 50% 77%;
-    --glass-bg: 355 64% 15% / 0.75;
-    --glass-border: 355 40% 45% / 0.4;
-    --gradient-primary: linear-gradient(135deg, hsl(34 50% 82%), hsl(34 50% 70%));
+    --primary: 34 50% 77%;
     --sidebar-background: 355 64% 12% / 0.85;
     --sidebar-foreground: 36 33% 95%;
-    --sidebar-accent: 34 50% 77% / 0.15;
-    --sidebar-accent-foreground: 0 0% 100%;
   }
 
-  /* THEME 6 — Cinza Titânio (Tech Minimal) */
   [data-theme="mist"] {
     --background: 240 4% 12%;
-    --background-2: 240 4% 8%;
     --foreground: 0 0% 100%;
     --card: 240 4% 16%;
     --card-foreground: 0 0% 100%;
-    --popover: 240 4% 16%;
-    --popover-foreground: 0 0% 100%;
     --primary: 0 0% 82%;
-    --primary-foreground: 240 4% 12%;
-    --secondary: 240 4% 20%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 240 4% 20%;
-    --muted-foreground: 240 4% 70%;
-    --accent: 0 0% 82%;
-    --accent-foreground: 240 4% 12%;
-    --border: 240 4% 25%;
-    --input: 240 4% 25%;
-    --ring: 0 0% 82%;
-    --glass-bg: 240 4% 14% / 0.75;
-    --glass-border: 240 4% 35% / 0.4;
-    --gradient-primary: linear-gradient(135deg, hsl(0 0% 90%), hsl(0 0% 70%));
     --sidebar-background: 240 4% 10% / 0.8;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-accent: 0 0% 82% / 0.15;
-    --sidebar-accent-foreground: 0 0% 100%;
   }
 
-  /* THEME 7 — Âmbar Luxo (Hermès Style) */
   [data-theme="sunset"] {
     --background: 24 67% 14%;
-    --background-2: 24 67% 10%;
     --foreground: 36 100% 97%;
     --card: 24 67% 18%;
     --card-foreground: 36 100% 97%;
-    --popover: 24 67% 18%;
-    --popover-foreground: 36 100% 97%;
-    --primary: 37 62% 60%; /* Ouro Quente */
-    --primary-foreground: 24 67% 14%;
-    --secondary: 24 50% 22%;
-    --secondary-foreground: 36 100% 97%;
-    --muted: 24 50% 22%;
-    --muted-foreground: 24 30% 70%;
-    --accent: 37 62% 60%;
-    --accent-foreground: 24 67% 14%;
-    --border: 24 50% 30%;
-    --input: 24 50% 30%;
-    --ring: 37 62% 60%;
-    --glass-bg: 24 67% 16% / 0.75;
-    --glass-border: 24 50% 45% / 0.4;
-    --gradient-primary: linear-gradient(135deg, hsl(37 62% 65%), hsl(37 62% 50%));
+    --primary: 37 62% 60%;
     --sidebar-background: 24 67% 12% / 0.85;
     --sidebar-foreground: 36 100% 95%;
-    --sidebar-accent: 37 62% 60% / 0.15;
-    --sidebar-accent-foreground: 0 0% 100%;
   }
 }
 
 @layer base {
   * { 
     @apply border-border; 
-    /* Force minimum contrast and readability globally */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -328,21 +185,11 @@
     background-clip: text;
     color: transparent;
   }
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: hsl(var(--accent) / 0.3);
     border-radius: 10px;
@@ -351,7 +198,6 @@
     background: hsl(var(--accent) / 0.5);
   }
 }
-
 
 /* Hide Lovable Badge */
 a[href*="lovable.dev"], 
@@ -363,5 +209,4 @@ div[style*="Edit with Lovable"],
   visibility: hidden !important;
   pointer-events: none !important;
   position: absolute !important;
-  z-index: -9999 !important;
 }
