@@ -9,7 +9,7 @@ export function ThemeSwitcher() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="glass rounded-full" aria-label="Trocar tema">
+        <Button variant="ghost" size="icon" className="bg-white/80 border border-border backdrop-blur-md rounded-full" aria-label="Trocar tema">
           <Palette className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
