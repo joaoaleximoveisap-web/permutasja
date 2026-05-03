@@ -131,7 +131,7 @@ export default function Properties() {
         <ImportBar />
 
         <div className="flex flex-col md:flex-row gap-4">
-          <aside className="hidden lg:block w-72 shrink-0">
+          <aside className="hidden lg:block w-72 shrink-0 space-y-4">
             <FilterPanel filters={filters} setFilters={setFilters} />
           </aside>
 
