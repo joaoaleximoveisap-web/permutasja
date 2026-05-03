@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { formatBRL } from "@/lib/property-utils";
 
 export default function Dashboard() {
-  const { properties, credits } = useProperties();
+  const { properties, credits, creditSystemEnabled } = useProperties();
   const totalValue = properties.reduce((s, p) => s + p.price, 0);
   const permutas = properties.filter(p => p.permuta.enabled).length;
 
@@ -14,7 +14,7 @@ export default function Dashboard() {
     { label: "Imóveis na carteira", value: properties.length, icon: Building2 },
     { label: "Valor total", value: formatBRL(totalValue), icon: TrendingUp },
     { label: "Aceitam permuta", value: permutas, icon: Repeat2 },
-    { label: "Créditos restantes", value: credits, icon: Coins },
+    ...(creditSystemEnabled ? [{ label: "Créditos restantes", value: credits, icon: Coins }] : []),
   ];
 
   return (

@@ -12,14 +12,14 @@ import { toast } from "sonner";
 export function ImportBar({ onImported }: { onImported?: () => void }) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const { upsertDraft, credits, consumeCredit } = useProperties();
+  const { upsertDraft, credits, consumeCredit, creditSystemEnabled } = useProperties();
   const navigate = useNavigate();
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
     try { new URL(url); } catch { toast.error("URL inválida"); return; }
-    if (credits <= 0) { toast.error("Sem créditos. Faça upgrade para continuar importando."); return; }
+    if (creditSystemEnabled && credits <= 0) { toast.error("Sem créditos. Faça upgrade para continuar importando."); return; }
 
     setLoading(true);
     try {

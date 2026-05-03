@@ -23,11 +23,12 @@ export function BulkImportDialog() {
     pricesFound: number;
     linksExtracted: number;
   } | null>(null);
-  const { addProperty, properties } = useProperties();
+  const { addProperty, properties, credits, creditSystemEnabled } = useProperties();
 
   const discoverLinks = async () => {
     if (!url.trim()) return;
     try { new URL(url); } catch { toast.error("URL inválida"); return; }
+    if (creditSystemEnabled && credits <= 0) { toast.error("Sem créditos disponíveis."); return; }
 
     setPhase("discovering");
     try {
