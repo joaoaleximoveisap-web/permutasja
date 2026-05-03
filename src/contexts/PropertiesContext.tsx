@@ -5,6 +5,7 @@ type Ctx = {
   properties: Property[];
   drafts: Property[];
   credits: number;
+  creditSystemEnabled: boolean;
   addProperty: (p: Property) => void;
   updateProperty: (p: Property) => void;
   upsertDraft: (p: Property) => void;
@@ -15,6 +16,8 @@ type Ctx = {
   consumeCredit: () => boolean;
   refillCredits: (n?: number) => void;
 };
+
+export const CREDIT_SYSTEM_ENABLED = false; // Feature flag to disable credits
 
 const PropertiesCtx = createContext<Ctx | null>(null);
 const PROPS_KEY = "permutasja:properties";
@@ -63,6 +66,7 @@ export function PropertiesProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const consumeCredit = useCallback(() => {
+    if (!CREDIT_SYSTEM_ENABLED) return true;
     let ok = false;
     setCredits((c) => { if (c > 0) { ok = true; return c - 1; } return c; });
     return ok;
@@ -71,6 +75,7 @@ export function PropertiesProvider({ children }: { children: React.ReactNode }) 
 
   const value = useMemo(() => ({
     properties, drafts, credits,
+    creditSystemEnabled: CREDIT_SYSTEM_ENABLED,
     addProperty, upsertDraft, publishDraft, removeDraft, getDraft,
     removeProperty, updateProperty, consumeCredit, refillCredits,
   }), [properties, drafts, credits, addProperty, upsertDraft, publishDraft, removeDraft, getDraft, removeProperty, consumeCredit, refillCredits]);
