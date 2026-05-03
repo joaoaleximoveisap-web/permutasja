@@ -9,11 +9,11 @@ export function ThemeSwitcher() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="glass rounded-full" aria-label="Trocar tema">
+        <Button variant="ghost" size="icon" className="bg-white/80 border border-border backdrop-blur-md rounded-full" aria-label="Trocar tema">
           <Palette className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="glass-strong w-72 p-3 rounded-2xl border-glass-border">
+      <PopoverContent align="end" className="bg-black/95 backdrop-blur-2xl w-72 p-3 rounded-2xl border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
         <p className="px-2 pb-2 text-xs uppercase tracking-widest text-muted-foreground">Temas</p>
         <div className="grid gap-1">
           {THEMES.map((t) => {
@@ -22,7 +22,7 @@ export function ThemeSwitcher() {
               <button
                 key={t.id}
                 onClick={() => setTheme(t.id)}
-                className={`group flex items-center gap-3 rounded-xl px-2 py-2 text-left transition-smooth hover:bg-sidebar-accent ${active ? "bg-sidebar-accent" : ""}`}
+                className={`group flex items-center gap-3 rounded-xl px-2 py-2 text-left transition-smooth hover:bg-white/10 ${active ? "bg-white/15 ring-1 ring-white/20" : ""}`}
               >
                 <div className="flex h-8 w-12 overflow-hidden rounded-lg ring-1 ring-border">
                   {t.swatch.map((c, i) => (

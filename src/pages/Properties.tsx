@@ -87,7 +87,7 @@ export default function Properties() {
               <>
                 <Button 
                   variant="outline" 
-                  className="glass rounded-xl gap-2"
+                  className="bg-white border border-border rounded-xl gap-2 shadow-sm"
                   onClick={() => setSelectionMode(true)}
                 >
                   <CheckSquare className="h-4 w-4" /> Selecionar
@@ -99,7 +99,7 @@ export default function Properties() {
               <>
                 <Button 
                   variant="outline" 
-                  className="glass rounded-xl gap-2"
+                  className="bg-white border border-border rounded-xl gap-2"
                   onClick={selectAll}
                 >
                   {selectedIds.size === filtered.length ? <Square className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
@@ -131,13 +131,13 @@ export default function Properties() {
         <ImportBar />
 
         <div className="flex flex-col md:flex-row gap-4">
-          <aside className="hidden lg:block w-72 shrink-0">
+          <aside className="hidden lg:block w-72 shrink-0 space-y-4">
             <FilterPanel filters={filters} setFilters={setFilters} />
           </aside>
 
           <div className="flex-1 space-y-4 min-w-0">
             <div className="flex gap-2">
-              <div className="glass rounded-xl flex items-center gap-2 px-3 flex-1">
+              <div className="bg-white border border-border rounded-xl flex items-center gap-2 px-3 flex-1 shadow-sm">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   value={query}
@@ -148,7 +148,7 @@ export default function Properties() {
               </div>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" className="lg:hidden glass rounded-xl">
+                  <Button variant="outline" className="lg:hidden bg-white border border-border rounded-xl">
                     <SlidersHorizontal className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>

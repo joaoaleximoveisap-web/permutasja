@@ -23,7 +23,7 @@ export function PropertyCard({
       <button
         onClick={selectionMode && onSelect ? () => onSelect(property.id) : onClick}
         className={cn(
-          "w-full text-left relative overflow-hidden rounded-2xl glass-strong transition-smooth hover:scale-[1.02] hover:shadow-elevated focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "w-full text-left relative overflow-hidden rounded-2xl bg-card transition-smooth hover:scale-[1.02] hover:shadow-elevated focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           selected && "ring-2 ring-accent"
         )}
       >

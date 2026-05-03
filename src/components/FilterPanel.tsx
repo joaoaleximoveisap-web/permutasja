@@ -19,7 +19,7 @@ export const defaultFilters: Filters = {
 
 export function FilterPanel({ filters, setFilters }: { filters: Filters; setFilters: (f: Filters) => void }) {
   return (
-    <div className="glass-strong rounded-2xl p-4 space-y-5">
+    <div className="bg-card border border-border rounded-2xl p-4 space-y-5 shadow-sm">
       <div>
         <div className="flex items-center justify-between mb-2">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Preço</Label>
@@ -51,7 +51,7 @@ export function FilterPanel({ filters, setFilters }: { filters: Filters; setFilt
             <button
               key={n}
               onClick={() => setFilters({ ...filters, minBedrooms: n })}
-              className={`flex-1 rounded-xl px-2 py-2 text-sm transition-smooth glass
+              className={`flex-1 rounded-xl px-2 py-2 text-sm transition-smooth border border-border bg-white shadow-sm
                 ${filters.minBedrooms === n ? "bg-gradient-primary text-primary-foreground" : "hover:bg-sidebar-accent"}`}
             >
               {n === 0 ? "Todos" : `${n}+`}
@@ -60,7 +60,7 @@ export function FilterPanel({ filters, setFilters }: { filters: Filters; setFilt
         </div>
       </div>
 
-      <div className="flex items-center justify-between glass rounded-xl px-3 py-2">
+      <div className="flex items-center justify-between bg-white border border-border rounded-xl px-3 py-2 shadow-sm">
         <Label className="cursor-pointer">Apenas com permuta</Label>
         <Switch checked={filters.onlyPermuta} onCheckedChange={(v) => setFilters({ ...filters, onlyPermuta: v })} />
       </div>
