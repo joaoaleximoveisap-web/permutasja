@@ -174,8 +174,13 @@ export type Database = {
           city: string | null
           created_at: string | null
           description: string | null
+          external_id: string | null
+          features_json: Json | null
           id: string
           images: string[] | null
+          location_json: Json | null
+          media_urls: string[] | null
+          metadata: Json | null
           neighborhood: string | null
           original_data: Json | null
           parking: number | null
@@ -196,8 +201,13 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           description?: string | null
+          external_id?: string | null
+          features_json?: Json | null
           id?: string
           images?: string[] | null
+          location_json?: Json | null
+          media_urls?: string[] | null
+          metadata?: Json | null
           neighborhood?: string | null
           original_data?: Json | null
           parking?: number | null
@@ -218,8 +228,13 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           description?: string | null
+          external_id?: string | null
+          features_json?: Json | null
           id?: string
           images?: string[] | null
+          location_json?: Json | null
+          media_urls?: string[] | null
+          metadata?: Json | null
           neighborhood?: string | null
           original_data?: Json | null
           parking?: number | null

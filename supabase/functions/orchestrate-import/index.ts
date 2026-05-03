@@ -11,7 +11,7 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  const supabaseClient = createClient(
+  const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   )
@@ -21,13 +21,13 @@ serve(async (req) => {
     let currentPage = 1
     let totalImported = 0
 
-    while (currentPage <= 10) {
-      await supabaseClient.from('import_logs').insert({
+    while (currentPage <= 5) {
+      await supabase.from('import_logs').insert({
         status: 'processing',
-        message: `Iniciando extração da página ${currentPage}...`
+        message: `Iniciando extração da página ${currentPage} de ${targetUrl}...`
       })
 
-      // Call scan-listing-page function
+      // Call scan function
       const scanResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/scan-listing-page`, {
         method: 'POST',
         headers: {
@@ -39,25 +39,31 @@ serve(async (req) => {
 
       const { properties, hasNextPage } = await scanResponse.json()
 
-      if (!properties || properties.length === 0) break
+      if (!properties || properties.length === 0) {
+        await supabase.from('import_logs').insert({
+          status: 'info',
+          message: `Nenhum objeto encontrado na página ${currentPage}. Encerrando.`
+        })
+        break
+      }
 
       for (const prop of properties) {
-        const { error } = await supabaseClient.from('properties').upsert({
+        const { error } = await supabase.from('properties').upsert({
           external_id: prop.id,
           title: prop.titulo,
           price: prop.preco,
-          location: prop.localizacao,
-          features: prop.caracteristicas,
-          media: prop.midia,
+          location_json: prop.localizacao,
+          features_json: prop.caracteristicas,
+          media_urls: prop.midia,
           url: prop.url,
           source: 'Aurora Imobi'
         }, { onConflict: 'external_id' })
 
         if (!error) {
           totalImported++
-          await supabaseClient.from('import_logs').insert({
+          await supabase.from('import_logs').insert({
             status: 'success',
-            message: `Objeto [${prop.titulo}] criado com sucesso.`
+            message: `Objeto [${prop.titulo}] criado/atualizado com sucesso.`
           })
         }
       }
