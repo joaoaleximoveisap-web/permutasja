@@ -1,16 +1,39 @@
 import { Property } from "@/lib/types";
 import { formatBRL } from "@/lib/property-utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Bed, Maximize2, MapPin, Repeat2, Tag, ExternalLink, Trash2, ChevronLeft, ChevronRight, Pencil, Sparkles } from "lucide-react";
+import { Bed, Maximize2, MapPin, Repeat2, Tag, ExternalLink, Trash2, ChevronLeft, ChevronRight, Pencil, Sparkles, X, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/contexts/PropertiesContext";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { EditPropertyDialog } from "./EditPropertyDialog";
 
 export function PropertyDetail({ property, open, onOpenChange }: { property: Property | null; open: boolean; onOpenChange: (v: boolean) => void; }) {
   const { removeProperty } = useProperties();
   const [active, setActive] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  const nextImg = useCallback(() => {
+    if (!property) return;
+    setActive(prev => (prev < property.images.length - 1 ? prev + 1 : 0));
+  }, [property]);
+
+  const prevImg = useCallback(() => {
+    if (!property) return;
+    setActive(prev => (prev > 0 ? prev - 1 : property.images.length - 1));
+  }, [property]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (!fullscreen) return;
+      if (e.key === "ArrowRight") nextImg();
+      if (e.key === "ArrowLeft") prevImg();
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [fullscreen, nextImg, prevImg]);
+
   if (!property) return null;
 
   return (
@@ -18,36 +41,41 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
       if (!editOpen) onOpenChange(v);
     }}>
       <DialogContent className="max-w-6xl glass-strong border-glass-border rounded-3xl p-0 overflow-hidden max-h-[95vh] overflow-y-auto z-50">
-        <div className="flex flex-col">
+        <div className="flex flex-col relative">
           {/* Hero Section Style Netflix */}
-          <div className="relative w-full aspect-video md:aspect-[21/9] bg-black overflow-hidden group">
+          <div 
+            className="relative w-full aspect-video md:aspect-[21/9] bg-black overflow-hidden group cursor-zoom-in"
+            onClick={() => setFullscreen(true)}
+          >
             <img 
               src={property.images[active]} 
               alt={property.title} 
-              className="w-full h-full object-cover transition-smooth" 
+              className="w-full h-full object-cover transition-smooth group-hover:scale-105" 
             />
             
             {/* Dark Gradient Overlay Style Netflix */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
             
-            {/* Hero Content Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              {/* Only Image, no text on top */}
+            {/* Immersive Badge */}
+            <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+              <div className="glass-strong bg-white/10 backdrop-blur-md border-white/20 rounded-xl px-4 py-2 flex items-center gap-2 text-white font-bold text-sm">
+                <ZoomIn className="h-4 w-4" /> Ver em tela cheia
+              </div>
             </div>
 
             {/* Navigation Arrows */}
             {property.images.length > 1 && (
               <>
                 <button 
-                  onClick={() => setActive(prev => (prev > 0 ? prev - 1 : property.images.length - 1))}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20"
+                  onClick={(e) => { e.stopPropagation(); prevImg(); }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20 sm:opacity-0 sm:group-hover:opacity-100"
                   aria-label="Imagem anterior"
                 >
                   <ChevronLeft className="h-8 w-8" />
                 </button>
                 <button 
-                  onClick={() => setActive(prev => (prev < property.images.length - 1 ? prev + 1 : 0))}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20"
+                  onClick={(e) => { e.stopPropagation(); nextImg(); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition-all z-20 sm:opacity-0 sm:group-hover:opacity-100"
                   aria-label="Próxima imagem"
                 >
                   <ChevronRight className="h-8 w-8" />
@@ -60,6 +88,7 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
               {active + 1} / {property.images.length}
             </div>
           </div>
+
 
           <div className="p-8 md:p-12 grid md:grid-cols-3 gap-12">
             <div className="md:col-span-2 space-y-8">
@@ -157,17 +186,25 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
                 </div>
               </div>
 
-              {/* Gallery List (All Images) */}
+              {/* Gallery List (Social Style) */}
               <div className="pt-6">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 px-1">Galeria Completa</h3>
-                <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Galeria Completa</h3>
+                  <button 
+                    onClick={() => setFullscreen(true)}
+                    className="text-[10px] font-bold text-accent hover:underline flex items-center gap-1"
+                  >
+                    Ver Imersivo <ExternalLink className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
                   {property.images.map((src, i) => (
                     <button 
                       key={i} 
                       onClick={() => setActive(i)} 
-                      className={`aspect-video rounded-lg overflow-hidden ring-2 transition-all ${i === active ? "ring-accent scale-95" : "ring-transparent opacity-60 hover:opacity-100 hover:scale-105"}`}
+                      className={`aspect-video rounded-xl overflow-hidden ring-2 transition-all group ${i === active ? "ring-accent" : "ring-transparent opacity-60 hover:opacity-100 hover:scale-[1.02]"}`}
                     >
-                      <img src={src} alt="" className="h-full w-full object-cover" />
+                      <img src={src} alt="" className="h-full w-full object-cover transition-smooth group-hover:scale-110" />
                     </button>
                   ))}
                 </div>
@@ -184,6 +221,67 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
           />
         )}
       </DialogContent>
+      {/* Fullscreen Immersive Viewer */}
+      {fullscreen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl animate-in fade-in duration-300 flex flex-col">
+          {/* Header */}
+          <div className="p-6 flex items-center justify-between z-10">
+            <div className="text-white space-y-1">
+              <h3 className="font-bold text-lg leading-none">{property.title}</h3>
+              <p className="text-white/60 text-xs font-medium">{active + 1} de {property.images.length} fotos</p>
+            </div>
+            <button 
+              onClick={() => setFullscreen(false)}
+              className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 relative flex items-center justify-center p-4 md:p-12 overflow-hidden">
+            <img 
+              src={property.images[active]} 
+              alt="" 
+              className="max-w-full max-h-full object-contain select-none shadow-2xl rounded-sm transition-all duration-500 animate-in zoom-in-95" 
+            />
+
+            {/* Navigation */}
+            {property.images.length > 1 && (
+              <>
+                <button 
+                  onClick={prevImg}
+                  className="absolute left-4 md:left-8 p-4 rounded-full bg-white/5 text-white hover:bg-white/10 backdrop-blur-md transition-all group"
+                >
+                  <ChevronLeft className="h-8 w-8 group-hover:-translate-x-1 transition-transform" />
+                </button>
+                <button 
+                  onClick={nextImg}
+                  className="absolute right-4 md:right-8 p-4 rounded-full bg-white/5 text-white hover:bg-white/10 backdrop-blur-md transition-all group"
+                >
+                  <ChevronRight className="h-8 w-8 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Mini-feed Footer (Instagram Style) */}
+          <div className="p-6 bg-gradient-to-t from-black to-transparent">
+            <div className="max-w-4xl mx-auto flex gap-2 overflow-x-auto no-scrollbar justify-center py-2 px-4">
+              {property.images.map((src, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => setActive(i)} 
+                  className={`h-12 w-20 md:h-16 md:w-28 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${i === active ? "border-accent scale-110" : "border-transparent opacity-40 hover:opacity-100"}`}
+                >
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </Dialog>
+
   );
 }
