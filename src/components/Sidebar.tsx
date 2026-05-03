@@ -43,8 +43,8 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      <div className="glass rounded-2xl p-4 text-xs text-muted-foreground">
-        <p className="leading-relaxed">Importe imóveis de qualquer link e organize sua carteira em segundos.</p>
+      <div className="p-4 text-xs text-muted-foreground border-t border-sidebar-border">
+        <p className="leading-relaxed opacity-80">Importe imóveis de qualquer link e organize sua carteira em segundos.</p>
       </div>
     </aside>
   );
