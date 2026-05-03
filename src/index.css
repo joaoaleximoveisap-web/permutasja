@@ -287,11 +287,17 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     line-height: 1.5;
   }
+  input, textarea, select {
+    @apply text-foreground bg-background border-border;
+  }
+  input::placeholder, textarea::placeholder {
+    @apply text-muted-foreground opacity-100;
+  }
   h1, h2, h3, h4 {
     font-family: 'Fraunces', 'Playfair Display', Georgia, serif;
     letter-spacing: -0.02em;
     font-weight: 700;
-    @apply text-foreground; /* Titles must always have primary contrast */
+    @apply text-foreground;
   }
 }
 
