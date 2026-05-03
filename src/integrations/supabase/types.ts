@@ -61,6 +61,30 @@ export type Database = {
           },
         ]
       }
+      import_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          message: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          message: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          message?: string
+          status?: string
+        }
+        Relationships: []
+      }
       import_preview_selections: {
         Row: {
           created_at: string | null

@@ -1,78 +1,79 @@
-import { corsHeaders } from "../_shared/cors.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.41.1";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-  const supabase = createClient(
-    Deno.env.get("VITE_SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
 
   try {
-    const { session_id } = await req.json();
+    const { targetUrl } = await req.json()
+    let currentPage = 1
+    let totalImported = 0
 
-    // 1. Pick batch - Batch size: 3 jobs per cycle (conservative)
-    const { data: jobs } = await supabase
-      .from("import_jobs")
-      .select("id")
-      .eq("session_id", session_id)
-      .eq("status", "pending")
-      .order("created_at", { ascending: true })
-      .limit(3);
+    while (currentPage <= 10) {
+      await supabaseClient.from('import_logs').insert({
+        status: 'processing',
+        message: `Iniciando extração da página ${currentPage}...`
+      })
 
-    if (!jobs || jobs.length === 0) {
-      // Check if all are terminal
-      const { data: remaining } = await supabase
-        .from("import_jobs")
-        .select("id")
-        .eq("session_id", session_id)
-        .eq("status", "pending")
-        .limit(1);
+      // Call scan-listing-page function
+      const scanResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/scan-listing-page`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url: targetUrl, page: currentPage })
+      })
 
-      if (!remaining || remaining.length === 0) {
-        await supabase.from("import_sessions").update({ 
-          status: "done", 
-          finished_at: new Date().toISOString() 
-        }).eq("id", session_id);
+      const { properties, hasNextPage } = await scanResponse.json()
+
+      if (!properties || properties.length === 0) break
+
+      for (const prop of properties) {
+        const { error } = await supabaseClient.from('properties').upsert({
+          external_id: prop.id,
+          title: prop.titulo,
+          price: prop.preco,
+          location: prop.localizacao,
+          features: prop.caracteristicas,
+          media: prop.midia,
+          url: prop.url,
+          source: 'Aurora Imobi'
+        }, { onConflict: 'external_id' })
+
+        if (!error) {
+          totalImported++
+          await supabaseClient.from('import_logs').insert({
+            status: 'success',
+            message: `Objeto [${prop.titulo}] criado com sucesso.`
+          })
+        }
       }
-      return new Response("Done", { headers: corsHeaders });
+
+      if (!hasNextPage) break
+      currentPage++
     }
 
-    // 2. Process batch sequentially with delay
-    for (const job of jobs) {
-      try {
-        await fetch(`${Deno.env.get("VITE_SUPABASE_URL")}/functions/v1/process-import-job`, {
-          method: "POST",
-          headers: { 
-            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ job_id: job.id })
-        });
-        // Delay between jobs: 2000ms minimum
-        await new Promise(r => setTimeout(r, 2000));
-      } catch (e) {
-        console.error(`Error processing job ${job.id}:`, e);
-      }
-    }
-
-    // 3. Self-invoke for next batch - Delay between batches: 3000ms
-    await new Promise(r => setTimeout(r, 3000));
-    
-    await fetch(`${Deno.env.get("VITE_SUPABASE_URL")}/functions/v1/orchestrate-import`, {
-      method: "POST",
-      headers: { 
-        "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ session_id })
-    });
-
-    return new Response("Batch processed", { headers: corsHeaders });
-
+    return new Response(
+      JSON.stringify({ success: true, totalImported }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   } catch (error) {
-    console.error("Orchestration error:", error);
-    return new Response(error.message, { status: 500, headers: corsHeaders });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
-});
+})
