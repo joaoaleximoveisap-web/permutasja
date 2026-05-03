@@ -93,29 +93,32 @@ export function PropertyDetail({ property, open, onOpenChange }: { property: Pro
           <div className="p-8 md:p-12 grid md:grid-cols-3 gap-12">
             <div className="md:col-span-2 space-y-8">
               <section className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  {property.permuta.enabled && (
-                    <div className="bg-accent text-white rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest shadow-lg">
-                      Aceita Permuta
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3">
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {property.permuta.enabled && (
+                      <div className="bg-accent text-white rounded-lg px-3 py-1 text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                        Aceita Permuta
+                      </div>
+                    )}
                     {property.isExclusive && (
-                      <div className="bg-accent/10 text-accent border border-accent/20 rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                      <div className="bg-accent/10 text-accent border border-accent/20 rounded-lg px-3 py-1 text-[10px] font-bold uppercase tracking-widest">
                         Exclusivo
                       </div>
                     )}
                     {property.price > 1500000 && (
-                      <div className="bg-primary/10 text-primary border border-primary/20 rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                      <div className="bg-primary/10 text-primary border border-primary/20 rounded-lg px-3 py-1 text-[10px] font-bold uppercase tracking-widest">
                         Alto Padrão
                       </div>
                     )}
                   </div>
-                  <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
-                    {property.title}
-                  </h2>
-                  <div className="text-3xl md:text-4xl font-bold text-accent">
-                    {formatBRL(property.price)}
+
+                  <div className="space-y-2">
+                    <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
+                      {property.title}
+                    </h2>
+                    <div className="text-3xl md:text-4xl font-bold text-accent">
+                      {formatBRL(property.price)}
+                    </div>
                   </div>
                 </div>
 
