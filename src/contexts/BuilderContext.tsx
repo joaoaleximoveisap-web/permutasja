@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from "react";
-import { BuilderConfig, ElementConfig, StyleConfig } from "@/lib/builder-types";
+import { BuilderConfig, ElementConfig, StyleConfig, ElementType } from "@/lib/builder-types";
 
 interface BuilderContextType {
   config: BuilderConfig;
-  selectElement: (id: string | null) => void;
+  selectElement: (id: string | null, multi?: boolean) => void;
+  updateElement: (id: string, updates: Partial<ElementConfig>) => void;
   updateElementStyle: (id: string, styles: Partial<StyleConfig>) => void;
   updateElementProps: (id: string, props: Record<string, any>) => void;
   moveElement: (id: string, newParentId: string, index: number) => void;
@@ -25,7 +26,7 @@ const initialConfig: BuilderConfig = {
     },
     "header-1": {
       id: "header-1",
-      type: "header",
+      type: "container",
       name: "Header",
       parentId: "root",
       styles: { backgroundColor: "#ffffff", paddingBottom: 20, paddingTop: 20 },
@@ -52,7 +53,7 @@ const initialConfig: BuilderConfig = {
     }
   },
   rootElementId: "root",
-  selectedElementId: null,
+  selectedElementIds: [],
   classes: {},
   globalTokens: {
     colors: {
@@ -82,8 +83,32 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
     setHistoryIndex(newHistory.length - 1);
   }, [history, historyIndex]);
 
-  const selectElement = (id: string | null) => {
-    setConfig(prev => ({ ...prev, selectedElementId: id }));
+  const selectElement = (id: string | null, multi: boolean = false) => {
+    setConfig(prev => {
+      if (!id) return { ...prev, selectedElementIds: [] };
+      if (multi) {
+        const isSelected = prev.selectedElementIds.includes(id);
+        const newIds = isSelected 
+          ? prev.selectedElementIds.filter(i => i !== id)
+          : [...prev.selectedElementIds, id];
+        return { ...prev, selectedElementIds: newIds };
+      }
+      return { ...prev, selectedElementIds: [id] };
+    });
+  };
+
+  const updateElement = (id: string, updates: Partial<ElementConfig>) => {
+    setConfig(prev => {
+      const newConfig = {
+        ...prev,
+        elements: {
+          ...prev.elements,
+          [id]: { ...prev.elements[id], ...updates }
+        }
+      };
+      saveToHistory(newConfig);
+      return newConfig;
+    });
   };
 
   const updateElementStyle = (id: string, styles: Partial<StyleConfig>) => {
@@ -121,7 +146,6 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
   };
 
   const moveElement = (id: string, newParentId: string, index: number) => {
-    // Basic implementation for reordering/moving
     setConfig(prev => {
       const element = prev.elements[id];
       const oldParentId = element.parentId;
@@ -129,13 +153,11 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
 
       const newElements = { ...prev.elements };
       
-      // Remove from old parent
       newElements[oldParentId] = {
         ...newElements[oldParentId],
         children: newElements[oldParentId].children.filter(childId => childId !== id)
       };
 
-      // Add to new parent
       const newChildren = [...newElements[newParentId].children];
       newChildren.splice(index, 0, id);
       newElements[newParentId] = {
@@ -143,7 +165,6 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
         children: newChildren
       };
 
-      // Update element's parent pointer
       newElements[id] = { ...element, parentId: newParentId };
 
       const newConfig = { ...prev, elements: newElements };
@@ -187,6 +208,7 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
     <BuilderContext.Provider value={{ 
       config, 
       selectElement, 
+      updateElement,
       updateElementStyle, 
       updateElementProps, 
       moveElement, 
