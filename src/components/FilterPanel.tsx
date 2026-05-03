@@ -19,7 +19,7 @@ export const defaultFilters: Filters = {
 
 export function FilterPanel({ filters, setFilters }: { filters: Filters; setFilters: (f: Filters) => void }) {
   return (
-    <div className="glass-strong rounded-2xl p-4 space-y-5">
+    <div className="bg-card border border-border rounded-2xl p-4 space-y-5 shadow-sm">
       <div>
         <div className="flex items-center justify-between mb-2">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Preço</Label>
