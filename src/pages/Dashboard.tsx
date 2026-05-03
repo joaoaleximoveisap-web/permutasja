@@ -20,32 +20,32 @@ export default function Dashboard() {
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-10">
-        <section className="relative h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden rounded-[3rem] shadow-2xl">
-          {/* Immersive Background */}
+        <section className="relative h-[90vh] min-h-[700px] flex items-center justify-center overflow-hidden rounded-[3rem] shadow-2xl mx-2 md:mx-0 mt-4 md:mt-0">
+          {/* Dynamic Immersive Background */}
           <div 
-            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform hover:scale-[1.02]"
+            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform hover:scale-[1.03]"
             style={{ 
               backgroundImage: `url(${properties[0]?.images[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920'})`,
             }}
           />
           
-          {/* Professional Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+          {/* Deep Cinematic Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/90" />
           
-          <div className="relative z-10 w-full max-w-5xl px-8 text-center space-y-8">
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-              <div className="inline-block bg-accent/20 backdrop-blur-md border border-accent/30 rounded-full px-6 py-2 text-accent font-bold uppercase tracking-[0.4em] text-[10px]">
-                Mercado de Alto Padrão
+          <div className="relative z-10 w-full max-w-5xl px-8 text-center space-y-10">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-1000">
+              <div className="inline-block bg-accent/20 backdrop-blur-md border border-accent/40 rounded-full px-8 py-2.5 text-accent font-bold uppercase tracking-[0.5em] text-[9px] shadow-sm">
+                Luxury Real Estate Technology
               </div>
-              <h1 className="text-5xl md:text-8xl font-bold text-white leading-[1.1] tracking-tighter drop-shadow-2xl">
-                Descubra sua <br /> <span className="text-accent italic font-serif">Próxima Conquista</span>.
+              <h1 className="text-6xl md:text-9xl font-bold text-white leading-[0.95] tracking-tighter drop-shadow-2xl">
+                The New <br /> <span className="text-accent italic font-serif">Standard</span>.
               </h1>
-              <p className="text-xl md:text-2xl text-white/70 max-w-3xl mx-auto font-medium leading-relaxed">
-                A tecnologia definitiva para extração e gestão de imóveis exclusivos. <br className="hidden md:block" /> Organize sua carteira com inteligência internacional.
+              <p className="text-xl md:text-2xl text-white/60 max-w-3xl mx-auto font-medium leading-relaxed tracking-tight">
+                A plataforma definitiva para extração, gestão e permuta de ativos exclusivos. <br className="hidden md:block" /> Inteligência de mercado com design internacional.
               </p>
             </div>
             
-            <div className="max-w-2xl mx-auto pt-4 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300">
+            <div className="max-w-2xl mx-auto pt-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500">
               <ImportBar />
             </div>
           </div>
