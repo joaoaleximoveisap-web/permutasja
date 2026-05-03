@@ -235,10 +235,10 @@ Deno.serve(async (req) => {
     let extracted: any = null;
     let html = "";
 
-    // Attempt 1: Firecrawl (LLM extract + HTML)
+    // Attempt 1: Firecrawl (Scrape + Extract)
     if (FIRECRAWL_API_KEY) {
       try {
-        const fcRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
+        const fcRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
@@ -246,8 +246,10 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             url,
-            formats: [
-              { type: "json", schema: {
+            formats: ["html", "extract"],
+            waitFor: 5000,
+            extract: {
+              schema: {
                 type: "object",
                 properties: {
                   title: { type: "string" },
@@ -260,23 +262,23 @@ Deno.serve(async (req) => {
                   city: { type: "string" },
                   neighborhood: { type: "string" },
                   type: { type: "string" },
-                  images: { type: "array", items: { type: "string" } },
-                  permuta: { type: "boolean" },
-                  permutaDetails: { type: "string" }
+                  images: { type: "array", items: { type: "string" } }
                 }
-              }},
-              "html"
-            ],
-            waitFor: 2000,
+              }
+            }
           }),
         });
         const result = await fcRes.json();
         if (fcRes.ok) {
           const doc = result.data || result;
-          extracted = doc.json || doc.extract || null;
+          extracted = doc.extract || doc.json || null;
           html = doc.html || "";
         } else {
           console.warn("Firecrawl failed:", result);
+          if (result.error?.includes("token")) {
+             // Let the user know specifically about the token issue
+             return new Response(JSON.stringify({ error: "Erro de autenticação no Firecrawl. Verifique sua API Key." }), { status: 401, headers: corsHeaders });
+          }
         }
       } catch (e) {
         console.error("Firecrawl error:", e);
