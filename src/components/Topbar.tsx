@@ -20,7 +20,7 @@ export function Topbar() {
             </div>
           )}
           <ThemeSwitcher />
-          <div className="glass rounded-full h-9 w-9 grid place-items-center" aria-label="Usuário">
+          <div className="bg-white border border-border rounded-full h-9 w-9 grid place-items-center shadow-sm" aria-label="Usuário">
             <User className="h-4 w-4" />
           </div>
         </div>
