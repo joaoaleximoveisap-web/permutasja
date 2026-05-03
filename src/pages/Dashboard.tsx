@@ -20,30 +20,32 @@ export default function Dashboard() {
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-10">
-        <section className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden rounded-[2.5rem]">
-          {/* Dynamic Background or Default Hero */}
+        <section className="relative h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden rounded-[3rem] shadow-2xl">
+          {/* Immersive Background */}
           <div 
-            className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform hover:scale-[1.02]"
             style={{ 
               backgroundImage: `url(${properties[0]?.images[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920'})`,
             }}
           />
           
-          {/* Dark Immersive Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+          {/* Professional Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
           
-          <div className="relative z-10 w-full max-w-4xl px-6 text-center space-y-6">
-            <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <p className="text-accent font-bold uppercase tracking-[0.3em] text-xs">Exclusividade & Luxo</p>
-              <h1 className="text-4xl md:text-7xl font-bold text-white leading-tight tracking-tight drop-shadow-2xl">
-                Sua Carteira <span className="text-accent">Inteligente</span>.
+          <div className="relative z-10 w-full max-w-5xl px-8 text-center space-y-8">
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+              <div className="inline-block bg-accent/20 backdrop-blur-md border border-accent/30 rounded-full px-6 py-2 text-accent font-bold uppercase tracking-[0.4em] text-[10px]">
+                Mercado de Alto Padrão
+              </div>
+              <h1 className="text-5xl md:text-8xl font-bold text-white leading-[1.1] tracking-tighter drop-shadow-2xl">
+                Descubra sua <br /> <span className="text-accent italic font-serif">Próxima Conquista</span>.
               </h1>
-              <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto font-medium">
-                Extraímos dados e imagens de qualquer portal em segundos. Otimize sua gestão de imóveis de alto padrão.
+              <p className="text-xl md:text-2xl text-white/70 max-w-3xl mx-auto font-medium leading-relaxed">
+                A tecnologia definitiva para extração e gestão de imóveis exclusivos. <br className="hidden md:block" /> Organize sua carteira com inteligência internacional.
               </p>
             </div>
             
-            <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+            <div className="max-w-2xl mx-auto pt-4 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300">
               <ImportBar />
             </div>
           </div>
