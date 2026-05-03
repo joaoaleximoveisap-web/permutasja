@@ -16,8 +16,8 @@ export function Sidebar() {
           <Sparkles className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
-          <div className="font-semibold tracking-tight">Permutas Já</div>
-          <div className="text-xs text-muted-foreground font-medium">para corretores</div>
+          <div className="font-bold tracking-tight text-lg leading-tight text-primary">Permutas Já</div>
+          <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Premium Curator</div>
         </div>
       </div>
 

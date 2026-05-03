@@ -20,43 +20,45 @@ export default function Dashboard() {
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-10">
-        <section className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden rounded-[2.5rem]">
-          {/* Dynamic Background or Default Hero */}
+        <section className="relative h-[90vh] min-h-[700px] flex items-center justify-center overflow-hidden rounded-[3rem] shadow-2xl mx-2 md:mx-0 mt-4 md:mt-0">
+          {/* Dynamic Immersive Background */}
           <div 
-            className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform hover:scale-[1.03]"
             style={{ 
               backgroundImage: `url(${properties[0]?.images[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920'})`,
             }}
           />
           
-          {/* Dark Immersive Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+          {/* Deep Cinematic Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/90" />
           
-          <div className="relative z-10 w-full max-w-4xl px-6 text-center space-y-6">
-            <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <p className="text-accent font-bold uppercase tracking-[0.3em] text-xs">Exclusividade & Luxo</p>
-              <h1 className="text-4xl md:text-7xl font-bold text-white leading-tight tracking-tight drop-shadow-2xl">
-                Sua Carteira <span className="text-accent">Inteligente</span>.
+          <div className="relative z-10 w-full max-w-5xl px-8 text-center space-y-10">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-1000">
+              <div className="inline-block bg-accent/20 backdrop-blur-md border border-accent/40 rounded-full px-8 py-2.5 text-accent font-bold uppercase tracking-[0.5em] text-[9px] shadow-sm">
+                Luxury Real Estate Technology
+              </div>
+              <h1 className="text-6xl md:text-9xl font-bold text-white leading-[0.95] tracking-tighter drop-shadow-2xl">
+                The New <br /> <span className="text-accent italic font-serif">Standard</span>.
               </h1>
-              <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto font-medium">
-                Extraímos dados e imagens de qualquer portal em segundos. Otimize sua gestão de imóveis de alto padrão.
+              <p className="text-xl md:text-2xl text-white/60 max-w-3xl mx-auto font-medium leading-relaxed tracking-tight">
+                A plataforma definitiva para extração, gestão e permuta de ativos exclusivos. <br className="hidden md:block" /> Inteligência de mercado com design internacional.
               </p>
             </div>
             
-            <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+            <div className="max-w-2xl mx-auto pt-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500">
               <ImportBar />
             </div>
           </div>
         </section>
 
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-6 py-10">
           {stats.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="glass rounded-2xl p-4">
+            <div key={label} className="bg-white/50 border border-border/50 rounded-3xl p-6 transition-all hover:bg-white hover:shadow-xl group">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{label}</span>
-                <Icon className="h-4 w-4 text-accent" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{label}</span>
+                <Icon className="h-5 w-5 text-accent opacity-50 group-hover:opacity-100 transition-opacity" />
               </div>
-              <div className="mt-2 text-2xl font-semibold">{value}</div>
+              <div className="mt-3 text-3xl font-bold tracking-tighter">{value}</div>
             </div>
           ))}
         </section>
@@ -76,10 +78,13 @@ export default function Dashboard() {
           </section>
         ) : (
           <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Adicionados recentemente</h2>
-              <Link to="/imoveis" className="text-sm text-accent hover:underline flex items-center gap-1">
-                Ver todos <ArrowRight className="h-4 w-4" />
+            <div className="flex items-end justify-between border-b border-border pb-6 mb-8">
+              <div className="space-y-1">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Curadoria Exclusiva</h2>
+                <p className="text-muted-foreground font-medium">Os ativos mais recentes da sua carteira inteligente.</p>
+              </div>
+              <Link to="/imoveis" className="text-sm font-bold text-accent hover:underline flex items-center gap-2 uppercase tracking-widest bg-accent/5 px-4 py-2 rounded-xl transition-all">
+                Ver Portfólio <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
