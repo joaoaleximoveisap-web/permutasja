@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import DESIGN_SYSTEM from "@/lib/design-system";
 
-export type ThemeMode = "light" | "dark" | "sand" | "onyx" | "forest";
+export type ThemeMode = "light" | "dark" | "sand" | "midnight" | "forest" | "ocean" | "rose" | "mist" | "sunset";
 
 interface ThemeContextType {
   theme: ThemeMode;
@@ -28,12 +28,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty("--background", activeTheme.background.main);
     root.style.setProperty("--foreground", activeTheme.text.primary);
     
-    // Remove all theme classes first
-    root.classList.remove("dark", "light", "sand", "onyx", "forest");
+    // Remove all possible theme classes
+    root.classList.remove(
+      "dark", "light", "sand", "midnight", "forest", 
+      "ocean", "rose", "mist", "sunset"
+    );
     root.classList.add(theme);
 
     // Apply specific dark mode class for tailwind
-    if (theme === "dark" || theme === "onyx") {
+    // Add any dark themes here
+    const darkThemes = ["dark", "midnight", "forest", "ocean", "rose", "mist", "sunset"];
+    if (darkThemes.includes(theme)) {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
