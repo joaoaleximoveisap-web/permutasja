@@ -148,7 +148,7 @@ export default function Properties() {
               </div>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" className="lg:hidden glass rounded-xl">
+                  <Button variant="outline" className="lg:hidden bg-white border border-border rounded-xl">
                     <SlidersHorizontal className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
