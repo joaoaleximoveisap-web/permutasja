@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { ThemeConfig } from "@/lib/theme-config";
 import { THEMES } from "@/lib/themes";
 import { getContrastColor } from "@/lib/color-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ThemeContextType {
   config: ThemeConfig;
