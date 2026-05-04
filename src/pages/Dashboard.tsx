@@ -51,6 +51,7 @@ export default function Dashboard() {
             {/* HERO SECTION */}
             <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden rounded-[3rem] shadow-2xl group">
               <div 
+                id="dashboard-hero-bg"
                 className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform group-hover:scale-[1.03]"
                 style={{ 
                   backgroundImage: `url(${properties[0]?.images[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920'})`,
