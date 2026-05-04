@@ -132,17 +132,11 @@ export function LiveEditor() {
     return (
       <button
         data-live-editor-ui
-        onClick={() => {
-          console.log("Live Editor: Ativado via botão");
-          setActive(true);
-        }}
-        className="fixed bottom-10 right-10 z-[1000005] h-20 w-20 rounded-full bg-[#C5A46D] text-black shadow-[0_0_60px_rgba(198,168,125,0.7)] grid place-items-center hover:scale-110 active:scale-95 transition-all border-4 border-white animate-bounce group"
-        title="Modo Editor Visual"
+        onClick={() => setActive(true)}
+        className="fixed top-2 right-2 z-[1000005] h-7 w-7 rounded-full bg-black/30 hover:bg-[#C5A46D] text-white hover:text-black backdrop-blur-md grid place-items-center transition-all opacity-40 hover:opacity-100 border border-white/20 group"
+        title="Editor Visual (Alt+E)"
       >
-        <Wand2 className="h-10 w-10 fill-current" />
-        <div className="absolute -top-12 right-0 bg-black text-white text-[10px] font-black px-3 py-1 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-tighter shadow-xl border border-white/20">
-          Ativar Editor Canva
-        </div>
+        <Wand2 className="h-3.5 w-3.5" />
       </button>
     );
   }
