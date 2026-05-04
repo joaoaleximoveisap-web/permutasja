@@ -76,50 +76,61 @@ export default function Properties() {
 
   return (
     <AppShell>
-      <div className="max-w-7xl mx-auto space-y-5">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between border-b border-border pb-8 gap-6">
-          <div className="space-y-1">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter">Your Portfolio</h1>
-            <p className="text-lg text-muted-foreground font-medium italic">Gerencie {properties.length} ativos exclusivos com inteligência.</p>
+      {/* Container max-w fluido; max-w-7xl no desktop, sem horizontal overflow */}
+      <div className="w-full max-w-7xl mx-auto space-y-5 min-w-0">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between border-b border-border pb-6 md:pb-8 gap-4 md:gap-6">
+          <div className="space-y-1 min-w-0">
+            {/* Tipografia fluida: 1.875rem (30px) → 3.75rem (60px). Sem degraus, sem overflow. */}
+            <h1
+              className="font-bold tracking-tighter break-words"
+              style={{ fontSize: "clamp(1.875rem, 6vw, 3.75rem)", lineHeight: 1.05 }}
+            >
+              Your Portfolio
+            </h1>
+            <p className="text-base md:text-lg text-muted-foreground font-medium italic">
+              Gerencie {properties.length} ativos exclusivos com inteligência.
+            </p>
           </div>
-          <div className="flex gap-2">
+          {/* Ações: flex-wrap evita overflow; min-h-[44px] em todos os botões = touch target. */}
+          <div className="flex flex-wrap gap-2 shrink-0">
             {!selectionMode ? (
               <>
-                <Button 
-                  variant="outline" 
-                  className="bg-white border border-border rounded-xl gap-2 shadow-sm"
+                <Button
+                  variant="outline"
+                  className="min-h-[44px] bg-white border border-border rounded-xl gap-2 shadow-sm"
                   onClick={() => setSelectionMode(true)}
                 >
-                  <CheckSquare className="h-4 w-4" /> Selecionar
+                  <CheckSquare className="h-4 w-4" /> <span className="hidden sm:inline">Selecionar</span>
                 </Button>
                 <BulkImportModal />
                 <AddPropertyDialog />
               </>
             ) : (
               <>
-                <Button 
-                  variant="outline" 
-                  className="bg-white border border-border rounded-xl gap-2"
+                <Button
+                  variant="outline"
+                  className="min-h-[44px] bg-white border border-border rounded-xl gap-2"
                   onClick={selectAll}
                 >
                   {selectedIds.size === filtered.length ? <Square className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
-                  {selectedIds.size === filtered.length ? "Desmarcar todos" : "Selecionar todos"}
+                  <span className="hidden sm:inline">{selectedIds.size === filtered.length ? "Desmarcar todos" : "Selecionar todos"}</span>
                 </Button>
-                <Button 
-                  variant="destructive" 
-                  className="rounded-xl gap-2"
+                <Button
+                  variant="destructive"
+                  className="min-h-[44px] rounded-xl gap-2"
                   onClick={deleteSelected}
                   disabled={selectedIds.size === 0}
                 >
                   <Trash2 className="h-4 w-4" /> Excluir ({selectedIds.size})
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  className="rounded-xl"
+                <Button
+                  variant="ghost"
+                  className="min-h-[44px] min-w-[44px] rounded-xl"
                   onClick={() => {
                     setSelectionMode(false);
                     setSelectedIds(new Set());
                   }}
+                  aria-label="Cancelar seleção"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -148,33 +159,39 @@ export default function Properties() {
               </div>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" className="lg:hidden bg-white border border-border rounded-xl">
+                  <Button variant="outline" className="lg:hidden min-h-[44px] min-w-[44px] bg-white border border-border rounded-xl shrink-0" aria-label="Filtros">
                     <SlidersHorizontal className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="glass-strong border-glass-border">
+                {/* Sheet ocupa quase toda largura no mobile, com scroll interno */}
+                <SheetContent side="right" className="glass-strong border-glass-border w-[88vw] sm:w-[400px] max-w-md overflow-y-auto">
                   <FilterPanel filters={filters} setFilters={setFilters} />
                 </SheetContent>
               </Sheet>
             </div>
 
             {filtered.length === 0 ? (
-              <div className="bg-white/50 border border-border/50 rounded-[3rem] p-20 text-center space-y-4">
+              <div className="bg-white/50 border border-border/50 rounded-3xl md:rounded-[3rem] p-8 sm:p-12 md:p-20 text-center space-y-4">
                 <div className="h-16 w-16 bg-accent/10 rounded-full mx-auto grid place-items-center">
                   <Building2 className="h-8 w-8 text-accent" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold tracking-tight">Nenhum imóvel encontrado</p>
-                  <p className="text-muted-foreground mt-1 font-medium">Ajuste os filtros ou importe um novo link para sua curadoria.</p>
+                  <p className="text-lg sm:text-xl font-bold tracking-tight">Nenhum imóvel encontrado</p>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1 font-medium">Ajuste os filtros ou importe um novo link para sua curadoria.</p>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              // Grid fluido: auto-fill com minmax garante que cards se reorganizem em qualquer largura,
+              // sem depender só de breakpoints fixos (cobre tablets paisagem, dobráveis, ultrawide).
+              <div
+                className="grid gap-4 sm:gap-6 md:gap-8"
+                style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 22rem), 1fr))" }}
+              >
                 {filtered.map(p => (
-                  <PropertyCard 
-                    key={p.id} 
-                    property={p} 
-                    onClick={() => { setSelected(p); setOpen(true); }} 
+                  <PropertyCard
+                    key={p.id}
+                    property={p}
+                    onClick={() => { setSelected(p); setOpen(true); }}
                     onDelete={handleDeleteSingle}
                     selected={selectedIds.has(p.id)}
                     onSelect={toggleSelection}

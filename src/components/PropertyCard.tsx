@@ -27,17 +27,18 @@ export function PropertyCard({
           selected && "ring-2 ring-accent"
         )}
       >
-        <div className="relative h-[450px] overflow-hidden">
+        {/* aspect-ratio fixa proporção sem CLS; em mobile o card respira (4/5), em md+ vira widescreen elegante (16/10). */}
+        <div className="relative w-full aspect-[4/5] sm:aspect-[16/10] overflow-hidden">
           <img
             src={property.images[0]}
             alt={property.title}
             loading="lazy"
-            className="h-full w-full object-cover transition-smooth group-hover:scale-105"
+            className="absolute inset-0 h-full w-full object-cover transition-smooth group-hover:scale-105"
           />
-          {/* Automatic Dark Overlay for Legibility - rgba(0,0,0,0.4) as requested */}
-          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
-          {/* Gradient Overlay for bottom text */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          {/* Overlay escuro para legibilidade — mais forte no mobile (sem hover) */}
+          <div className="absolute inset-0 bg-black/40 md:group-hover:bg-black/20 transition-colors duration-500" />
+          {/* Gradiente fixo no mobile (info sempre visível); só aparece no hover em desktop */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500" />
 
           
           {selectionMode && (
@@ -62,14 +63,20 @@ export function PropertyCard({
             )}
           </div>
 
-          <div className="absolute bottom-6 left-6 right-6 text-white transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 opacity-0 group-hover:opacity-100">
-            <div className="text-3xl font-bold tracking-tighter mb-1">{formatBRL(property.price)}</div>
-            <div className="text-sm font-medium line-clamp-1 opacity-80 mb-3">{property.title}</div>
-            <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-accent">
-              <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{property.neighborhood}</span>
-              <span>•</span>
+          {/* Info sempre visível em mobile (touch não tem hover); animada apenas em desktop. Tipografia fluida via clamp(). */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white md:transform md:translate-y-4 md:group-hover:translate-y-0 transition-all duration-500 md:opacity-0 md:group-hover:opacity-100">
+            <div
+              className="font-bold tracking-tighter mb-1 leading-tight"
+              style={{ fontSize: "clamp(1.25rem, 4.5vw, 1.875rem)" }}
+            >
+              {formatBRL(property.price)}
+            </div>
+            <div className="text-xs sm:text-sm font-medium line-clamp-1 opacity-80 mb-2 sm:mb-3">{property.title}</div>
+            <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[10px] font-bold uppercase tracking-widest text-accent">
+              <span className="flex items-center gap-1 min-w-0"><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{property.neighborhood}</span></span>
+              <span className="opacity-60">•</span>
               <span>{property.bedrooms} beds</span>
-              <span>•</span>
+              <span className="opacity-60">•</span>
               <span>{property.area}m²</span>
             </div>
           </div>
@@ -82,7 +89,8 @@ export function PropertyCard({
             e.stopPropagation();
             onDelete(property.id);
           }}
-          className="absolute top-3 right-3 p-2 rounded-xl bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
+          aria-label="Excluir imóvel"
+          className="absolute top-3 right-3 min-h-[44px] min-w-[44px] grid place-items-center rounded-xl bg-destructive/80 text-destructive-foreground md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-destructive"
         >
           <Trash2 className="h-4 w-4" />
         </button>
