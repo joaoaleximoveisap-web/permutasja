@@ -416,3 +416,56 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
     </div>
   );
 }
+
+function UploadButton({ onUploaded }: { onUploaded: (url: string, isVideo: boolean) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<string>("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    setBusy(true);
+    setProgress("Enviando…");
+    try {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `live/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from("live-media").upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from("live-media").getPublicUrl(path);
+      onUploaded(data.publicUrl, file.type.startsWith("video/"));
+      setProgress("✓ Pronto");
+      setTimeout(() => setProgress(""), 1500);
+    } catch (e: any) {
+      setProgress("Erro: " + (e.message || "falhou"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+        }}
+      />
+      <Button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="w-full bg-black text-white hover:bg-black/80 font-bold uppercase tracking-widest text-[11px]"
+      >
+        {busy ? "Enviando…" : "📤 Escolher imagem ou vídeo"}
+      </Button>
+      {progress && <div className="text-[10px] text-muted-foreground text-center">{progress}</div>}
+    </div>
+  );
+}
