@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveEdit, ElementOverride } from "@/contexts/LiveEditContext";
+import { supabase } from "@/integrations/supabase/client";
 import { getStableSelector, isInsideEditorUI } from "@/lib/dom-selector";
 import { getContrastColor } from "@/lib/color-utils";
 import { Button } from "@/components/ui/button";
@@ -316,28 +317,35 @@ export function LiveEditor() {
                 <SliderField label="Opacidade" value={current.opacity ?? 1} min={0} max={1} step={0.05} onChange={(v) => set({ opacity: v })} />
               </TabsContent>
 
-              {/* IMAGE */}
+              {/* IMAGE / VIDEO */}
               <TabsContent value="image" className="mt-0 space-y-5">
-                <Field label="Importe o link aqui">
+                <Field label="URL da imagem">
                   <Input
-                    placeholder="https://…"
+                    placeholder="https://… (jpg, png, webp)"
                     defaultValue={current.imageUrl || ""}
-                    onChange={(e) => set({ imageUrl: e.target.value })}
+                    onChange={(e) => set({ imageUrl: e.target.value, videoUrl: "" })}
                   />
                 </Field>
-                <Field label="Upload">
+                <Field label="URL do vídeo">
                   <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => set({ imageUrl: reader.result as string });
-                      reader.readAsDataURL(file);
+                    placeholder="https://… (mp4, webm)"
+                    defaultValue={current.videoUrl || ""}
+                    onChange={(e) => set({ videoUrl: e.target.value })}
+                  />
+                </Field>
+                <Field label="Upload de arquivo (imagem ou vídeo)">
+                  <UploadButton
+                    onUploaded={(url, isVideo) => {
+                      if (isVideo) set({ videoUrl: url });
+                      else set({ imageUrl: url, videoUrl: "" });
                     }}
                   />
                 </Field>
+                {current.videoUrl && (
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => set({ videoUrl: "" })}>
+                    Remover vídeo
+                  </Button>
+                )}
               </TabsContent>
 
               {/* BOX */}
@@ -405,6 +413,59 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
         />
         <Input value={value} onChange={(e) => onChange(e.target.value)} className="h-9 text-xs font-mono" />
       </div>
+    </div>
+  );
+}
+
+function UploadButton({ onUploaded }: { onUploaded: (url: string, isVideo: boolean) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<string>("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    setBusy(true);
+    setProgress("Enviando…");
+    try {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `live/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from("live-media").upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from("live-media").getPublicUrl(path);
+      onUploaded(data.publicUrl, file.type.startsWith("video/"));
+      setProgress("✓ Pronto");
+      setTimeout(() => setProgress(""), 1500);
+    } catch (e: any) {
+      setProgress("Erro: " + (e.message || "falhou"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+        }}
+      />
+      <Button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="w-full bg-black text-white hover:bg-black/80 font-bold uppercase tracking-widest text-[11px]"
+      >
+        {busy ? "Enviando…" : "📤 Escolher imagem ou vídeo"}
+      </Button>
+      {progress && <div className="text-[10px] text-muted-foreground text-center">{progress}</div>}
     </div>
   );
 }

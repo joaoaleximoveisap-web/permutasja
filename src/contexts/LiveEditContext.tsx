@@ -17,6 +17,7 @@ export interface ElementOverride {
   opacity?: number;
   boxShadow?: string;
   imageUrl?: string;
+  videoUrl?: string;
   display?: string;
 }
 
@@ -73,6 +74,28 @@ function applyTextAndImages(overrides: Record<string, ElementOverride>) {
           el.style.backgroundSize = "cover";
           el.style.backgroundPosition = "center";
         }
+      }
+      if (o.videoUrl) {
+        const existing = el.querySelector(":scope > video[data-live-video]") as HTMLVideoElement | null;
+        if (existing) {
+          if (existing.src !== o.videoUrl) existing.src = o.videoUrl;
+        } else {
+          // Hide background image on this element
+          el.style.backgroundImage = "none";
+          const v = document.createElement("video");
+          v.setAttribute("data-live-video", "1");
+          v.src = o.videoUrl;
+          v.autoplay = true;
+          v.loop = true;
+          v.muted = true;
+          v.playsInline = true;
+          v.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;";
+          if (getComputedStyle(el).position === "static") el.style.position = "relative";
+          el.prepend(v);
+        }
+      } else {
+        const v = el.querySelector(":scope > video[data-live-video]");
+        if (v) v.remove();
       }
     } catch {}
   }
