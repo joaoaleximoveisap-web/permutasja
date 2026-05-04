@@ -318,7 +318,7 @@ export function LiveEditor() {
 
               {/* IMAGE */}
               <TabsContent value="image" className="mt-0 space-y-5">
-                <Field label="URL da imagem">
+                <Field label="Importe o link aqui">
                   <Input
                     placeholder="https://…"
                     defaultValue={current.imageUrl || ""}
