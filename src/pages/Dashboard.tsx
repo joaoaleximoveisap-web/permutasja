@@ -66,7 +66,7 @@ export default function Dashboard() {
                     International Luxury Portfolios
                   </div>
                   <EditableElement id="dashboard-hero-title" as="h1" className="text-6xl md:text-9xl font-bold text-white leading-[0.95] tracking-tighter drop-shadow-2xl">
-                    The New <br /> <span className="text-accent italic font-serif">Standard</span>.
+                    Permutas com rapidez
                   </EditableElement>
                 </div>
 
