@@ -18,6 +18,7 @@ import ReviewProperty from "./pages/ReviewProperty.tsx";
 import SmartSearch from "./pages/SmartSearch.tsx";
 import Editor from "./pages/Editor.tsx";
 import VisualBuilderPage from "./pages/VisualBuilder.tsx";
+import Demandas from "./pages/Demandas.tsx";
 // Função que remove elementos flutuantes com estilos específicos
 const removeFloating = () => {
   document
@@ -50,6 +51,7 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/demandas" element={<Demandas />} />
                     <Route path="/imoveis" element={<Properties />} />
                     <Route path="/revisar/:id" element={<ReviewProperty />} />
                     <Route path="/busca-inteligente" element={<SmartSearch />} />
