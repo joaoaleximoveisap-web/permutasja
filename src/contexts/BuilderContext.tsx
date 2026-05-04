@@ -75,10 +75,39 @@ export function BuilderProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfig] = useState<BuilderConfig>(DEFAULT_CONFIG);
   const [history, setHistory] = useState<BuilderConfig[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [builderHydrated, setBuilderHydrated] = useState(false);
+  const builderSaveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetchConfigs();
+    // Hydrate Visual Builder config
+    (async () => {
+      const { data } = await supabase
+        .from("ui_config")
+        .select("settings")
+        .eq("element_id", "builder::config")
+        .maybeSingle();
+      if (data?.settings) {
+        setConfig(data.settings as unknown as BuilderConfig);
+      }
+      setBuilderHydrated(true);
+    })();
   }, []);
+
+  // Auto-save Visual Builder config (debounced) after hydration
+  useEffect(() => {
+    if (!builderHydrated) return;
+    if (builderSaveTimer.current) clearTimeout(builderSaveTimer.current);
+    builderSaveTimer.current = setTimeout(() => {
+      supabase
+        .from("ui_config")
+        .upsert(
+          { element_id: "builder::config", settings: config as any },
+          { onConflict: "element_id" }
+        )
+        .then(() => {});
+    }, 500);
+  }, [config, builderHydrated]);
 
   const fetchConfigs = async () => {
     const { data, error } = await supabase.from("ui_config").select("*");

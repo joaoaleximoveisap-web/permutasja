@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { ThemeConfig } from "@/lib/theme-config";
 import { THEMES } from "@/lib/themes";
 import { getContrastColor } from "@/lib/color-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ThemeContextType {
   config: ThemeConfig;
@@ -61,6 +62,23 @@ export function ThemeEditorProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem("permutasja:custom-theme");
     return saved ? JSON.parse(saved) : defaultConfig;
   });
+  const [hydrated, setHydrated] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Hydrate from Supabase (overrides local if exists)
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("ui_config")
+        .select("settings")
+        .eq("element_id", "theme::custom")
+        .maybeSingle();
+      if (data?.settings) {
+        setConfig(data.settings as unknown as ThemeConfig);
+      }
+      setHydrated(true);
+    })();
+  }, []);
 
   const updateConfig = (updates: Partial<ThemeConfig>) => {
     setConfig(prev => ({ ...prev, ...updates }));
@@ -88,8 +106,6 @@ export function ThemeEditorProvider({ children }: { children: ReactNode }) {
     
     // Apply Colors
     Object.entries(config.colors).forEach(([key, value]) => {
-      // Helper to convert hex to HSL for shadcn compatibility if needed
-      // For now, we'll apply raw hex where possible or convert as needed
       root.style.setProperty(`--${key.replace(/[A-Z]/g, m => "-" + m.toLowerCase())}`, value);
     });
 
@@ -105,7 +121,20 @@ export function ThemeEditorProvider({ children }: { children: ReactNode }) {
     // Apply Typography
     root.style.setProperty("--font-family", config.typography.fontFamily);
     root.style.setProperty("--base-font-size", `${config.typography.baseSize}px`);
-  }, [config]);
+
+    // Auto-save to Supabase (debounced) — só após hidratação para não sobrescrever
+    if (!hydrated) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      supabase
+        .from("ui_config")
+        .upsert(
+          { element_id: "theme::custom", settings: config as any },
+          { onConflict: "element_id" }
+        )
+        .then(() => {});
+    }, 500);
+  }, [config, hydrated]);
 
   return (
     <ThemeEditorContext.Provider value={{ config, updateConfig, updateColors, updateTypography, updateLayout, resetTheme }}>
