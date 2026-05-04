@@ -8,6 +8,7 @@ import { formatBRL } from "@/lib/property-utils";
 import ScraperManager from "@/components/ScraperManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditableElement } from "@/components/EditableElement";
+import { DemandsCard } from "@/components/DemandsCard";
 
 export default function Dashboard() {
 
@@ -70,8 +71,13 @@ export default function Dashboard() {
                 </div>
 
                 
-                <div className="max-w-2xl mx-auto pt-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500">
+                <div className="max-w-4xl mx-auto pt-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500 space-y-12">
                   <ImportBar />
+                  
+                  {/* LUXURY DEMANDS CARD */}
+                  <div className="max-w-2xl mx-auto">
+                    <DemandsCard />
+                  </div>
                 </div>
               </div>
             </section>

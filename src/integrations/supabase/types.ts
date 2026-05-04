@@ -172,6 +172,96 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_offers: {
+        Row: {
+          bairro: string | null
+          codigo: string | null
+          corretor: string
+          created_at: string | null
+          data_original: string
+          external_id: string | null
+          id: string
+          link: string | null
+          metadata: Json | null
+          permuta: Json | null
+          preco: number | null
+          tipo: string | null
+        }
+        Insert: {
+          bairro?: string | null
+          codigo?: string | null
+          corretor: string
+          created_at?: string | null
+          data_original: string
+          external_id?: string | null
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          permuta?: Json | null
+          preco?: number | null
+          tipo?: string | null
+        }
+        Update: {
+          bairro?: string | null
+          codigo?: string | null
+          corretor?: string
+          created_at?: string | null
+          data_original?: string
+          external_id?: string | null
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          permuta?: Json | null
+          preco?: number | null
+          tipo?: string | null
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          corretor: string
+          created_at: string | null
+          data_original: string
+          external_id: string | null
+          id: string
+          localizacao: string[] | null
+          metadata: Json | null
+          observacoes: string | null
+          preco_max: number | null
+          preco_min: number | null
+          status: string | null
+          tipo: string
+        }
+        Insert: {
+          corretor: string
+          created_at?: string | null
+          data_original: string
+          external_id?: string | null
+          id?: string
+          localizacao?: string[] | null
+          metadata?: Json | null
+          observacoes?: string | null
+          preco_max?: number | null
+          preco_min?: number | null
+          status?: string | null
+          tipo: string
+        }
+        Update: {
+          corretor?: string
+          created_at?: string | null
+          data_original?: string
+          external_id?: string | null
+          id?: string
+          localizacao?: string[] | null
+          metadata?: Json | null
+          observacoes?: string | null
+          preco_max?: number | null
+          preco_min?: number | null
+          status?: string | null
+          tipo?: string
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           area: number | null
