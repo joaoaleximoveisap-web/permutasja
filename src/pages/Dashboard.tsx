@@ -55,7 +55,7 @@ export default function Dashboard() {
                 id="dashboard-hero-bg"
                 className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform group-hover:scale-[1.03]"
                 style={{ 
-                  backgroundImage: `url(${properties[0]?.images[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920'})`,
+                  backgroundImage: `url('https://pqjxsiukkdhbxqcjgsvj.supabase.co/storage/v1/object/public/live-media/live/1777869961433-p53577.jpeg')`,
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/90" />
@@ -66,7 +66,7 @@ export default function Dashboard() {
                     International Luxury Portfolios
                   </div>
                   <EditableElement id="dashboard-hero-title" as="h1" className="text-6xl md:text-9xl font-bold text-white leading-[0.95] tracking-tighter drop-shadow-2xl">
-                    The New <br /> <span className="text-accent italic font-serif">Standard</span>.
+                    Permutas com rapidez
                   </EditableElement>
                 </div>
 
