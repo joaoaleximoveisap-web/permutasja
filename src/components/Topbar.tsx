@@ -1,7 +1,8 @@
-import { Coins, User } from "lucide-react";
+import { Coins, User, Wand2 } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { useProperties } from "@/contexts/PropertiesContext";
 import { Link } from "react-router-dom";
+import { useLiveEdit } from "@/contexts/LiveEditContext";
 
 export function Topbar() {
   const { credits, creditSystemEnabled } = useProperties();
