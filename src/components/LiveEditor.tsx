@@ -134,10 +134,11 @@ export function LiveEditor() {
       <button
         data-live-editor-ui
         onClick={() => setActive(true)}
-        className="fixed top-2 right-2 z-[1000005] h-7 w-7 rounded-full bg-black/30 hover:bg-[#C5A46D] text-white hover:text-black backdrop-blur-md grid place-items-center transition-all opacity-40 hover:opacity-100 border border-white/20 group"
-        title="Editor Visual (Alt+E)"
+        className="fixed top-20 right-4 z-[1000005] px-4 py-2 rounded-full bg-black text-[#C5A46D] border border-[#C5A46D]/50 shadow-xl flex items-center gap-2 hover:scale-105 transition-all group"
+        title="Ativar Editor (Alt+E)"
       >
-        <Wand2 className="h-3.5 w-3.5" />
+        <Wand2 className="h-4 w-4" />
+        <span className="text-[10px] font-black uppercase tracking-widest">Editar Site</span>
       </button>
     );
   }
