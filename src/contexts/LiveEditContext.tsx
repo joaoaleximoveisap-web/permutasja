@@ -17,6 +17,7 @@ export interface ElementOverride {
   opacity?: number;
   boxShadow?: string;
   imageUrl?: string;
+  videoUrl?: string;
   display?: string;
 }
 
