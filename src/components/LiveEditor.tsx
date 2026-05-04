@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveEdit, ElementOverride } from "@/contexts/LiveEditContext";
+import { supabase } from "@/integrations/supabase/client";
 import { getStableSelector, isInsideEditorUI } from "@/lib/dom-selector";
 import { getContrastColor } from "@/lib/color-utils";
 import { Button } from "@/components/ui/button";
