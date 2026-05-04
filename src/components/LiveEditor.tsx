@@ -129,19 +129,7 @@ export function LiveEditor() {
   };
 
   // Floating toggle button
-  if (!active) {
-    return (
-      <button
-        data-live-editor-ui
-        onClick={() => setActive(true)}
-        className="fixed top-20 right-4 z-[1000005] px-4 py-2 rounded-full bg-black text-[#C5A46D] border border-[#C5A46D]/50 shadow-xl flex items-center gap-2 hover:scale-105 transition-all group"
-        title="Ativar Editor (Alt+E)"
-      >
-        <Wand2 className="h-4 w-4" />
-        <span className="text-[10px] font-black uppercase tracking-widest">Editar Site</span>
-      </button>
-    );
-  }
+  if (!active) return null;
 
   // Contrast check
   const showContrastWarn = (() => {
