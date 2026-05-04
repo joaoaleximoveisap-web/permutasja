@@ -316,28 +316,35 @@ export function LiveEditor() {
                 <SliderField label="Opacidade" value={current.opacity ?? 1} min={0} max={1} step={0.05} onChange={(v) => set({ opacity: v })} />
               </TabsContent>
 
-              {/* IMAGE */}
+              {/* IMAGE / VIDEO */}
               <TabsContent value="image" className="mt-0 space-y-5">
-                <Field label="Importe o link aqui">
+                <Field label="URL da imagem">
                   <Input
-                    placeholder="https://…"
+                    placeholder="https://… (jpg, png, webp)"
                     defaultValue={current.imageUrl || ""}
-                    onChange={(e) => set({ imageUrl: e.target.value })}
+                    onChange={(e) => set({ imageUrl: e.target.value, videoUrl: "" })}
                   />
                 </Field>
-                <Field label="Upload">
+                <Field label="URL do vídeo">
                   <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => set({ imageUrl: reader.result as string });
-                      reader.readAsDataURL(file);
+                    placeholder="https://… (mp4, webm)"
+                    defaultValue={current.videoUrl || ""}
+                    onChange={(e) => set({ videoUrl: e.target.value })}
+                  />
+                </Field>
+                <Field label="Upload de arquivo (imagem ou vídeo)">
+                  <UploadButton
+                    onUploaded={(url, isVideo) => {
+                      if (isVideo) set({ videoUrl: url });
+                      else set({ imageUrl: url, videoUrl: "" });
                     }}
                   />
                 </Field>
+                {current.videoUrl && (
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => set({ videoUrl: "" })}>
+                    Remover vídeo
+                  </Button>
+                )}
               </TabsContent>
 
               {/* BOX */}
