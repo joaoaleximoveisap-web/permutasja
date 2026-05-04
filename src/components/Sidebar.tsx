@@ -1,9 +1,10 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Building2, Sparkles, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Building2, Sparkles, MessageSquare, Network } from "lucide-react";
 
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/imoveis", label: "Imóveis", icon: Building2 },
+  { to: "/demandas", label: "Demandas", icon: Network },
   { to: "/busca-inteligente", label: "Busca IA", icon: MessageSquare },
 ];
 
