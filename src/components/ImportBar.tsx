@@ -119,7 +119,7 @@ export function ImportBar({ onImported }: { onImported?: () => void }) {
         className="rounded-[1.5rem] bg-accent text-white hover:scale-105 transition-all px-10 h-14 font-bold uppercase tracking-widest text-xs shadow-xl shadow-accent/20"
       >
         {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Sparkles className="h-5 w-5 mr-2" />}
-        {loading ? "Analysing..." : "Extract Data"}
+        {loading ? "Analisando..." : "Clique para importar"}
       </Button>
     </form>
   );
