@@ -8,7 +8,7 @@ import { formatBRL } from "@/lib/property-utils";
 import ScraperManager from "@/components/ScraperManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditableElement } from "@/components/EditableElement";
-import { DemandsCard } from "@/components/DemandsCard";
+
 
 export default function Dashboard() {
 
