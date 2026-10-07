@@ -113,12 +113,10 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           npm install -g @anthropic-ai/claude-code@latest --no-audit --no-fund --loglevel=error
-          if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
-            unset ANTHROPIC_API_KEY
-          elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-            unset CLAUDE_CODE_OAUTH_TOKEN
-          else
-            echo "Nenhuma credencial Claude configurada" >&2
+          # Custo zero em API Anthropic: nao usar chave paga como fallback.
+          unset ANTHROPIC_API_KEY
+          if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+            echo "Assinatura Claude nao conectada: execucao bloqueada para evitar cobranca de API" >&2
             exit 1
           fi
           set +e
